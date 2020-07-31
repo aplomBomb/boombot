@@ -9,12 +9,19 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/bwmarrin/disgord/x/mux"
 	"github.com/joho/godotenv"
 )
 
+// Version is the bot version information
 const Version = "v0.0.0-alpha"
 
+// Session is global for easy access
 var Session, _ = discordgo.New()
+
+// Router is registered as a global variable to allow easy access to the
+// multiplexer throughout the bot.
+var Router = mux.New()
 
 func init() {
 
