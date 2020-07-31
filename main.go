@@ -1,8 +1,5 @@
-// Declare this file to be part of the main package so it can be compiled into
-// an executable.
 package main
 
-// Import all Go packages required for this file.
 import (
 	"flag"
 	"fmt"
@@ -15,27 +12,21 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Version is a constant that stores the Disgord version information.
 const Version = "v0.0.0-alpha"
 
-// Session is declared in the global space so it can be easily used
-// throughout this program.
-// In this use case, there is no error that would be returned.
 var Session, _ = discordgo.New()
 
-// Read in all configuration options from both environment variables and
-// command line arguments.
 func init() {
 
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
 	}
 
-	// Discord Authentication Token
-	// Session.Token = os.Getenv("DG_TOKEN")
-	// if Session.Token == "" {
-	// 	flag.StringVar(&Session.Token, "t", "", "Discord Authentication Token")
-	// }
+	//Discord Authentication Token
+	Session.Token = os.Getenv("TOKEN")
+	if Session.Token == "" {
+		flag.StringVar(&Session.Token, "t", "", "Discord Authentication Token")
+	}
 }
 
 func main() {
@@ -44,7 +35,8 @@ func main() {
 	var err error
 
 	// Print out a fancy logo!
-	fmt.Printf(`▄▄▄▄·             • ▌ ▄ ·.▄▄▄▄▄▄▄
+	fmt.Printf(`
+	▄▄▄▄·             • ▌ ▄ ·.           ▄▄▄▄▄▄▄
 	▐█ ▀█▪ ▄█▀▄  ▄█▀▄ ·██ ▐███▪▐█ ▀█▪ ▄█▀▄ •██  
 	▐█▀▀█▄▐█▌.▐▌▐█▌.▐▌▐█ ▌▐▌▐█·▐█▀▀█▄▐█▌.▐▌ ▐█.▪
 	██▄▪▐█▐█▌.▐▌▐█▌.▐▌██ ██▌▐█▌██▄▪▐█▐█▌.▐▌ ▐█▌·
