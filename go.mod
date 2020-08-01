@@ -1,4 +1,4 @@
-module github.com/aplombomb/derpBawt
+module github.com/aplombomb/boombot
 
 go 1.14
 

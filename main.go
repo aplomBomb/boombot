@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/aplombomb/derpBawt/src/pkg/multiplexer"
+	"github.com/aplombomb/boombot/src/pkg/multiplexer"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 )
