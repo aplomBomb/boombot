@@ -16,9 +16,9 @@ import (
 // Version of BoomBot
 const Version = "v0.0.0-alpha"
 
-// Session is a global instance of discordgo
+// session is a global instance of discordgo
 // api available for use throughout the app
-var Session, _ = discordgo.New()
+var session, _ = discordgo.New()
 
 // Router is global for easy use thoughout the app.
 // Passed string will serve as command prefix
@@ -31,16 +31,14 @@ func init() {
 	}
 
 	//Discord Authentication Token
-	Session.Token = os.Getenv("TOKEN")
-	if Session.Token == "" {
-		flag.StringVar(&Session.Token, "t", "", "Discord Authentication Token")
+	session.Token = os.Getenv("TOKEN")
+	if session.Token == "" {
+		flag.StringVar(&session.Token, "t", "", "Discord Authentication Token")
 	}
+
 }
 
-func main() {
-
-	var err error
-
+func init() {
 	// BoomBot cli logo
 	fmt.Printf(`
 	▄▄▄▄·             • ▌ ▄ ·.  ▄▄▄▄      ▄▄▄▄▄▄▄
@@ -48,18 +46,20 @@ func main() {
 	▐█▀▀█▄▐█▌.▐▌▐█▌.▐▌▐█ ▌▐▌▐█·▐█▀▀█▄▐█▌.▐▌ ▐█.▪
 	██▄▪▐█▐█▌.▐▌▐█▌.▐▌██ ██▌▐█▌██▄▪▐█▐█▌.▐▌ ▐█▌·
 	·▀▀▀▀  ▀█▄▀▪ ▀█▄▀▪▀▀  █▪▀▀▀·▀▀▀▀  ▀█▄▀▪ ▀▀▀ %-16s\/`+"\n\n", Version)
+}
 
-	// Parse args from command line
-	flag.Parse()
+func main() {
+
+	var err error
 
 	// Check for token
-	if Session.Token == "" {
+	if session.Token == "" {
 		log.Println("You must provide a Discord authentication token.")
 		return
 	}
 
 	// Open Discord websocket
-	err = Session.Open()
+	err = session.Open()
 	if err != nil {
 		log.Printf("error opening connection to Discord, %s\n", err)
 		os.Exit(1)
@@ -72,6 +72,6 @@ func main() {
 	<-sc
 
 	// Cleanup
-	Session.Close()
+	session.Close()
 
 }
