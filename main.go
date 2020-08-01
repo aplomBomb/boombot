@@ -8,20 +8,21 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/aplombomb/derpBawt/src/pkg/multiplexer"
 	"github.com/bwmarrin/discordgo"
-	"github.com/bwmarrin/disgord/x/mux"
 	"github.com/joho/godotenv"
 )
 
-// Version is the bot version information
+// Version of BoomBot
 const Version = "v0.0.0-alpha"
 
-// Session is global for easy access
+// Session is a global instance of discordgo
+// api available for use throughout the app
 var Session, _ = discordgo.New()
 
-// Router is registered as a global variable to allow easy access to the
-// multiplexer throughout the bot.
-var Router = mux.New()
+// Router is global for easy use thoughout the app.
+// Passed string will serve as command prefix
+var Router = multiplexer.New("**")
 
 func init() {
 
@@ -38,27 +39,26 @@ func init() {
 
 func main() {
 
-	// Declare any variables needed later.
 	var err error
 
-	// Print out a fancy logo!
+	// BoomBot cli logo
 	fmt.Printf(`
-	▄▄▄▄·             • ▌ ▄ ·.            ▄▄▄▄▄▄▄
+	▄▄▄▄·             • ▌ ▄ ·.  ▄▄▄▄      ▄▄▄▄▄▄▄
 	▐█ ▀█▪ ▄█▀▄  ▄█▀▄ ·██ ▐███▪▐█ ▀█▪ ▄█▀▄ •██  
 	▐█▀▀█▄▐█▌.▐▌▐█▌.▐▌▐█ ▌▐▌▐█·▐█▀▀█▄▐█▌.▐▌ ▐█.▪
 	██▄▪▐█▐█▌.▐▌▐█▌.▐▌██ ██▌▐█▌██▄▪▐█▐█▌.▐▌ ▐█▌·
 	·▀▀▀▀  ▀█▄▀▪ ▀█▄▀▪▀▀  █▪▀▀▀·▀▀▀▀  ▀█▄▀▪ ▀▀▀ %-16s\/`+"\n\n", Version)
 
-	// Parse command line arguments
+	// Parse args from command line
 	flag.Parse()
 
-	// Verify a Token was provided
+	// Check for token
 	if Session.Token == "" {
 		log.Println("You must provide a Discord authentication token.")
 		return
 	}
 
-	// Open a websocket connection to Discord
+	// Open Discord websocket
 	err = Session.Open()
 	if err != nil {
 		log.Printf("error opening connection to Discord, %s\n", err)
@@ -71,8 +71,7 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
-	// Clean up
+	// Cleanup
 	Session.Close()
 
-	// Exit Normally.
 }
