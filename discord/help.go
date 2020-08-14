@@ -50,7 +50,7 @@ func defaultHelp(data *disgord.MessageCreate) {
 					"This is the help function.\n\n"+
 						"Use `%shelp functionName` to find out more about each function\n"+
 						"Current available functions : ```\nhelp \n```"+
-						"You can also read the source code here : https://github.com/Karitham/WaifuBot",
+						"You can also read the source code here : https://github.com/aplombomb/boombot",
 					conf.Prefix,
 				),
 				Footer: &disgord.EmbedFooter{
