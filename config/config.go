@@ -10,7 +10,7 @@ import (
 type ConfJSONStruct struct {
 	Prefix   string `json:"Prefix"`
 	BotToken string `json:"Bot_Token"`
-	MongoURL string `json:"Mongo_URL"`
+	// MongoURL string `json:"Mongo_URL"`
 }
 
 // Retrieve reads config from file

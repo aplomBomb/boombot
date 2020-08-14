@@ -3,7 +3,6 @@ package discord
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -21,6 +20,19 @@ var ctx = context.Background()
 var client *disgord.Client
 var session disgord.Session
 var conf config.ConfJSONStruct
+
+//Version of BoomBot
+const Version = "v0.0.0-alpha"
+
+func init() {
+	//BoomBot cli logo
+	fmt.Printf(`
+	▄▄▄▄·             • ▌ ▄ ·.  ▄▄▄▄      ▄▄▄▄▄▄▄
+	▐█ ▀█▪ ▄█▀▄  ▄█▀▄ ·██ ▐███▪▐█ ▀█▪ ▄█▀▄ •██
+	▐█▀▀█▄▐█▌.▐▌▐█▌.▐▌▐█ ▌▐▌▐█·▐█▀▀█▄▐█▌.▐▌ ▐█.▪
+	██▄▪▐█▐█▌.▐▌▐█▌.▐▌██ ██▌▐█▌██▄▪▐█▐█▌.▐▌ ▐█▌·
+	·▀▀▀▀  ▀█▄▀▪ ▀█▄▀▪▀▀  █▪▀▀▀·▀▀▀▀  ▀█▄▀▪ ▀▀▀ %-16s\/`+"\n\n", Version)
+}
 
 // BotRun the bot and handle events
 func BotRun(cf config.ConfJSONStruct) {
@@ -55,6 +67,11 @@ func BotRun(cf config.ConfJSONStruct) {
 func reply(s disgord.Session, data *disgord.MessageCreate) {
 	cmd, args := ParseMessage(data)
 
+	switch cmd {
+	case "help", "h", "?", "wtf":
+		help(data, args)
+	}
+
 }
 
 // ParseMessage parses the message into command / args
@@ -69,16 +86,6 @@ func ParseMessage(data *disgord.MessageCreate) (string, []string) {
 		}
 	}
 	return command, args
-}
-
-// ParseArgToSearch parses any arg to an int, if no int is entered, returns 0 as the result
-func (args CmdArguments) ParseArgToSearch() query.CharSearchInput {
-	id, err := strconv.Atoi(args[0])
-	arg := strings.Join(args, " ")
-	if err != nil && id != 0 {
-		fmt.Println(err)
-	}
-	return query.CharSearchInput{ID: id, Name: arg}
 }
 
 func deleteMessage(resp *disgord.Message, sleep time.Duration) {
