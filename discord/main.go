@@ -18,6 +18,7 @@ import (
 type CmdArguments []string
 type msgEvent disgord.Message
 
+//AdminReaction defines the structure of needed reaction data
 type AdminReaction struct {
 	userID    snowflake.Snowflake
 	channelID snowflake.Snowflake
@@ -69,17 +70,12 @@ func BotRun(cf config.ConfJSONStruct) {
 	)
 
 	//Bind a handler to new message reactions
-	go client.On(disgord.EvtMessageReactionAdd,
+	go client.On(disgord.EvtMessageReactionAdd, RespondToReaction)
 
-		respondToReaction,
-	)
+	//Bind a handler to voice channel update events
+	go client.On(disgord.EvtVoiceStateUpdate, RespondToVoiceChannelUpdate)
 
-	go client.On(disgord.EvtVoiceStateUpdate,
-
-		respondToVoiceChannelJoin,
-	)
-
-	fmt.Println("The bot is currently running")
+	fmt.Println("BoomBot is running")
 }
 
 func respondToMessage(s disgord.Session, data *disgord.MessageCreate) {
@@ -92,7 +88,8 @@ func respondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 
 }
 
-func respondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
+//RespondToReaction contains logic for handling the reaction add event
+func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", data.PartialEmoji.Name, data.ChannelID, data.UserID)
 	reaction := ParseReaction(data)
 	seenReaction := &AdminReaction{
@@ -100,7 +97,6 @@ func respondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 		channelID: 734986357583380510,
 		emoji:     "👀",
 	}
-	fmt.Printf("Reaction: %+v\n", reaction)
 	//if the reaction has been added to a message by me with the eye emoji
 	//in the mod requests channel, send a message to the member that
 	//suggested the mod that i have seen their suggestion
@@ -114,7 +110,8 @@ func respondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	}
 }
 
-func respondToVoiceChannelJoin(s disgord.Session, data *disgord.VoiceStateUpdate) {
+//RespondToVoiceChannelUpdate contains logic for handling the voiceChannelUpdate event
+func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 	fmt.Printf("User %+v just joined the %+v voice chat", data.UserID, data.ChannelID)
 }
 
