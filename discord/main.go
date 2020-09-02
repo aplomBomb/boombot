@@ -94,44 +94,24 @@ func respondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 
 func respondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", data.PartialEmoji.Name, data.ChannelID, data.UserID)
-
 	reaction := ParseReaction(data)
-
 	seenReaction := &AdminReaction{
 		userID:    321044596476084235,
 		channelID: 734986357583380510,
 		emoji:     "👀",
 	}
-
 	fmt.Printf("Reaction: %+v\n", reaction)
-
+	//if the reaction has been added to a message by me with the eye emoji
+	//in the mod requests channel, send a message to the member that
+	//suggested the mod that i have seen their suggestion
 	if reflect.DeepEqual(reaction, seenReaction) {
 		seenMsg := disgord.Message{
 			Content: "Bomb has seen your mod recommendation",
 		}
-
 		message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
-		fmt.Printf("message: %+v\n", message)
-		fmt.Printf("message author id: %+v\n", message.Author.ID)
-
 		message.Author.SendMsg(ctx, s, &seenMsg)
 
-		// disgord.Session.CreateDM(ctx, )
 	}
-
-	// acceptedReaction := adminReaction{
-	// 	userID:    "321044596476084235",
-	// 	channelID: "734986357583380510",
-	// 	emoji:     "👀",
-	// }
-
-	// switch data.ChannelID {
-	// case 734986357583380510:
-	// 	switch data.PartialEmoji.Name {
-	// 	case "👀", "eyes", :
-	// 	}
-	// }
-
 }
 
 func respondToVoiceChannelJoin(s disgord.Session, data *disgord.VoiceStateUpdate) {
