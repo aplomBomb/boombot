@@ -44,14 +44,23 @@ var (
 		"eyesFlipped",
 		"freakouteyes",
 		"monkaUltraEyes",
+		"PepeHmm",
 	}
 	acceptedEmojis = []string{
 		"✅",
 		"check",
 		"👍",
+		"ablobyes",
+		"Check",
+		"seemsgood",
 	}
 	rejectedEmojis = []string{
 		"🚫",
+		"no",
+		"steve_nope",
+		"❌",
+		"xmark",
+		"🇽",
 	}
 )
 
@@ -148,6 +157,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 			}
 			message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
 			message.Author.SendMsg(ctx, s, &dm)
+			go deleteMessage(message, 2)
 			break
 		}
 	}
@@ -160,6 +170,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 			}
 			message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
 			message.Author.SendMsg(ctx, s, &dm)
+			go deleteMessage(message, 2)
 			break
 		}
 	}
@@ -200,7 +211,7 @@ func createReactions(emojis []string, data *disgord.MessageReactionAdd) *AdminRe
 }
 
 func deleteMessage(resp *disgord.Message, sleep time.Duration) {
-	time.Sleep(sleep)
+	time.Sleep(sleep * time.Hour)
 
 	err := client.DeleteMessage(
 		ctx,
