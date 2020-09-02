@@ -25,11 +25,35 @@ type AdminReaction struct {
 	emoji     string
 }
 
+//AdminReactions contains slice of AdminReaction
+type AdminReactions struct {
+	Reactions []*AdminReaction
+}
+
 // Global Variables to ease working with client/sesion etc
 var ctx = context.Background()
 var client *disgord.Client
 var session disgord.Session
 var conf config.ConfJSONStruct
+
+var (
+	seenEmojis = []string{
+		"👀",
+		"eyes",
+		"monkaEyesZoom",
+		"eyesFlipped",
+		"freakouteyes",
+		"monkaUltraEyes",
+	}
+	acceptedEmojis = []string{
+		"✅",
+		"check",
+		"👍",
+	}
+	rejectedEmojis = []string{
+		"🚫",
+	}
+)
 
 //Version of BoomBot
 const Version = "v0.0.0-alpha"
@@ -88,25 +112,70 @@ func respondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 
 }
 
+// func createReactions
+
 //RespondToReaction contains logic for handling the reaction add event
 func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", data.PartialEmoji.Name, data.ChannelID, data.UserID)
-	reaction := ParseReaction(data)
-	seenReaction := &AdminReaction{
-		userID:    321044596476084235,
-		channelID: 734986357583380510,
-		emoji:     "👀",
+
+	reactionEvent := &AdminReaction{
+		userID:    data.UserID,
+		channelID: data.ChannelID,
+		emoji:     data.PartialEmoji.Name,
 	}
+
+	seenReactions := createReactions(seenEmojis, data)
+	acceptedReactions := createReactions(acceptedEmojis, data)
+	rejectedReactions := createReactions(rejectedEmojis, data)
+
+	// fmt.Printf("check: %+v\n", seenReactions)
+
 	//if the reaction has been added to a message by me with the eye emoji
 	//in the mod requests channel, send a message to the member that
 	//suggested the mod that i have seen their suggestion
-	if reflect.DeepEqual(reaction, seenReaction) {
-		seenMsg := disgord.Message{
-			Content: "Bomb has seen your mod recommendation",
-		}
-		message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
-		message.Author.SendMsg(ctx, s, &seenMsg)
+	// if reflect.DeepEqual(reaction, seenReaction) {
+	// 	seenMsg := disgord.Message{
+	// 		Content: "Bomb has seen your mod recommendation",
+	// 	}
+	// 	message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
+	// 	message.Author.SendMsg(ctx, s, &seenMsg)
 
+	// }
+	//Loop through valid seen reactions and check for a match
+	for _, currentSeenReaction := range seenReactions.Reactions {
+		if reflect.DeepEqual(currentSeenReaction, reactionEvent) {
+			fmt.Println("matches")
+			seenMsg := disgord.Message{
+				Content: "Bomb has seen your mod recommendation",
+			}
+			message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
+			message.Author.SendMsg(ctx, s, &seenMsg)
+			break
+		}
+	}
+	//Loop through valid accepted reactions and check for a match
+	for _, currentAcceptedReaction := range acceptedReactions.Reactions {
+		if reflect.DeepEqual(currentAcceptedReaction, reactionEvent) {
+			fmt.Println("matches")
+			acceptedMsg := disgord.Message{
+				Content: "Bomb has accepted your mod recommendation",
+			}
+			message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
+			message.Author.SendMsg(ctx, s, &acceptedMsg)
+			break
+		}
+	}
+	//Loop through valid rejected reactions and check for a match
+	for _, currentRejectedReaction := range rejectedReactions.Reactions {
+		if reflect.DeepEqual(currentRejectedReaction, reactionEvent) {
+			fmt.Println("matches")
+			rejectedMsg := disgord.Message{
+				Content: "Bomb has rejected your mod recommendation",
+			}
+			message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
+			message.Author.SendMsg(ctx, s, &rejectedMsg)
+			break
+		}
 	}
 }
 
@@ -130,11 +199,17 @@ func ParseMessage(data *disgord.MessageCreate) (string, []string) {
 }
 
 //ParseReaction bundles up reaction data for easier comparison
-func ParseReaction(data *disgord.MessageReactionAdd) *AdminReaction {
-	return &AdminReaction{
-		userID:    data.UserID,
-		channelID: data.ChannelID,
-		emoji:     data.PartialEmoji.Name,
+func createReactions(emojis []string, data *disgord.MessageReactionAdd) *AdminReactions {
+	reactions := []*AdminReaction{}
+	for _, emoji := range emojis {
+		reactions = append(reactions, &AdminReaction{
+			userID:    321044596476084235,
+			channelID: 734986357583380510,
+			emoji:     emoji,
+		})
+	}
+	return &AdminReactions{
+		Reactions: reactions,
 	}
 }
 
