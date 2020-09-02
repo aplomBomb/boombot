@@ -3,8 +3,11 @@ package discord
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
+
+	"github.com/andersfylling/snowflake/v4"
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
@@ -14,6 +17,12 @@ import (
 // CmdArguments represents the arguments entered by the user after a command
 type CmdArguments []string
 type msgEvent disgord.Message
+
+type AdminReaction struct {
+	userID    snowflake.Snowflake
+	channelID snowflake.Snowflake
+	emoji     string
+}
 
 // Global Variables to ease working with client/sesion etc
 var ctx = context.Background()
@@ -34,7 +43,7 @@ func init() {
 	·▀▀▀▀  ▀█▄▀▪ ▀█▄▀▪▀▀  █▪▀▀▀·▀▀▀▀  ▀█▄▀▪ ▀▀▀ %-16s\/`+"\n\n", Version)
 }
 
-// BotRun the bot and handle events
+// BotRun | Start the bot and handle events
 func BotRun(cf config.ConfJSONStruct) {
 	// sets the config for the whole disc package
 	conf = cf
@@ -49,22 +58,31 @@ func BotRun(cf config.ConfJSONStruct) {
 	filter, _ := std.NewMsgFilter(ctx, client)
 	filter.SetPrefix(cf.Prefix)
 
-	// create a handler and bind it to new message events
+	//create a handler and bind it to new message events
 	go client.On(disgord.EvtMessageCreate,
-		// middleware
-		filter.NotByBot,    // ignore bot messages
-		filter.HasPrefix,   // read original
-		std.CopyMsgEvt,     // read & copy original
-		filter.StripPrefix, // write copy
+		filter.NotByBot,
+		filter.HasPrefix,
+		std.CopyMsgEvt,
+		filter.StripPrefix,
 
-		// handler
-		reply, // call reply func
-	) // handles copy
+		respondToMessage,
+	)
+
+	//Bind a handler to new message reactions
+	go client.On(disgord.EvtMessageReactionAdd,
+
+		respondToReaction,
+	)
+
+	go client.On(disgord.EvtVoiceStateUpdate,
+
+		respondToVoiceChannelJoin,
+	)
 
 	fmt.Println("The bot is currently running")
 }
 
-func reply(s disgord.Session, data *disgord.MessageCreate) {
+func respondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	cmd, args := ParseMessage(data)
 
 	switch cmd {
@@ -72,6 +90,52 @@ func reply(s disgord.Session, data *disgord.MessageCreate) {
 		help(data, args)
 	}
 
+}
+
+func respondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
+	fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", data.PartialEmoji.Name, data.ChannelID, data.UserID)
+
+	reaction := ParseReaction(data)
+
+	seenReaction := &AdminReaction{
+		userID:    321044596476084235,
+		channelID: 734986357583380510,
+		emoji:     "👀",
+	}
+
+	fmt.Printf("Reaction: %+v\n", reaction)
+
+	if reflect.DeepEqual(reaction, seenReaction) {
+		seenMsg := disgord.Message{
+			Content: "Bomb has seen your mod recommendation",
+		}
+
+		message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
+		fmt.Printf("message: %+v\n", message)
+		fmt.Printf("message author id: %+v\n", message.Author.ID)
+
+		message.Author.SendMsg(ctx, s, &seenMsg)
+
+		// disgord.Session.CreateDM(ctx, )
+	}
+
+	// acceptedReaction := adminReaction{
+	// 	userID:    "321044596476084235",
+	// 	channelID: "734986357583380510",
+	// 	emoji:     "👀",
+	// }
+
+	// switch data.ChannelID {
+	// case 734986357583380510:
+	// 	switch data.PartialEmoji.Name {
+	// 	case "👀", "eyes", :
+	// 	}
+	// }
+
+}
+
+func respondToVoiceChannelJoin(s disgord.Session, data *disgord.VoiceStateUpdate) {
+	fmt.Printf("User %+v just joined the %+v voice chat", data.UserID, data.ChannelID)
 }
 
 // ParseMessage parses the message into command / args
@@ -86,6 +150,15 @@ func ParseMessage(data *disgord.MessageCreate) (string, []string) {
 		}
 	}
 	return command, args
+}
+
+//ParseReaction bundles up reaction data for easier comparison
+func ParseReaction(data *disgord.MessageReactionAdd) *AdminReaction {
+	return &AdminReaction{
+		userID:    data.UserID,
+		channelID: data.ChannelID,
+		emoji:     data.PartialEmoji.Name,
+	}
 }
 
 func deleteMessage(resp *disgord.Message, sleep time.Duration) {
