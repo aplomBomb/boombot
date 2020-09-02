@@ -112,8 +112,6 @@ func respondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 
 }
 
-// func createReactions
-
 //RespondToReaction contains logic for handling the reaction add event
 func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", data.PartialEmoji.Name, data.ChannelID, data.UserID)
@@ -128,28 +126,16 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	acceptedReactions := createReactions(acceptedEmojis, data)
 	rejectedReactions := createReactions(rejectedEmojis, data)
 
-	// fmt.Printf("check: %+v\n", seenReactions)
-
-	//if the reaction has been added to a message by me with the eye emoji
-	//in the mod requests channel, send a message to the member that
-	//suggested the mod that i have seen their suggestion
-	// if reflect.DeepEqual(reaction, seenReaction) {
-	// 	seenMsg := disgord.Message{
-	// 		Content: "Bomb has seen your mod recommendation",
-	// 	}
-	// 	message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
-	// 	message.Author.SendMsg(ctx, s, &seenMsg)
-
-	// }
 	//Loop through valid seen reactions and check for a match
+	//TODO-These loops need to be consolidated into a single function
 	for _, currentSeenReaction := range seenReactions.Reactions {
 		if reflect.DeepEqual(currentSeenReaction, reactionEvent) {
 			fmt.Println("matches")
-			seenMsg := disgord.Message{
+			dm := disgord.Message{
 				Content: "Bomb has seen your mod recommendation",
 			}
 			message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
-			message.Author.SendMsg(ctx, s, &seenMsg)
+			message.Author.SendMsg(ctx, s, &dm)
 			break
 		}
 	}
@@ -157,11 +143,11 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	for _, currentAcceptedReaction := range acceptedReactions.Reactions {
 		if reflect.DeepEqual(currentAcceptedReaction, reactionEvent) {
 			fmt.Println("matches")
-			acceptedMsg := disgord.Message{
+			dm := disgord.Message{
 				Content: "Bomb has accepted your mod recommendation",
 			}
 			message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
-			message.Author.SendMsg(ctx, s, &acceptedMsg)
+			message.Author.SendMsg(ctx, s, &dm)
 			break
 		}
 	}
@@ -169,11 +155,11 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	for _, currentRejectedReaction := range rejectedReactions.Reactions {
 		if reflect.DeepEqual(currentRejectedReaction, reactionEvent) {
 			fmt.Println("matches")
-			rejectedMsg := disgord.Message{
+			dm := disgord.Message{
 				Content: "Bomb has rejected your mod recommendation",
 			}
 			message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
-			message.Author.SendMsg(ctx, s, &rejectedMsg)
+			message.Author.SendMsg(ctx, s, &dm)
 			break
 		}
 	}
