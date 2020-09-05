@@ -92,7 +92,7 @@ func BotRun(cf config.ConfJSONStruct) {
 	filter, _ := std.NewMsgFilter(ctx, client)
 	filter.SetPrefix(cf.Prefix)
 
-	//create a handler and bind it to new message events
+	//create a handler and bind it to new command events
 	go client.On(disgord.EvtMessageCreate,
 		filter.NotByBot,
 		filter.HasPrefix,
@@ -108,7 +108,25 @@ func BotRun(cf config.ConfJSONStruct) {
 	//Bind a handler to voice channel update events
 	go client.On(disgord.EvtVoiceStateUpdate, RespondToVoiceChannelUpdate)
 
+	//Bind a handler to message events
+	go client.On(disgord.EvtMessageCreate, RespondToMessage)
+
 	fmt.Println("BoomBot is running")
+}
+
+//RespondToMessage handles all messages created in the server
+func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
+	//Per channel message event switch handler
+	switch data.Message.ChannelID {
+	case 734986357583380510:
+		if strings.Contains(data.Message.Content, "https://www.curseforge.com/minecraft/mc-mods/") == false {
+			message, _ := client.GetMessage(ctx, data.Message.ChannelID, data.Message.ID)
+			go deleteMessage(message, 1)
+		}
+	default:
+		break
+	}
+
 }
 
 //RespondToCommand handles all messages that begin with prefix
