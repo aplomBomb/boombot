@@ -24,33 +24,9 @@ var session disgord.Session
 var conf config.ConfJSONStruct
 
 func init() {
-	var (
-		seenEmojis = []string{
-			"👀",
-			"eyes",
-			"monkaEyesZoom",
-			"eyesFlipped",
-			"freakouteyes",
-			"monkaUltraEyes",
-			"PepeHmm",
-		}
-		acceptedEmojis = []string{
-			"✅",
-			"check",
-			"👍",
-			"ablobyes",
-			"Check",
-			"seemsgood",
-		}
-		rejectedEmojis = []string{
-			"🚫",
-			"no",
-			"steve_nope",
-			"❌",
-			"xmark",
-			"🇽",
-		}
-	)
+	reaction.HydrateModReactions(conf.SeenEmojis, "seen")
+	reaction.HydrateModReactions(conf.AcceptedEmojis, "accepted")
+	reaction.HydrateModReactions(conf.RejectedEmojis, "rejected")
 }
 
 //Version of BoomBot
