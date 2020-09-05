@@ -17,7 +17,7 @@ type Reactions struct {
 }
 
 //New returns a new reaction struct
-func (react *Reaction) New(uID snowflake.Snowflake, chID snowflake.Snowflake, emoji string) *Reaction {
+func New(uID snowflake.Snowflake, chID snowflake.Snowflake, emoji string) *Reaction {
 	return &Reaction{
 		userID:    uID,
 		channelID: chID,

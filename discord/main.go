@@ -7,28 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/andersfylling/snowflake/v4"
-
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
 	"github.com/aplombomb/boombot/config"
+	"github.com/aplombomb/boombot/reaction"
 )
 
 // CmdArguments represents the arguments entered by the user after a command
 type CmdArguments []string
 type msgEvent disgord.Message
-
-//AdminReaction defines the structure of needed reaction data
-type AdminReaction struct {
-	userID    snowflake.Snowflake
-	channelID snowflake.Snowflake
-	emoji     string
-}
-
-//AdminReactions contains slice of AdminReaction
-type AdminReactions struct {
-	Reactions []*AdminReaction
-}
 
 // Global Variables to ease working with client/sesion etc
 var ctx = context.Background()
@@ -36,33 +23,35 @@ var client *disgord.Client
 var session disgord.Session
 var conf config.ConfJSONStruct
 
-var (
-	seenEmojis = []string{
-		"👀",
-		"eyes",
-		"monkaEyesZoom",
-		"eyesFlipped",
-		"freakouteyes",
-		"monkaUltraEyes",
-		"PepeHmm",
-	}
-	acceptedEmojis = []string{
-		"✅",
-		"check",
-		"👍",
-		"ablobyes",
-		"Check",
-		"seemsgood",
-	}
-	rejectedEmojis = []string{
-		"🚫",
-		"no",
-		"steve_nope",
-		"❌",
-		"xmark",
-		"🇽",
-	}
-)
+func init() {
+	var (
+		seenEmojis = []string{
+			"👀",
+			"eyes",
+			"monkaEyesZoom",
+			"eyesFlipped",
+			"freakouteyes",
+			"monkaUltraEyes",
+			"PepeHmm",
+		}
+		acceptedEmojis = []string{
+			"✅",
+			"check",
+			"👍",
+			"ablobyes",
+			"Check",
+			"seemsgood",
+		}
+		rejectedEmojis = []string{
+			"🚫",
+			"no",
+			"steve_nope",
+			"❌",
+			"xmark",
+			"🇽",
+		}
+	)
+}
 
 //Version of BoomBot
 const Version = "v0.0.0-alpha"
@@ -146,11 +135,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", data.PartialEmoji.Name, data.ChannelID, data.UserID)
 
-	reactionEvent := &AdminReaction{
-		userID:    data.UserID,
-		channelID: data.ChannelID,
-		emoji:     data.PartialEmoji.Name,
-	}
+	reactionEvent := reaction.New(data.UserID, data.ChannelID, data.PartialEmoji.Name)
 
 	seenReactions := createReactions(seenEmojis, data)
 	acceptedReactions := createReactions(acceptedEmojis, data)
