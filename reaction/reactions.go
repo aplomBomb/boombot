@@ -1,8 +1,7 @@
 package reaction
 
 import (
-	"log"
-
+	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/snowflake/v4"
 )
 
@@ -11,6 +10,7 @@ type Reaction struct {
 	userID    snowflake.Snowflake
 	channelID snowflake.Snowflake
 	emoji     string
+	action    string
 }
 
 //ModReactions defines the data structure for reactions that
@@ -30,19 +30,44 @@ func New(uID snowflake.Snowflake, chID snowflake.Snowflake, emoji string) *React
 	}
 }
 
+//RespondToReaction processes\Delegates reaction events
+func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd, pool ModReactions) {
+
+}
+
 //HydrateModReactions creates the ModReactions struct used
 //for the bot to respond to specific reactions
-func HydrateModReactions(emoji string, reactionType string) {
-	types := [3]string{"seen", "accepted", "rejected"}
-	match := false
+func (mr ModReactions) HydrateModReactions(seenEmojis []string, acceptedEmojis []string, rejectedEmojis []string) *ModReactions {
+	sr := []Reaction{}
+	ar := []Reaction{}
+	rr := []Reaction{}
 
-	for _, currentType := range types {
-		if reactionType == currentType {
-			match = true
-		}
+	for _, emoji := range seenEmojis {
+		sr = append(sr, Reaction{
+			userID:    321044596476084235,
+			channelID: 734986357583380510,
+			emoji:     emoji,
+		})
 	}
-	if match == false {
-		log.Fatal("You must specify the kind of reaction you are trying to create!\n Options: 'seen', 'accepted', 'rejected'")
+	for _, emoji := range acceptedEmojis {
+		sr = append(ar, Reaction{
+			userID:    321044596476084235,
+			channelID: 734986357583380510,
+			emoji:     emoji,
+		})
+	}
+	for _, emoji := range rejectedEmojis {
+		sr = append(rr, Reaction{
+			userID:    321044596476084235,
+			channelID: 734986357583380510,
+			emoji:     emoji,
+		})
+	}
+
+	return &ModReactions{
+		SeenReactions:     sr,
+		AcceptedReactions: ar,
+		RejectedReactions: rr,
 	}
 
 }
