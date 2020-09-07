@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
@@ -17,13 +16,12 @@ type CmdArguments []string
 type msgEvent disgord.Message
 
 // Global Variables to ease working with client/sesion etc
-var ctx = context.Background()
-var client *disgord.Client
-var session disgord.Session
-var conf config.ConfJSONStruct
-
-//Generate the pool of reactions necessary
-var modReactionPool = reaction.ModReactions{}.HydrateModReactions(conf.SeenEmojis, conf.AcceptedEmojis, conf.RejectedEmojis)
+var (
+	ctx     = context.Background()
+	client  *disgord.Client
+	session disgord.Session
+	conf    config.ConfJSONStruct
+)
 
 //Version of BoomBot
 const Version = "v0.0.0-alpha"
@@ -64,7 +62,7 @@ func BotRun(cf config.ConfJSONStruct) {
 	)
 
 	//Bind a handler to new message reactions
-	go client.On(disgord.EvtMessageReactionAdd, reaction.RespondToReaction(session, *disgord.MessageReactionAdd, *modReactionPool))
+	go client.On(disgord.EvtMessageReactionAdd, ParseReaction)
 
 	//Bind a handler to voice channel update events
 	go client.On(disgord.EvtVoiceStateUpdate, RespondToVoiceChannelUpdate)
@@ -82,7 +80,7 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	case 734986357583380510:
 		if strings.Contains(data.Message.Content, "https://www.curseforge.com/minecraft/mc-mods/") == false {
 			message, _ := client.GetMessage(ctx, data.Message.ChannelID, data.Message.ID)
-			go deleteMessage(message, 1)
+			go reaction.DeleteMessage(ctx, client, message, 1)
 		}
 	default:
 		break
@@ -103,123 +101,14 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 }
 
-//RespondToReaction contains logic for handling the reaction add event
-// func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
-// 	fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", data.PartialEmoji.Name, data.ChannelID, data.UserID)
+//ParseReaction is being used to extract the data object from the EvtMessageReactionAdd event,
+//not sure of a better way to do this
+func ParseReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
+	modReactionPool := reaction.ModReactions{}
+	modReactionPool.HydrateModReactions(conf.SeenEmojis, conf.AcceptedEmojis, conf.RejectedEmojis)
+	reaction.RespondToReaction(ctx, client, s, data, &modReactionPool)
 
-// 	reactionEvent := reaction.New(data.UserID, data.ChannelID, data.PartialEmoji.Name)
-
-//Loop through valid seen reactions and check for a match
-//TODO-These loops need to be consolidated into a single function
-// for _, currentSeenReaction := range seenReactions.Reactions {
-// 	if reflect.DeepEqual(currentSeenReaction, reactionEvent) {
-// 		url := ""
-// 		modName := ""
-// 		message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
-// 		msgFields := strings.Fields(message.Content)
-
-//snag the url and the mod name from the request
-// 		for _, field := range msgFields {
-// 			if strings.Contains(field, "https://www.curseforge.com/minecraft/mc-mods/") {
-// 				url = field
-// 				urlFields := strings.Split(url, "/")
-// 				i := len(urlFields) - 1
-// 				modName = urlFields[i]
-// 			}
-// 		}
-// 		dm := disgord.Message{
-// 			Embeds: []*disgord.Embed{
-// 				&disgord.Embed{
-// 					Title:       fmt.Sprintf("**Your request to add %s is being reviewed**", modName),
-// 					URL:         url,
-// 					Description: fmt.Sprintf("*Bomb is reviewing your request to add %s*", modName),
-// 					Color:       0xcc0000,
-// 					Footer: &disgord.EmbedFooter{
-// 						Text:    "Sit tight partner!",
-// 						IconURL: "https://cdn.discordapp.com/emojis/745396324215685201.gif?v=1",
-// 					},
-// 				},
-// 			},
-// 		}
-// 		message.Author.SendMsg(ctx, s, &dm)
-// 		break
-// 	}
-// }
-//Loop through valid accepted reactions and check for a match
-// for _, currentAcceptedReaction := range acceptedReactions.Reactions {
-// 	if reflect.DeepEqual(currentAcceptedReaction, reactionEvent) {
-// 		url := ""
-// 		modName := ""
-// 		message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
-// 		msgFields := strings.Fields(message.Content)
-
-//snag the url and the mod name from the request
-// 		for _, field := range msgFields {
-// 			if strings.Contains(field, "https://www.curseforge.com/minecraft/mc-mods/") {
-// 				url = field
-// 				urlFields := strings.Split(url, "/")
-// 				i := len(urlFields) - 1
-// 				modName = urlFields[i]
-// 			}
-// 		}
-// 		dm := disgord.Message{
-// 			Embeds: []*disgord.Embed{
-// 				&disgord.Embed{
-// 					Title:       fmt.Sprintf("**%s ACCEPTED!!**", modName),
-// 					URL:         url,
-// 					Description: fmt.Sprintf("*Bomb has added %s to the modpack! If the server breaks now, it's all your fault!*", modName),
-// 					Color:       0xcc0000,
-// 					Footer: &disgord.EmbedFooter{
-// 						Text:    "Pervert Steve is always watching...",
-// 						IconURL: "https://cdn.discordapp.com/emojis/681217726412488767.png?v=1",
-// 					},
-// 				},
-// 			},
-// 		}
-// 		message.Author.SendMsg(ctx, s, &dm)
-// 		go deleteMessage(message, 3600)
-// 		break
-// 	}
-// }
-//Loop through valid rejected reactions and check for a match
-//Extract the mod name to include in the embedded dm to the user for context
-// for _, currentRejectedReaction := range rejectedReactions.Reactions {
-// 	if reflect.DeepEqual(currentRejectedReaction, reactionEvent) {
-// 		url := ""
-// 		modName := ""
-// 		message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
-// 		msgFields := strings.Fields(message.Content)
-
-//snag the url and the mod name from the request
-// 			for _, field := range msgFields {
-// 				if strings.Contains(field, "https://www.curseforge.com/minecraft/mc-mods/") {
-// 					url = field
-// 					urlFields := strings.Split(url, "/")
-// 					i := len(urlFields) - 1
-// 					modName = urlFields[i]
-// 				}
-// 			}
-
-// 			dm := disgord.Message{
-// 				Embeds: []*disgord.Embed{
-// 					&disgord.Embed{
-// 						Title:       fmt.Sprintf("**%s Rejected**", modName),
-// 						URL:         url,
-// 						Description: fmt.Sprintf("*Bomb has rejected your request to add %s*", modName),
-// 						Color:       0xcc0000,
-// 						Footer: &disgord.EmbedFooter{
-// 							Text:    "You have brought much shame upon your famiry",
-// 							IconURL: "https://cdn.discordapp.com/emojis/662170922580574258.gif?v=1",
-// 						},
-// 					},
-// 				},
-// 			}
-// 			message.Author.SendMsg(ctx, s, &dm)
-// 			go deleteMessage(message, 3600)
-// 			break
-// 		}
-// 	}
-// }
+}
 
 //RespondToVoiceChannelUpdate contains logic for handling the voiceChannelUpdate event
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
@@ -253,16 +142,3 @@ func ParseMessage(data *disgord.MessageCreate) (string, []string) {
 // 		Reactions: reactions,
 // 	}
 // }
-
-func deleteMessage(resp *disgord.Message, sleep time.Duration) {
-	time.Sleep(sleep * time.Second)
-
-	err := client.DeleteMessage(
-		ctx,
-		resp.ChannelID,
-		resp.ID,
-	)
-	if err != nil {
-		fmt.Println("error deleting message :", err)
-	}
-}
