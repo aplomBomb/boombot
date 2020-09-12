@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
 	"github.com/aplombomb/boombot/config"
-	"github.com/aplombomb/boombot/reaction"
 )
 
 // CmdArguments represents the arguments entered by the user after a command
@@ -17,10 +17,11 @@ type msgEvent disgord.Message
 
 // Global Variables to ease working with client/sesion etc
 var (
-	ctx     = context.Background()
-	client  *disgord.Client
-	session disgord.Session
-	conf    config.ConfJSONStruct
+	ctx             = context.Background()
+	client          *disgord.Client
+	session         disgord.Session
+	conf            config.ConfJSONStruct
+	modReactionPool = reactionPool{}
 )
 
 //Version of BoomBot
@@ -43,6 +44,9 @@ func BotRun(cf config.ConfJSONStruct) {
 
 	// init the client
 	client = disgord.New(disgord.Config{BotToken: cf.BotToken})
+
+	//Populate the reaction pool
+	modReactionPool = *modReactionPool.hydrateReactionPool(cf.SeenEmojis, cf.AcceptedEmojis, cf.RejectedEmojis)
 
 	// stay connected to discord
 	defer client.StayConnectedUntilInterrupted(ctx)
@@ -80,7 +84,7 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	case 734986357583380510:
 		if strings.Contains(data.Message.Content, "https://www.curseforge.com/minecraft/mc-mods/") == false {
 			message, _ := client.GetMessage(ctx, data.Message.ChannelID, data.Message.ID)
-			go reaction.DeleteMessage(ctx, client, message, 1)
+			go deleteMessage(ctx, client, message, 1)
 		}
 	default:
 		break
@@ -104,9 +108,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 //ParseReaction is being used to extract the data object from the EvtMessageReactionAdd event,
 //not sure of a better way to do this
 func ParseReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
-	modReactionPool := reaction.ModReactions{}
-	modReactionPool.HydrateModReactions(conf.SeenEmojis, conf.AcceptedEmojis, conf.RejectedEmojis)
-	reaction.RespondToReaction(ctx, client, s, data, &modReactionPool)
+	respondToReaction(ctx, client, s, data, &modReactionPool)
 
 }
 
@@ -126,6 +128,20 @@ func ParseMessage(data *disgord.MessageCreate) (string, []string) {
 		}
 	}
 	return command, args
+}
+
+//DeleteMessage deletes the message after the specified time
+func deleteMessage(ctx context.Context, client *disgord.Client, resp *disgord.Message, sleep time.Duration) {
+	time.Sleep(sleep * time.Second)
+
+	err := client.DeleteMessage(
+		ctx,
+		resp.ChannelID,
+		resp.ID,
+	)
+	if err != nil {
+		fmt.Println("error deleting message :", err)
+	}
 }
 
 //ParseReaction bundles up reaction data for easier comparison

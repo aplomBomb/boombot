@@ -1,35 +1,34 @@
-package reaction
+package discord
 
 import (
 	"context"
 	"fmt"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/snowflake/v4"
 )
 
 //Reaction defines the structure of needed reaction data
-type Reaction struct {
+type reaction struct {
 	userID    snowflake.Snowflake
 	channelID snowflake.Snowflake
 	emoji     string
 	action    string
 }
 
-//ModReactions defines the data structure for reactions that
+//reactionPool defines the data structure for reactions that
 //the bot should respond to inside the 'Mod Requests' channel
-type ModReactions struct {
-	SeenReactions     []Reaction
-	AcceptedReactions []Reaction
-	RejectedReactions []Reaction
+type reactionPool struct {
+	SeenReactions     []reaction
+	AcceptedReactions []reaction
+	RejectedReactions []reaction
 }
 
 //New returns a new reaction struct
-func New(uID snowflake.Snowflake, chID snowflake.Snowflake, emoji string) *Reaction {
-	return &Reaction{
+func new(uID snowflake.Snowflake, chID snowflake.Snowflake, emoji string) *reaction {
+	return &reaction{
 		userID:    uID,
 		channelID: chID,
 		emoji:     emoji,
@@ -37,15 +36,17 @@ func New(uID snowflake.Snowflake, chID snowflake.Snowflake, emoji string) *React
 }
 
 //RespondToReaction processes\Delegates reaction events
-func RespondToReaction(ctx context.Context, client *disgord.Client, s disgord.Session, data *disgord.MessageReactionAdd, reactionPool *ModReactions) {
-
-	fmt.Println(reactionPool)
-	reactionEvent := New(data.UserID, data.ChannelID, data.PartialEmoji.Name)
+func respondToReaction(ctx context.Context, client *disgord.Client, s disgord.Session, data *disgord.MessageReactionAdd, reactionPool *reactionPool) {
+	fmt.Println("Responding...")
+	fmt.Printf("ReactionPool: %+v", reactionPool)
+	reactionEvent := new(data.UserID, data.ChannelID, data.PartialEmoji.Name)
+	fmt.Printf("ReactionEvent: %+v", reactionEvent)
 
 	//Loop through valid seen reactions and check for a match
 	//TODO-These loops need to be consolidated into a single function
 	for _, currentSeenReaction := range reactionPool.SeenReactions {
 		if reflect.DeepEqual(currentSeenReaction, reactionEvent) {
+			fmt.Println("It's a match!")
 			url := ""
 			modName := ""
 			message, _ := client.GetMessage(ctx, data.ChannelID, data.MessageID)
@@ -110,7 +111,7 @@ func RespondToReaction(ctx context.Context, client *disgord.Client, s disgord.Se
 				},
 			}
 			message.Author.SendMsg(ctx, s, &dm)
-			go DeleteMessage(ctx, client, message, 3600)
+			go deleteMessage(ctx, client, message, 3600)
 			break
 		}
 	}
@@ -148,61 +149,49 @@ func RespondToReaction(ctx context.Context, client *disgord.Client, s disgord.Se
 				},
 			}
 			message.Author.SendMsg(ctx, s, &dm)
-			go DeleteMessage(ctx, client, message, 3600)
+			go deleteMessage(ctx, client, message, 3600)
 			break
 		}
 	}
 
 }
 
-//HydrateModReactions creates the ModReactions struct used
+//HydratereactionPool creates the reactionPool struct used
 //for the bot to respond to specific reactions
-func (mr *ModReactions) HydrateModReactions(seenEmojis []string, acceptedEmojis []string, rejectedEmojis []string) *ModReactions {
-	sr := []Reaction{}
-	ar := []Reaction{}
-	rr := []Reaction{}
+func (mr *reactionPool) hydrateReactionPool(seenEmojis []string, acceptedEmojis []string, rejectedEmojis []string) *reactionPool {
+	sr := []reaction{}
+	ar := []reaction{}
+	rr := []reaction{}
 
 	for _, emoji := range seenEmojis {
-		fmt.Println(emoji)
-		sr = append(sr, Reaction{
+		// fmt.Println(emoji)
+		sr = append(sr, reaction{
 			userID:    321044596476084235,
 			channelID: 734986357583380510,
 			emoji:     emoji,
 		})
 	}
 	for _, emoji := range acceptedEmojis {
-		sr = append(ar, Reaction{
+		// fmt.Println(emoji)
+		sr = append(ar, reaction{
 			userID:    321044596476084235,
 			channelID: 734986357583380510,
 			emoji:     emoji,
 		})
 	}
 	for _, emoji := range rejectedEmojis {
-		sr = append(rr, Reaction{
+		// fmt.Println(emoji)
+		sr = append(rr, reaction{
 			userID:    321044596476084235,
 			channelID: 734986357583380510,
 			emoji:     emoji,
 		})
 	}
 
-	return &ModReactions{
+	return &reactionPool{
 		SeenReactions:     sr,
 		AcceptedReactions: ar,
 		RejectedReactions: rr,
 	}
 
-}
-
-//DeleteMessage deletes the message after the specified time
-func DeleteMessage(ctx context.Context, client *disgord.Client, resp *disgord.Message, sleep time.Duration) {
-	time.Sleep(sleep * time.Second)
-
-	err := client.DeleteMessage(
-		ctx,
-		resp.ChannelID,
-		resp.ID,
-	)
-	if err != nil {
-		fmt.Println("error deleting message :", err)
-	}
 }
