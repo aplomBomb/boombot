@@ -71,7 +71,7 @@ func BotRun(cf config.ConfJSONStruct) {
 }
 
 func deleteMessage(resp *disgord.Message, sleep time.Duration) {
-	time.Sleep(sleep * time.Second)
+	time.Sleep(sleep)
 
 	err := client.DeleteMessage(
 		ctx,

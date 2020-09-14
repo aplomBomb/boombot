@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/snowflake/v4"
@@ -131,7 +132,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 				},
 			}
 			message.Author.SendMsg(ctx, s, &dm)
-			go deleteMessage(message, 3600)
+			go deleteMessage(message, 1*time.Hour)
 			break
 		}
 	}
@@ -169,7 +170,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 				},
 			}
 			message.Author.SendMsg(ctx, s, &dm)
-			go deleteMessage(message, 3600)
+			go deleteMessage(message, 1*time.Hour)
 			break
 		}
 	}
