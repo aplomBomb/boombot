@@ -8,8 +8,9 @@ import (
 
 // ConfJSONStruct is used to unmarshal the config.json
 type ConfJSONStruct struct {
-	Prefix   string `json:"Prefix"`
-	BotToken string `json:"Bot_Token"`
+	Prefix       string `json:"Prefix"`
+	BotToken     string `json:"Bot_Token"`
+	YoutubeToken string `json:"YoutubeToken"`
 	// MongoURL string `json:"Mongo_URL"`
 }
 
