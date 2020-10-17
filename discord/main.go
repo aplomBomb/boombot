@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/aplombomb/boombot/discord/yt"
+	yt "github.com/aplombomb/boombot/Youtube"
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
