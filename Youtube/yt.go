@@ -2,6 +2,7 @@ package yt
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/andersfylling/disgord"
@@ -39,4 +40,17 @@ func New(token string, query string, creator *disgord.User) (*YoutubeClient, err
 func (yt *YoutubeClient) Search(query string) string {
 	// result, err := yt.service.Search()
 	return "test"
+}
+
+func (yt *YoutubeClient) VerifyVoiceChat(sess disgord.Session) bool {
+
+	ctx := context.Background()
+
+	user, err := sess.GetUser(ctx, yt.creator.ID)
+
+	if err != nil {
+		fmt.Println("ERROR", err)
+	}
+	fmt.Printf("\n\nUSER!!: %+v\n\n", user)
+	return false
 }

@@ -19,7 +19,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		help(data, args)
 	case "play":
 
-		// init the Youtube client
+		// init the Youtube client here for test coverage's sake | will find another home for this later
 		ytClient, err := yt.New(conf.YoutubeToken, data.Message.Content, data.Message.Author)
 
 		if err != nil {
@@ -27,6 +27,12 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		}
 
 		fmt.Printf("\nYT Client Created: %+v\n\n\n", ytClient)
+
+		if inVoice := ytClient.VerifyVoiceChat(s); inVoice == false {
+			fmt.Println("User is not in voice channel")
+		} else {
+			fmt.Println("User is in voice channel")
+		}
 
 		// yt.PrintIt(ytClient)
 	default:

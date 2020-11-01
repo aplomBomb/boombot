@@ -11,6 +11,7 @@ type ConfJSONStruct struct {
 	Prefix       string `json:"Prefix"`
 	BotToken     string `json:"Bot_Token"`
 	YoutubeToken string `json:"YoutubeToken"`
+	GuildID      string `json:"Guild_ID"`
 	// MongoURL string `json:"Mongo_URL"`
 }
 
