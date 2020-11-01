@@ -14,7 +14,7 @@ type YoutubeClient struct {
 	service   *youtube.Service
 	query     string
 	timestamp time.Time
-	creator   string
+	creator   *disgord.User
 }
 
 // CreateClient returns a Youtube Service client
@@ -29,7 +29,10 @@ func New(token string, query string, creator *disgord.User) (*YoutubeClient, err
 	}
 
 	return &YoutubeClient{
-		service: youtubeService,
+		service:   youtubeService,
+		query:     query,
+		timestamp: time.Now(),
+		creator:   creator,
 	}, nil
 }
 
