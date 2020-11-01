@@ -3,10 +3,7 @@ package discord
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
-
-	yt "github.com/aplombomb/boombot/Youtube"
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
@@ -43,15 +40,6 @@ func BotRun(cf config.ConfJSONStruct) {
 
 	// init the client
 	client = disgord.New(disgord.Config{BotToken: cf.BotToken})
-
-	// init the Youtube client
-	ytClient, err := yt.CreateClient(cf.YoutubeToken)
-
-	if err != nil {
-		log.Fatal("YT API ERROR: ", err)
-	}
-
-	fmt.Printf("\nYT Client Created: %+v\n\n\n", ytClient)
 
 	// stay connected to discord
 	defer client.StayConnectedUntilInterrupted(ctx)
