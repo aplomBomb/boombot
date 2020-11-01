@@ -7,7 +7,6 @@ import (
 
 	"github.com/andersfylling/disgord"
 
-	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 )
 
@@ -19,18 +18,9 @@ type YoutubeClient struct {
 }
 
 // CreateClient returns a Youtube Service client
-func New(token string, query string, creator *disgord.User) (*YoutubeClient, error) {
-
-	ctx := context.Background()
-
-	youtubeService, err := youtube.NewService(ctx, option.WithAPIKey(token))
-
-	if err != nil {
-		return nil, err
-	}
-
+func New(ytS *youtube.Service, query string, creator *disgord.User) (*YoutubeClient, error) {
 	return &YoutubeClient{
-		service:   youtubeService,
+		service:   ytS,
 		query:     query,
 		timestamp: time.Now(),
 		creator:   creator,

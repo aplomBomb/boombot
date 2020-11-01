@@ -1,10 +1,13 @@
 package discord
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	yt "github.com/aplombomb/boombot/Youtube"
+	"google.golang.org/api/option"
+	"google.golang.org/api/youtube/v3"
 
 	"github.com/andersfylling/disgord"
 )
@@ -20,7 +23,14 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	case "play":
 
 		// init the Youtube client here for test coverage's sake | will find another home for this later
-		ytClient, err := yt.New(conf.YoutubeToken, data.Message.Content, data.Message.Author)
+		ctx := context.Background()
+
+		youtubeService, err := youtube.NewService(ctx, option.WithAPIKey(conf.YoutubeToken))
+
+		if err != nil {
+			fmt.Println(err)
+		}
+		ytClient, err := yt.New(youtubeService, data.Message.Content, data.Message.Author)
 
 		if err != nil {
 			log.Fatal("YT API ERROR: ", err)
