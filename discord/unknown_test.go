@@ -8,6 +8,7 @@ import (
 )
 
 func Test_unknown(t *testing.T) {
+
 	type args struct {
 		data    *disgord.MessageCreate
 		message *disgord.Message
@@ -21,7 +22,7 @@ func Test_unknown(t *testing.T) {
 			name: "unknown | success",
 			args: args{
 				data: disgord.MessageCreate{
-					
+
 				}
 			}
 		}
