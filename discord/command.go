@@ -46,7 +46,22 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 		// yt.PrintIt(ytClient)
 	default:
-		unknown(data)
+		resp, err := client.CreateMessage(
+			ctx,
+			data.Message.ChannelID,
+			&disgord.CreateMessageParams{
+				Embed: &disgord.Embed{
+					Title:       "Unknown command",
+					Description: fmt.Sprintf("Type %shelp to see the commands available", conf.Prefix),
+					Timestamp:   data.Message.Timestamp,
+					Color:       0xcc0000,
+				},
+			},
+		)
+		if err != nil {
+			fmt.Println("error while creating message :", err)
+		}
+		unknown(data, resp)
 	}
 
 }

@@ -6,23 +6,10 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
-func unknown(data *disgord.MessageCreate) {
-	resp, err := client.CreateMessage(
-		ctx,
-		data.Message.ChannelID,
-		&disgord.CreateMessageParams{
-			Embed: &disgord.Embed{
-				Title:       "Unknown command",
-				Description: fmt.Sprintf("Type %shelp to see the commands available", conf.Prefix),
-				Timestamp:   data.Message.Timestamp,
-				Color:       0xcc0000,
-			},
-		},
-	)
-	if err != nil {
-		fmt.Println("error while creating message :", err)
-	}
+func unknown(data *disgord.MessageCreate, message *disgord.Message) *disgord.Message {
 	go deleteMessage(data.Message, 1)
-	go deleteMessage(resp, 10)
+	go deleteMessage(message, 10)
 	fmt.Println("Unknown command used")
+
+	return message
 }
