@@ -13,7 +13,7 @@ func help(data *disgord.MessageCreate, args []string) {
 }
 
 func defaultHelp(data *disgord.MessageCreate) {
-	_, err := client.CreateMessage(
+	_, err := client.SendMsg(
 		ctx,
 		data.Message.ChannelID,
 		&disgord.CreateMessageParams{

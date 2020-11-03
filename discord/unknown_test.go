@@ -8,28 +8,30 @@ import (
 )
 
 func Test_unknown(t *testing.T) {
-
 	type args struct {
-		data    *disgord.MessageCreate
-		message *disgord.Message
+		data *disgord.Message
 	}
 	tests := []struct {
-		name string
-		args args
-		want *disgord.Message
+		name    string
+		args    args
+		want    *disgord.Message
+		wantErr bool
 	}{
 		{
-			name: "unknown | success",
+			name: "unknown | create message success",
 			args: args{
-				data: disgord.MessageCreate{
-
-				}
+				
 			}
 		}
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := unknown(tt.args.data, tt.args.message); !reflect.DeepEqual(got, tt.want) {
+			got, err := unknown(tt.args.data)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("unknown() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("unknown() = %v, want %v", got, tt.want)
 			}
 		})

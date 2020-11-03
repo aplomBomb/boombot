@@ -38,30 +38,19 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 		fmt.Printf("\nYT Client Created: %+v\n\n\n", ytClient)
 
-		if inVoice := ytClient.VerifyVoiceChat(s); inVoice == false {
-			fmt.Println("User is not in voice channel")
-		} else {
-			fmt.Println("User is in voice channel")
-		}
+		// if inVoice := ytClient.VerifyVoiceChat(s); inVoice == false {
+		// 	fmt.Println("User is not in voice channel")
+		// } else {
+		// 	fmt.Println("User is in voice channel")
+		// }
 
 		// yt.PrintIt(ytClient)
 	default:
-		resp, err := client.CreateMessage(
-			ctx,
-			data.Message.ChannelID,
-			&disgord.CreateMessageParams{
-				Embed: &disgord.Embed{
-					Title:       "Unknown command",
-					Description: fmt.Sprintf("Type %shelp to see the commands available", conf.Prefix),
-					Timestamp:   data.Message.Timestamp,
-					Color:       0xcc0000,
-				},
-			},
-		)
+		_, err := unknown(data.Message)
+
 		if err != nil {
-			fmt.Println("error while creating message :", err)
+			fmt.Printf("\nERROR: %+v\n", err)
 		}
-		unknown(data, resp)
 	}
 
 }
