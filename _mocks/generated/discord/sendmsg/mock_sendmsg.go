@@ -54,3 +54,41 @@ func (mr *MockDisgordMsgAPIMockRecorder) SendMsg(ctx, channelID interface{}, dat
 	varargs := append([]interface{}{ctx, channelID}, data...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMsg", reflect.TypeOf((*MockDisgordMsgAPI)(nil).SendMsg), varargs...)
 }
+
+// MockDisgordClientAPI is a mock of DisgordClientAPI interface
+type MockDisgordClientAPI struct {
+	ctrl     *gomock.Controller
+	recorder *MockDisgordClientAPIMockRecorder
+}
+
+// MockDisgordClientAPIMockRecorder is the mock recorder for MockDisgordClientAPI
+type MockDisgordClientAPIMockRecorder struct {
+	mock *MockDisgordClientAPI
+}
+
+// NewMockDisgordClientAPI creates a new mock instance
+func NewMockDisgordClientAPI(ctrl *gomock.Controller) *MockDisgordClientAPI {
+	mock := &MockDisgordClientAPI{ctrl: ctrl}
+	mock.recorder = &MockDisgordClientAPIMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockDisgordClientAPI) EXPECT() *MockDisgordClientAPIMockRecorder {
+	return m.recorder
+}
+
+// NewClient mocks base method
+func (m *MockDisgordClientAPI) NewClient(conf disgord.Config) (*disgord.Client, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewClient", conf)
+	ret0, _ := ret[0].(*disgord.Client)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NewClient indicates an expected call of NewClient
+func (mr *MockDisgordClientAPIMockRecorder) NewClient(conf interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewClient", reflect.TypeOf((*MockDisgordClientAPI)(nil).NewClient), conf)
+}

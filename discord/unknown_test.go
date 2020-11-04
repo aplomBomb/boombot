@@ -1,19 +1,31 @@
 package discord_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
 
 	"github.com/andersfylling/disgord"
-	mock_sendmsg "github.com/aplombomb/boombot/_mocks/generated/discord"
+	newclientmock "github.com/aplombomb/boombot/_mocks/generated/discord/newclient"
+	sendmsgmock "github.com/aplombomb/boombot/_mocks/generated/discord/sendmsg"
+
 	"github.com/aplombomb/boombot/discord"
 )
 
 func TestUnknown(t *testing.T) {
+
+	c := gomock.NewController(t)
+	mockNewClient := newclientmock.NewMockDisgordClientAPI(c)
+	mockNewClient.EXPECT().NewClient(gomock.Any()).Return(&disgord.Client{}, nil)
+	mockedClient, _ := mockNewClient.NewClient(disgord.Config{})
+
+	fmt.Printf("\n\n\nMOCKEDCLIENT: %+v\n\n\n,", mockedClient)
+
 	type args struct {
-		data *disgord.Message
+		data   *disgord.Message
+		client *disgord.Client
 	}
 	tests := []struct {
 		name    string
@@ -28,16 +40,22 @@ func TestUnknown(t *testing.T) {
 					Timestamp: disgord.Time{Time: time.Now()},
 					ID:        2342342343,
 				},
+				mockedClient,
 			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := gomock.NewController(t)
-			mockSendMsg := mock_sendmsg.NewMockDisgordMsgAPI(c)
-			// mockSendMsg.EXPECT().SendMsg(gomock.Any(), gomock.Any()).Return(&disgord.Message{}, nil)
+			mockNewClient := newclientmock.NewMockDisgordClientAPI(c)
+			mockNewClient.EXPECT().NewClient(gomock.Any()).Return(&disgord.Client{}, nil)
+			mockedClient, _ := mockNewClient.NewClient(disgord.Config{})
+			mockSendMsg := sendmsgmock.NewMockDisgordMsgAPI(c)
 
-			if err := discord.Unknown(tt.args.data); (err != nil) != tt.wantErr {
+			mockSendMsg.EXPECT().SendMsg(gomock.Any(), gomock.Any()).Return(&disgord.Message{}, nil)
+
+			if err := discord.Unknown(tt.args.data, mockedClient); (err != nil) != tt.wantErr {
 				t.Errorf("Unknown() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
