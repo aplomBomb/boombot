@@ -6,13 +6,13 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
-func help(data *disgord.MessageCreate, args []string) {
+func help(data *disgord.MessageCreate, args []string, client *disgord.Client) {
 
-	defaultHelp(data)
+	defaultHelp(data, client)
 
 }
 
-func defaultHelp(data *disgord.MessageCreate) {
+func defaultHelp(data *disgord.MessageCreate, client *disgord.Client) {
 	_, err := client.SendMsg(
 		ctx,
 		data.Message.ChannelID,

@@ -19,7 +19,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	switch cmd {
 	case "help", "h", "?", "wtf":
 		fmt.Println(data.Message.Content)
-		help(data, args)
+		help(data, args, client)
 	case "play":
 
 		// init the Youtube client here for test coverage's sake | will find another home for this later
@@ -46,7 +46,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 		// yt.PrintIt(ytClient)
 	default:
-		_, err := unknown(data.Message)
+		err := Unknown(data.Message, client)
 
 		if err != nil {
 			fmt.Printf("\nERROR: %+v\n", err)

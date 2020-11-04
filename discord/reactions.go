@@ -132,7 +132,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 				},
 			}
 			message.Author.SendMsg(ctx, s, &dm)
-			go deleteMessage(message, 1*time.Hour)
+			go deleteMessage(message, 1*time.Hour, client)
 			break
 		}
 	}
@@ -170,7 +170,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 				},
 			}
 			message.Author.SendMsg(ctx, s, &dm)
-			go deleteMessage(message, 1*time.Hour)
+			go deleteMessage(message, 1*time.Hour, client)
 			break
 		}
 	}

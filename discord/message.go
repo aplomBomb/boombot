@@ -13,7 +13,7 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	case 734986357583380510:
 		if strings.Contains(data.Message.Content, "https://www.curseforge.com/minecraft/mc-mods/") == false {
 			message, _ := client.GetMessage(ctx, data.Message.ChannelID, data.Message.ID)
-			go deleteMessage(message, 1)
+			go deleteMessage(message, 1, client)
 		}
 	default:
 		break

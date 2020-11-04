@@ -7,9 +7,9 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
-func unknown(data *disgord.Message) (*disgord.Message, error) {
+func Unknown(data *disgord.Message, disgordClient *disgord.Client) error {
 
-	resp, err := client.SendMsg(
+	resp, err := disgordClient.SendMsg(
 		ctx,
 		data.ChannelID,
 		&disgord.CreateMessageParams{
@@ -21,15 +21,14 @@ func unknown(data *disgord.Message) (*disgord.Message, error) {
 			},
 		},
 	)
+
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	fmt.Printf("\nTHIS IS THE MESSAGE: %+v\n", resp.Content)
-
-	go deleteMessage(data, 150*time.Millisecond)
-	go deleteMessage(resp, 10*time.Second)
+	// panic("\n\n\nMEEEEEP\n\n\n")
+	go deleteMessage(data, 150*time.Millisecond, client)
+	go deleteMessage(resp, 10*time.Second, client)
 	fmt.Println("Unknown command used")
 
-	return resp, nil
+	return nil
 }
