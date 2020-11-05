@@ -2,20 +2,37 @@ package discord
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/andersfylling/disgord"
+	discordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
-func help(data *disgord.MessageCreate, args []string, client *disgord.Client) {
-
-	defaultHelp(data, client)
-
+// HelpCommandClient contains the resources needed for handling help requests
+type HelpCommandClient struct {
+	data          *disgord.MessageCreate
+	disgordClient discordiface.DisgordClientAPI
 }
 
-func defaultHelp(data *disgord.MessageCreate, client *disgord.Client) {
-	_, err := client.SendMsg(
+// func help(data *disgord.MessageCreate, args []string, client *disgord.Client) {
+
+// 	defaultHelp(data, client)
+
+// }
+
+// NewHelpCommandClient returns a new instance of the HelpCommandClient
+func NewHelpCommandClient(data *disgord.MessageCreate, disgordClient discordiface.DisgordClientAPI) *HelpCommandClient {
+	return &HelpCommandClient{
+		data:          data,
+		disgordClient: disgordClient,
+	}
+}
+
+// SendHelpMsg sends the default help message to the channel that received the help command
+func (hcc *HelpCommandClient) SendHelpMsg() {
+	resp, err := client.SendMsg(
 		ctx,
-		data.Message.ChannelID,
+		hcc.data.Message.ChannelID,
 		&disgord.CreateMessageParams{
 			Embed: &disgord.Embed{
 				Title: "**__help__**\n **ALIASES:** h, ?, wtf",
@@ -27,9 +44,9 @@ func defaultHelp(data *disgord.MessageCreate, client *disgord.Client) {
 					conf.Prefix,
 				),
 				Footer: &disgord.EmbedFooter{
-					Text: fmt.Sprintf("Help requested by %s", data.Message.Author.Username),
+					Text: fmt.Sprintf("Help requested by %s", hcc.data.Message.Author.Username),
 				},
-				Timestamp: data.Message.Timestamp,
+				Timestamp: hcc.data.Message.Timestamp,
 				Color:     0xeec400,
 			},
 		},
@@ -37,4 +54,5 @@ func defaultHelp(data *disgord.MessageCreate, client *disgord.Client) {
 	if err != nil {
 		fmt.Println("There was an error sending default help message: ", err)
 	}
+	go deleteMessage(resp, 30*time.Second, client)
 }

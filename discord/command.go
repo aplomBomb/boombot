@@ -19,7 +19,9 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	switch cmd {
 	case "help", "h", "?", "wtf":
 		fmt.Println(data.Message.Content)
-		help(data, args, client)
+		hcc := NewHelpCommandClient(data, client)
+
+		hcc.SendHelpMsg(args)
 	case "play":
 
 		// init the Youtube client here for test coverage's sake | will find another home for this later
