@@ -46,11 +46,12 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 		// yt.PrintIt(ytClient)
 	default:
-		err := Unknown(data.Message, client)
 
-		if err != nil {
-			fmt.Printf("\nERROR: %+v\n", err)
-		}
+		uh := NewUnknownHandler(data.Message, client)
+
+		// err := Unknown(data.Message, client)
+
+		uh.RespondToAuthor()
 	}
 
 }
