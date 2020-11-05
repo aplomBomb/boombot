@@ -5,20 +5,24 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord"
+	discord "github.com/aplombomb/boombot/discord/ifaces"
 )
 
+// UnknownCommandClient represents the data neccessary for unknown command processing
 type UnknownCommandClient struct {
 	data          *disgord.Message
-	disgordClient *disgord.Client
+	disgordClient discord.DisgordClientAPI
 }
 
-func NewUnknownCommandClient(data *disgord.Message, disgordClient *disgord.Client) *UnknownCommandClient {
+// NewUnknownCommandClient returns a new instance
+func NewUnknownCommandClient(data *disgord.Message, disgordClient discord.DisgordClientAPI) *UnknownCommandClient {
 	return &UnknownCommandClient{
 		data:          data,
 		disgordClient: disgordClient,
 	}
 }
 
+// RespondToChannel handles sending a message to the channel that received an unknown command
 func (uc *UnknownCommandClient) RespondToChannel() error {
 
 	resp, err := uc.disgordClient.SendMsg(

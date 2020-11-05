@@ -4,8 +4,7 @@ test: mocks runtests
 
 mocks:
 	@echo "Generating mocks..."
-	@mockgen -source=discord/types.go -package=mock_sendmsg -destination=$(mocksDestination)/discord/sendmsg/mock_sendmsg.go
-	@mockgen -source=discord/types.go -package=mock_newclient -destination=$(mocksDestination)/discord/newclient/mock_newclient.go
+	@mockgen -destination=$(mocksDestination)/discord/mock_client.go -package=mock_client github.com/aplombomb/boombot/discord/ifaces DisgordClientAPI
 
 runtests:
 	@echo "Running tests..."

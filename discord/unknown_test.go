@@ -1,24 +1,30 @@
 package discord_test
 
 import (
-	"os"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
+
 	"github.com/andersfylling/disgord"
+	mockSendMsg "github.com/aplombomb/boombot/_mocks/generated/discord"
 	"github.com/aplombomb/boombot/discord"
+	discordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
-func TestUnknownHandler_RespondToAuthor(t *testing.T) {
+func TestUnknownCommandClient_RespondToChannel(t *testing.T) {
+	c := gomock.NewController(t)
+	msm := mockSendMsg.NewMockDisgordClientAPI(c)
 
 	testMessage := &disgord.Message{
-		ChannelID: 789789789,
+		ChannelID: 123,
 		Timestamp: disgord.Time{Time: time.Now()},
 	}
 
 	type fields struct {
 		data          *disgord.Message
-		disgordClient *disgord.Client
+		disgordClient discordiface.DisgordClientAPI
 	}
 	tests := []struct {
 		name    string
@@ -26,12 +32,23 @@ func TestUnknownHandler_RespondToAuthor(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "RespondToAuthor | channelID error",
+			name: "unknowncommandclient | respondToChannel success",
 			fields: func() fields {
-
+				msm.EXPECT().SendMsg(gomock.Any(), gomock.Any(), gomock.Any()).Return(&disgord.Message{}, nil)
 				return fields{
-					data:          testMessage,
-					disgordClient: disgord.New(disgord.Config{BotToken: os.Getenv("BOOMBOT_TOKEN")}),
+					testMessage,
+					msm,
+				}
+			}(),
+			wantErr: false,
+		},
+		{
+			name: "unknowncommandclient | respondToChannel error",
+			fields: func() fields {
+				msm.EXPECT().SendMsg(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("meep"))
+				return fields{
+					testMessage,
+					msm,
 				}
 			}(),
 			wantErr: true,
@@ -39,9 +56,10 @@ func TestUnknownHandler_RespondToAuthor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uh := discord.NewUnknownCommandClient(tt.fields.data, tt.fields.disgordClient)
-			if err := uh.RespondToChannel(); (err != nil) != tt.wantErr {
-				t.Errorf("UnknownHandler.RespondToAuthor() error = %v, wantErr %v", err, tt.wantErr)
+			uc := discord.NewUnknownCommandClient(tt.fields.data, tt.fields.disgordClient)
+
+			if err := uc.RespondToChannel(); (err != nil) != tt.wantErr {
+				t.Errorf("UnknownCommandClient.RespondToChannel() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
