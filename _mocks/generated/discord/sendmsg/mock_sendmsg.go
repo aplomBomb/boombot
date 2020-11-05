@@ -12,31 +12,31 @@ import (
 	reflect "reflect"
 )
 
-// MockDisgordMsgAPI is a mock of DisgordMsgAPI interface
-type MockDisgordMsgAPI struct {
+// MockSendMsgAPI is a mock of SendMsgAPI interface
+type MockSendMsgAPI struct {
 	ctrl     *gomock.Controller
-	recorder *MockDisgordMsgAPIMockRecorder
+	recorder *MockSendMsgAPIMockRecorder
 }
 
-// MockDisgordMsgAPIMockRecorder is the mock recorder for MockDisgordMsgAPI
-type MockDisgordMsgAPIMockRecorder struct {
-	mock *MockDisgordMsgAPI
+// MockSendMsgAPIMockRecorder is the mock recorder for MockSendMsgAPI
+type MockSendMsgAPIMockRecorder struct {
+	mock *MockSendMsgAPI
 }
 
-// NewMockDisgordMsgAPI creates a new mock instance
-func NewMockDisgordMsgAPI(ctrl *gomock.Controller) *MockDisgordMsgAPI {
-	mock := &MockDisgordMsgAPI{ctrl: ctrl}
-	mock.recorder = &MockDisgordMsgAPIMockRecorder{mock}
+// NewMockSendMsgAPI creates a new mock instance
+func NewMockSendMsgAPI(ctrl *gomock.Controller) *MockSendMsgAPI {
+	mock := &MockSendMsgAPI{ctrl: ctrl}
+	mock.recorder = &MockSendMsgAPIMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockDisgordMsgAPI) EXPECT() *MockDisgordMsgAPIMockRecorder {
+func (m *MockSendMsgAPI) EXPECT() *MockSendMsgAPIMockRecorder {
 	return m.recorder
 }
 
 // SendMsg mocks base method
-func (m *MockDisgordMsgAPI) SendMsg(ctx context.Context, channelID snowflake.Snowflake, data ...interface{}) (*disgord.Message, error) {
+func (m *MockSendMsgAPI) SendMsg(ctx context.Context, channelID snowflake.Snowflake, data ...interface{}) (*disgord.Message, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, channelID}
 	for _, a := range data {
@@ -49,10 +49,47 @@ func (m *MockDisgordMsgAPI) SendMsg(ctx context.Context, channelID snowflake.Sno
 }
 
 // SendMsg indicates an expected call of SendMsg
-func (mr *MockDisgordMsgAPIMockRecorder) SendMsg(ctx, channelID interface{}, data ...interface{}) *gomock.Call {
+func (mr *MockSendMsgAPIMockRecorder) SendMsg(ctx, channelID interface{}, data ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, channelID}, data...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMsg", reflect.TypeOf((*MockDisgordMsgAPI)(nil).SendMsg), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMsg", reflect.TypeOf((*MockSendMsgAPI)(nil).SendMsg), varargs...)
+}
+
+// MockNewMessageByStringAPI is a mock of NewMessageByStringAPI interface
+type MockNewMessageByStringAPI struct {
+	ctrl     *gomock.Controller
+	recorder *MockNewMessageByStringAPIMockRecorder
+}
+
+// MockNewMessageByStringAPIMockRecorder is the mock recorder for MockNewMessageByStringAPI
+type MockNewMessageByStringAPIMockRecorder struct {
+	mock *MockNewMessageByStringAPI
+}
+
+// NewMockNewMessageByStringAPI creates a new mock instance
+func NewMockNewMessageByStringAPI(ctrl *gomock.Controller) *MockNewMessageByStringAPI {
+	mock := &MockNewMessageByStringAPI{ctrl: ctrl}
+	mock.recorder = &MockNewMessageByStringAPIMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockNewMessageByStringAPI) EXPECT() *MockNewMessageByStringAPIMockRecorder {
+	return m.recorder
+}
+
+// NewMessageByString mocks base method
+func (m *MockNewMessageByStringAPI) NewMessageByString(content string) *disgord.CreateMessageParams {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NewMessageByString", content)
+	ret0, _ := ret[0].(*disgord.CreateMessageParams)
+	return ret0
+}
+
+// NewMessageByString indicates an expected call of NewMessageByString
+func (mr *MockNewMessageByStringAPIMockRecorder) NewMessageByString(content interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewMessageByString", reflect.TypeOf((*MockNewMessageByStringAPI)(nil).NewMessageByString), content)
 }
 
 // MockDisgordClientAPI is a mock of DisgordClientAPI interface
