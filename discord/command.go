@@ -14,14 +14,14 @@ import (
 
 //RespondToCommand handles all messages that begin with prefix
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
-	cmd, args := ParseMessage(data)
+	cmd, _ := ParseMessage(data)
 
 	switch cmd {
 	case "help", "h", "?", "wtf":
 		fmt.Println(data.Message.Content)
-		hcc := NewHelpCommandClient(data, client)
+		hcc := NewHelpCommandClient(data.Message, client)
 
-		hcc.SendHelpMsg(args)
+		hcc.SendHelpMsg()
 	case "play":
 
 		// init the Youtube client here for test coverage's sake | will find another home for this later

@@ -5,23 +5,17 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord"
-	discordiface "github.com/aplombomb/boombot/discord/ifaces"
+	discord "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 // HelpCommandClient contains the resources needed for handling help requests
 type HelpCommandClient struct {
-	data          *disgord.MessageCreate
-	disgordClient discordiface.DisgordClientAPI
+	data          *disgord.Message
+	disgordClient discord.DisgordClientAPI
 }
 
-// func help(data *disgord.MessageCreate, args []string, client *disgord.Client) {
-
-// 	defaultHelp(data, client)
-
-// }
-
 // NewHelpCommandClient returns a new instance of the HelpCommandClient
-func NewHelpCommandClient(data *disgord.MessageCreate, disgordClient discordiface.DisgordClientAPI) *HelpCommandClient {
+func NewHelpCommandClient(data *disgord.Message, disgordClient discord.DisgordClientAPI) *HelpCommandClient {
 	return &HelpCommandClient{
 		data:          data,
 		disgordClient: disgordClient,
@@ -29,10 +23,10 @@ func NewHelpCommandClient(data *disgord.MessageCreate, disgordClient discordifac
 }
 
 // SendHelpMsg sends the default help message to the channel that received the help command
-func (hcc *HelpCommandClient) SendHelpMsg() {
-	resp, err := client.SendMsg(
+func (hcc *HelpCommandClient) SendHelpMsg() error {
+	resp, err := hcc.disgordClient.SendMsg(
 		ctx,
-		hcc.data.Message.ChannelID,
+		hcc.data.ChannelID,
 		&disgord.CreateMessageParams{
 			Embed: &disgord.Embed{
 				Title: "**__help__**\n **ALIASES:** h, ?, wtf",
@@ -44,15 +38,16 @@ func (hcc *HelpCommandClient) SendHelpMsg() {
 					conf.Prefix,
 				),
 				Footer: &disgord.EmbedFooter{
-					Text: fmt.Sprintf("Help requested by %s", hcc.data.Message.Author.Username),
+					Text: fmt.Sprintf("Help requested by %s", hcc.data.Author.Username),
 				},
-				Timestamp: hcc.data.Message.Timestamp,
+				Timestamp: hcc.data.Timestamp,
 				Color:     0xeec400,
 			},
 		},
 	)
 	if err != nil {
-		fmt.Println("There was an error sending default help message: ", err)
+		return err
 	}
 	go deleteMessage(resp, 30*time.Second, client)
+	return nil
 }

@@ -13,13 +13,16 @@ import (
 	discordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
-func TestUnknownCommandClient_RespondToChannel(t *testing.T) {
+func TestHelpCommandClient_SendHelpMsg(t *testing.T) {
 	c := gomock.NewController(t)
 	msm := mockSendMsg.NewMockDisgordClientAPI(c)
 
 	testMessage := &disgord.Message{
 		ChannelID: 123,
 		Timestamp: disgord.Time{Time: time.Now()},
+		Author: &disgord.User{
+			Username: "bomb",
+		},
 	}
 
 	type fields struct {
@@ -32,7 +35,7 @@ func TestUnknownCommandClient_RespondToChannel(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "unknowncommandclient | respondToChannel success",
+			name: "help | sendmsg success",
 			fields: func() fields {
 				msm.EXPECT().SendMsg(gomock.Any(), gomock.Any(), gomock.Any()).Return(&disgord.Message{}, nil)
 				return fields{
@@ -43,9 +46,9 @@ func TestUnknownCommandClient_RespondToChannel(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "unknowncommandclient | respondToChannel error",
+			name: "help | sendmsg error",
 			fields: func() fields {
-				msm.EXPECT().SendMsg(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("unknownsendmsgERR"))
+				msm.EXPECT().SendMsg(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("help sndmsgERR"))
 				return fields{
 					testMessage,
 					msm,
@@ -56,10 +59,10 @@ func TestUnknownCommandClient_RespondToChannel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uc := discord.NewUnknownCommandClient(tt.fields.data, tt.fields.disgordClient)
+			hcc := discord.NewHelpCommandClient(tt.fields.data, tt.fields.disgordClient)
 
-			if err := uc.RespondToChannel(); (err != nil) != tt.wantErr {
-				t.Errorf("UnknownCommandClient.RespondToChannel() error = %v, wantErr %v", err, tt.wantErr)
+			if err := hcc.SendHelpMsg(); (err != nil) != tt.wantErr {
+				t.Errorf("HelpCommandClient.SendHelpMsg() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
