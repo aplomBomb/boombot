@@ -7,28 +7,28 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
-type UnknownHandler struct {
+type UnknownCommandClient struct {
 	data          *disgord.Message
 	disgordClient *disgord.Client
 }
 
-func NewUnknownHandler(data *disgord.Message, disgordClient *disgord.Client) *UnknownHandler {
-	return &UnknownHandler{
+func NewUnknownCommandClient(data *disgord.Message, disgordClient *disgord.Client) *UnknownCommandClient {
+	return &UnknownCommandClient{
 		data:          data,
 		disgordClient: disgordClient,
 	}
 }
 
-func (uh *UnknownHandler) RespondToAuthor() error {
+func (uc *UnknownCommandClient) RespondToChannel() error {
 
-	resp, err := uh.disgordClient.SendMsg(
+	resp, err := uc.disgordClient.SendMsg(
 		ctx,
-		uh.data.ChannelID,
+		uc.data.ChannelID,
 		&disgord.CreateMessageParams{
 			Embed: &disgord.Embed{
 				Title:       "Unknown command",
 				Description: fmt.Sprintf("Type %shelp to see the commands available", conf.Prefix),
-				Timestamp:   uh.data.Timestamp,
+				Timestamp:   uc.data.Timestamp,
 				Color:       0xcc0000,
 			},
 		},
@@ -38,7 +38,7 @@ func (uh *UnknownHandler) RespondToAuthor() error {
 		return err
 	}
 	// panic("\n\n\nMEEEEEP\n\n\n")
-	go deleteMessage(uh.data, 150*time.Millisecond, client)
+	go deleteMessage(uc.data, 150*time.Millisecond, client)
 	go deleteMessage(resp, 10*time.Second, client)
 	fmt.Println("Unknown command used")
 

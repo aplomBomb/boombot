@@ -7,8 +7,12 @@ import (
 	"github.com/andersfylling/snowflake/v4"
 )
 
-type DisgordMsgAPI interface {
+type SendMsgAPI interface {
 	SendMsg(ctx context.Context, channelID snowflake.Snowflake, data ...interface{}) (msg *disgord.Message, err error)
+}
+
+type NewMessageByStringAPI interface {
+	NewMessageByString(content string) *disgord.CreateMessageParams
 }
 
 type DisgordClientAPI interface {

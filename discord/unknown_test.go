@@ -5,25 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-
 	"github.com/andersfylling/disgord"
-	mockmsg "github.com/aplombomb/boombot/_mocks/generated/discord/sendmsg"
 	"github.com/aplombomb/boombot/discord"
 )
 
-// func defaultFields(t *testing.T) fields {
-// 	c := gomock.NewController(t)
-// 	clientMock := mock
-// 	return fields{}
-// }
-
 func TestUnknownHandler_RespondToAuthor(t *testing.T) {
 
-	message := &disgord.Message{
-		ChannelID: 645286762452877314,
+	testMessage := &disgord.Message{
+		ChannelID: 789789789,
 		Timestamp: disgord.Time{Time: time.Now()},
-		Content:   "**THIS IS A TEST FOR THE UNKOWN COMMAND**",
 	}
 
 	type fields struct {
@@ -36,30 +26,21 @@ func TestUnknownHandler_RespondToAuthor(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "RespondToAuthor | success",
+			name: "RespondToAuthor | channelID error",
 			fields: func() fields {
-				c := gomock.NewController(t)
-				mc := mockmsg.NewMockDisgordMsgAPI(c)
-				mc.EXPECT().SendMsg(gomock.Any(), gomock.Any()).Return(&disgord.Message{}, nil)
+
 				return fields{
-					data:          message,
+					data:          testMessage,
 					disgordClient: disgord.New(disgord.Config{BotToken: os.Getenv("BOOMBOT_TOKEN")}),
 				}
 			}(),
-			wantErr: false,
+			wantErr: true,
 		},
-		// {
-		// 	name: "RespondToAuthor | SendMsg error",
-		// 	fields: func() fields {
-		// 		c := gomock.NewController(t)
-		// 		mc := mockmsg.NewMockDisgordMsgAPI(c)
-		// 	}
-		// }
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uh := discord.NewUnknownHandler(tt.fields.data, tt.fields.disgordClient)
-			if err := uh.RespondToAuthor(); (err != nil) != tt.wantErr {
+			uh := discord.NewUnknownCommandClient(tt.fields.data, tt.fields.disgordClient)
+			if err := uh.RespondToChannel(); (err != nil) != tt.wantErr {
 				t.Errorf("UnknownHandler.RespondToAuthor() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

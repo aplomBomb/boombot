@@ -40,7 +40,6 @@ func init() {
 
 // BotRun | Start the bot and handle events
 func BotRun(cf config.ConfJSONStruct) {
-
 	// sets the config for the whole disc package
 	conf = cf
 
