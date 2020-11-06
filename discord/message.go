@@ -7,22 +7,22 @@ import (
 	discord "github.com/aplombomb/boombot/discord/ifaces"
 )
 
+// MessageEventClient contains the data necessary for handling all non-command messages
 type MessageEventClient struct {
-	sess          *disgord.Session
 	data          *disgord.Message
 	disgordClient discord.DisgordClientAPI
 }
 
-func NewMessageEventClient(sess *disgord.Session, data *disgord.Message, disgordClient discord.DisgordClientAPI) *MessageEventClient {
+// NewMessageEventClient return a new MessageEventClient
+func NewMessageEventClient(data *disgord.Message, disgordClient discord.DisgordClientAPI) *MessageEventClient {
 	return &MessageEventClient{
-		sess,
 		data,
 		disgordClient,
 	}
 }
 
-//RespondToMessage handles all messages created in the server
-func (mec *MessageEventClient) RespondToMessage() {
+//FilterNonModLinks removes all messages from mod requests channel that are not acceptable links
+func (mec *MessageEventClient) FilterNonModLinks() {
 	//Per channel message event switch handler
 	switch mec.data.ChannelID {
 	case 734986357583380510:
@@ -34,17 +34,4 @@ func (mec *MessageEventClient) RespondToMessage() {
 		break
 	}
 
-}
-
-// ParseMessage parses the message into command / args
-func ParseMessage(data *disgord.Message) (string, []string) {
-	var command string
-	var args []string
-	if len(data.Message.Content) > 0 {
-		command = strings.ToLower(strings.Fields(data.Message.Content)[0])
-		if len(data.Message.Content) > 1 {
-			args = strings.Fields(data.Message.Content)[1:]
-		}
-	}
-	return command, args
 }

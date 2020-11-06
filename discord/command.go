@@ -4,16 +4,33 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/andersfylling/disgord"
 	yt "github.com/aplombomb/boombot/Youtube"
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
+
+	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
-//RespondToCommand handles all messages that begin with the configured prefix
-func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
-	cmd, _ := ParseMessage(data)
+// CommandEventClient contains the data for all command processing
+type CommandEventClient struct {
+	data          *disgord.Message
+	disgordClient disgordiface.DisgordClientAPI
+}
+
+// NewCommandEventClient returns a pointer to a new CommandEventClient
+func NewCommandEventClient(data *disgord.Message, disgordClient disgordiface.DisgordClientAPI) *CommandEventClient {
+	return &CommandEventClient{
+		data:          data,
+		disgordClient: disgordClient,
+	}
+}
+
+//RespondToCommandTemp handles all messages that begin with the configured prefix
+func (cec *CommandEventClient) RespondToCommandTemp(s disgord.Session, data *disgord.MessageCreate) {
+	cmd, _ := cec.ParseCommand(data.Message)
 
 	switch cmd {
 	case "help", "h", "?", "wtf":
@@ -55,4 +72,17 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		uc.RespondToChannel()
 	}
 
+}
+
+// ParseCommand returns the used command and all extraneous arguments
+func (cec *CommandEventClient) ParseCommand(data *disgord.Message) (string, []string) {
+	var command string
+	var args []string
+	if len(cec.data.Content) > 0 {
+		command = strings.ToLower(strings.Fields(cec.data.Content)[0])
+		if len(cec.data.Content) > 1 {
+			args = strings.Fields(cec.data.Content)[1:]
+		}
+	}
+	return command, args
 }

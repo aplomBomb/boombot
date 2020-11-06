@@ -15,9 +15,8 @@ import (
 type CmdArguments []string
 type msgEvent disgord.Message
 
-// Global Variables to ease working with client/sesion etc
+// TO-DO Get rid of these global variables
 var ctx = context.Background()
-
 var client *disgord.Client
 var session disgord.Session
 var conf config.ConfJSONStruct
