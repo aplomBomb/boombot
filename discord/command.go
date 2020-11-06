@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/andersfylling/disgord"
 	yt "github.com/aplombomb/boombot/Youtube"
+	discord "github.com/aplombomb/boombot/discord/ifaces"
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
-
-	"github.com/andersfylling/disgord"
 )
 
-//RespondToCommand handles all messages that begin with prefix
-func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
+//RespondToCommand handles all messages that begin with the configured prefix
+func RespondToCommand(s disgord.Session, data *disgord.MessageCreate, client *discord.DisgordClientAPI) {
 	cmd, _ := ParseMessage(data)
 
 	switch cmd {
 	case "help", "h", "?", "wtf":
 		fmt.Println(data.Message.Content)
-		hcc := NewHelpCommandClient(data.Message, client)
+		hcc := NewHelpCommandClient(data.Message, *client)
 
 		hcc.SendHelpMsg()
 	case "play":
@@ -49,7 +49,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		// yt.PrintIt(ytClient)
 	default:
 
-		uc := NewUnknownCommandClient(data.Message, client)
+		uc := NewUnknownCommandClient(data.Message, *client)
 
 		// err := Unknown(data.Message, client)
 

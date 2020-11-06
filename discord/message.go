@@ -6,6 +6,11 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
+// type MessageEventClient struct {
+// 	sess *disgord.Session
+// 	data *disgord.Message
+// }
+
 //RespondToMessage handles all messages created in the server
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	//Per channel message event switch handler
