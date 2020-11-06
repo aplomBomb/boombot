@@ -8,7 +8,7 @@ import (
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
 	"github.com/aplombomb/boombot/config"
-	discord "github.com/aplombomb/boombot/discord/ifaces"
+	discordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 // CmdArguments represents the arguments entered by the user after a command
@@ -18,7 +18,7 @@ type msgEvent disgord.Message
 // Global Variables to ease working with client/sesion etc
 var ctx = context.Background()
 
-// var client *disgord.Client
+var client *disgord.Client
 var session disgord.Session
 var conf config.ConfJSONStruct
 
@@ -43,7 +43,7 @@ func BotRun(cf config.ConfJSONStruct) {
 	// sets the config for the whole disc package
 	conf = cf
 
-	var client = disgord.New(disgord.Config{BotToken: cf.BotToken})
+	client = disgord.New(disgord.Config{BotToken: cf.BotToken})
 
 	// stay connected to discord
 	defer client.StayConnectedUntilInterrupted(ctx)
@@ -74,7 +74,7 @@ func BotRun(cf config.ConfJSONStruct) {
 	fmt.Println("BoomBot is running")
 }
 
-func deleteMessage(resp *disgord.Message, sleep time.Duration, client discord.DisgordClientAPI) {
+func deleteMessage(resp *disgord.Message, sleep time.Duration, client discordiface.DisgordClientAPI) {
 	time.Sleep(sleep)
 
 	err := client.DeleteMessage(

@@ -42,8 +42,8 @@ func (uc *UnknownCommandClient) RespondToChannel() error {
 		return err
 	}
 	// panic("\n\n\nMEEEEEP\n\n\n")
-	go deleteMessage(uc.data, 150*time.Millisecond, client)
-	go deleteMessage(resp, 10*time.Second, client)
+	go deleteMessage(uc.data, 150*time.Millisecond, uc.disgordClient)
+	go deleteMessage(resp, 10*time.Second, uc.disgordClient)
 	fmt.Println("Unknown command used")
 
 	return nil
