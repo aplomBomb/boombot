@@ -4,11 +4,14 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
-// Using this for access to the global client FOR NOW as passing it through the handlers has proven tricky
+// Using this for access to the global clients FOR NOW as passing it through the handlers has proven tricky
 // TO-DO find a solution to get rid of the global variables, including the client
 
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
-	cec := NewCommandEventClient(data.Message, client)
+
+	// cec := NewCommandEventClient(data.Message, client, ytClient)
+
+	// ytClient.S
 
 }
 

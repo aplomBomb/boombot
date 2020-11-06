@@ -2,8 +2,13 @@ package discord
 
 import (
 	"context"
+	"flag"
 	"fmt"
+	"log"
 	"time"
+
+	"google.golang.org/api/option"
+	"google.golang.org/api/youtube/v3"
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
@@ -18,8 +23,10 @@ type msgEvent disgord.Message
 // TO-DO Get rid of these global variables
 var ctx = context.Background()
 var client *disgord.Client
+var ytService *youtube.Service
 var session disgord.Session
 var conf config.ConfJSONStruct
+var query = flag.String("query", "Google", "Search term")
 
 // init the client
 // var client = disgord.New(disgord.Config{BotToken: os.Getenv("BOOMBOT_TOKEN")})
@@ -43,6 +50,17 @@ func BotRun(cf config.ConfJSONStruct) {
 	conf = cf
 
 	client = disgord.New(disgord.Config{BotToken: cf.BotToken})
+
+	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(cf.YoutubeToken))
+
+	call := ytService.Search.List([]string{"id, snippet"}).Q("query").MaxResults(10)
+
+	response, err := call.Do()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("\n\n\nPAYLOAD: %+v\n\n\n", response.Items[0])
 
 	// stay connected to discord
 	defer client.StayConnectedUntilInterrupted(ctx)

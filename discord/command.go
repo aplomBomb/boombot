@@ -1,60 +1,45 @@
 package discord
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/andersfylling/disgord"
-	yt "github.com/aplombomb/boombot/Youtube"
-	"google.golang.org/api/option"
-	"google.golang.org/api/youtube/v3"
 
 	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
+	youtubeiface "github.com/aplombomb/boombot/youtube/ifaces"
 )
 
 // CommandEventClient contains the data for all command processing
 type CommandEventClient struct {
 	data          *disgord.Message
 	disgordClient disgordiface.DisgordClientAPI
+	youtubeClient youtubeiface.YoutubeClientAPI
 }
 
 // NewCommandEventClient returns a pointer to a new CommandEventClient
-func NewCommandEventClient(data *disgord.Message, disgordClient disgordiface.DisgordClientAPI) *CommandEventClient {
+func NewCommandEventClient(data *disgord.Message, disgordClient disgordiface.DisgordClientAPI, youtubeClient youtubeiface.YoutubeClientAPI) *CommandEventClient {
 	return &CommandEventClient{
 		data:          data,
 		disgordClient: disgordClient,
+		youtubeClient: youtubeClient,
 	}
 }
 
 //RespondToCommandTemp handles all messages that begin with the configured prefix
-func (cec *CommandEventClient) RespondToCommandTemp(s disgord.Session, data *disgord.MessageCreate) {
-	cmd, _ := cec.ParseCommand(data.Message)
+func (cec *CommandEventClient) RespondToCommandTemp() {
+	cmd, _ := cec.ParseCommand(cec.data)
 
 	switch cmd {
 	case "help", "h", "?", "wtf":
-		fmt.Println(data.Message.Content)
-		hcc := NewHelpCommandClient(data.Message, client)
+		fmt.Println(cec.data.Content)
+		hcc := NewHelpCommandClient(cec.data, cec.disgordClient)
 
 		hcc.SendHelpMsg()
 	case "play":
 
 		// init the Youtube client here for test coverage's sake | will find another home for this later
-		ctx := context.Background()
-
-		youtubeService, err := youtube.NewService(ctx, option.WithAPIKey(conf.YoutubeToken))
-
-		if err != nil {
-			fmt.Println(err)
-		}
-		ytClient, err := yt.New(youtubeService, data.Message.Content, data.Message.Author)
-
-		if err != nil {
-			log.Fatal("YT API ERROR: ", err)
-		}
-
-		fmt.Printf("\nYT Client Created: %+v\n\n\n", ytClient)
+		// ctx := context.Background()
 
 		// if inVoice := ytClient.VerifyVoiceChat(s); inVoice == false {
 		// 	fmt.Println("User is not in voice channel")
@@ -65,7 +50,7 @@ func (cec *CommandEventClient) RespondToCommandTemp(s disgord.Session, data *dis
 		// yt.PrintIt(ytClient)
 	default:
 
-		uc := NewUnknownCommandClient(data.Message, client)
+		uc := NewUnknownCommandClient(cec.data, cec.disgordClient)
 
 		// err := Unknown(data.Message, client)
 

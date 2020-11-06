@@ -51,7 +51,7 @@ type AdminReactions struct {
 }
 
 //RespondToReaction contains logic for handling the reaction add event
-func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
+func RespondToReactionTemp(s disgord.Session, data *disgord.MessageReactionAdd) {
 	fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", data.PartialEmoji.Name, data.ChannelID, data.UserID)
 
 	reactionEvent := &AdminReaction{
