@@ -9,16 +9,16 @@ import (
 
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
-	// cec := NewCommandEventClient(data.Message, client, ytClient)
+	cec := NewCommandEventClient(data.Message, disgordGlobalClient, ytService.Search)
 
-	// ytClient.S
+	cec.RespondToCommand()
 
 }
 
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
-	mec := NewMessageEventClient(data.Message, client)
+	// mec := NewMessageEventClient(data.Message, client)
 
-	mec.FilterNonModLinks()
+	// mec.FilterNonModLinks()
 
 }
 
@@ -26,6 +26,6 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 
 }
 
-func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
+// func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 
-}
+// }

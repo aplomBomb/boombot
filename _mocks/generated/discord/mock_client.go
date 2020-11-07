@@ -93,3 +93,18 @@ func (mr *MockDisgordClientAPIMockRecorder) SendMsg(arg0, arg1 interface{}, arg2
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMsg", reflect.TypeOf((*MockDisgordClientAPI)(nil).SendMsg), varargs...)
 }
+
+// VoiceConnect mocks base method
+func (m *MockDisgordClientAPI) VoiceConnect(arg0, arg1 snowflake.Snowflake) (disgord.VoiceConnection, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VoiceConnect", arg0, arg1)
+	ret0, _ := ret[0].(disgord.VoiceConnection)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VoiceConnect indicates an expected call of VoiceConnect
+func (mr *MockDisgordClientAPIMockRecorder) VoiceConnect(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VoiceConnect", reflect.TypeOf((*MockDisgordClientAPI)(nil).VoiceConnect), arg0, arg1)
+}

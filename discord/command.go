@@ -14,11 +14,11 @@ import (
 type CommandEventClient struct {
 	data          *disgord.Message
 	disgordClient disgordiface.DisgordClientAPI
-	youtubeClient youtubeiface.YoutubeClientAPI
+	youtubeClient youtubeiface.YoutubeSearchServiceAPI
 }
 
 // NewCommandEventClient returns a pointer to a new CommandEventClient
-func NewCommandEventClient(data *disgord.Message, disgordClient disgordiface.DisgordClientAPI, youtubeClient youtubeiface.YoutubeClientAPI) *CommandEventClient {
+func NewCommandEventClient(data *disgord.Message, disgordClient disgordiface.DisgordClientAPI, youtubeClient youtubeiface.YoutubeSearchServiceAPI) *CommandEventClient {
 	return &CommandEventClient{
 		data:          data,
 		disgordClient: disgordClient,
@@ -26,9 +26,9 @@ func NewCommandEventClient(data *disgord.Message, disgordClient disgordiface.Dis
 	}
 }
 
-//RespondToCommandTemp handles all messages that begin with the configured prefix
-func (cec *CommandEventClient) RespondToCommandTemp() {
-	cmd, _ := cec.ParseCommand(cec.data)
+//RespondToCommand handles all messages that begin with the configured prefix
+func (cec *CommandEventClient) RespondToCommand() {
+	cmd, _ := cec.DisectCommand(cec.data)
 
 	switch cmd {
 	case "help", "h", "?", "wtf":
@@ -59,8 +59,8 @@ func (cec *CommandEventClient) RespondToCommandTemp() {
 
 }
 
-// ParseCommand returns the used command and all extraneous arguments
-func (cec *CommandEventClient) ParseCommand(data *disgord.Message) (string, []string) {
+// DisectCommand returns the used command and all extraneous arguments
+func (cec *CommandEventClient) DisectCommand(data *disgord.Message) (string, []string) {
 	var command string
 	var args []string
 	if len(cec.data.Content) > 0 {

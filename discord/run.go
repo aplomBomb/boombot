@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"time"
 
 	"google.golang.org/api/option"
@@ -22,7 +21,8 @@ type msgEvent disgord.Message
 
 // TO-DO Get rid of these global variables
 var ctx = context.Background()
-var client *disgord.Client
+
+var disgordGlobalClient *disgord.Client
 var ytService *youtube.Service
 var session disgord.Session
 var conf config.ConfJSONStruct
@@ -45,30 +45,17 @@ func init() {
 }
 
 // BotRun | Start the bot and handle events
-func BotRun(cf config.ConfJSONStruct) {
+func BotRun(client *disgord.Client, cf config.ConfJSONStruct) {
 	// sets the config for the whole disc package
 	conf = cf
 
-	client = disgord.New(disgord.Config{BotToken: cf.BotToken})
+	disgordGlobalClient = client
 
 	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(cf.YoutubeToken))
-
-	call := ytService.Search.List([]string{"id, snippet"}).Q("query").MaxResults(10)
-
-	response, err := call.Do()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("\n\n\nPAYLOAD: %+v\n\n\n", response.Items[0])
-
-	// stay connected to discord
-	defer client.StayConnectedUntilInterrupted(ctx)
 
 	// filter incomming messages & set the prefix
 	filter, _ := std.NewMsgFilter(ctx, client)
 	filter.SetPrefix(cf.Prefix)
-
 	//create a handler and bind it to new command events
 	go client.On(disgord.EvtMessageCreate,
 		filter.NotByBot,
@@ -88,7 +75,17 @@ func BotRun(cf config.ConfJSONStruct) {
 	//Bind a handler to message events
 	go client.On(disgord.EvtMessageCreate, RespondToMessage)
 
+	// The Gateway handler will replace the on handler once disgord becomse more stable
+	// Keeping this here until that day comes
+	// go client.Gateway().WithMiddleware(filter.NotByBot, filter.HasPrefix, std.CopyMsgEvt, filter.StripPrefix).MessageCreate(RespondToCommand)
+	// go client.Gateway().MessageReactionAdd(RespondToReaction)
+	// go client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
+	// go client.Gateway().MessageCreate(RespondToMessage)
+
 	fmt.Println("BoomBot is running")
+
+	client.StayConnectedUntilInterrupted(ctx)
+	//client.Gateway().StayConnectedUntilInterrupted()
 }
 
 func deleteMessage(resp *disgord.Message, sleep time.Duration, client discordiface.DisgordClientAPI) {
