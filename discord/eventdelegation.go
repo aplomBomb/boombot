@@ -29,7 +29,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	user, err := disgordGlobalClient.GetUser(ctx, data.Message.Author.ID)
 	if err != nil {
-		fmt.Println("Failed to fetch user")
+		fmt.Println("Failed to fetch user (probably a webhook message)")
 		user = &disgord.User{
 			Username: "unknown",
 		}
