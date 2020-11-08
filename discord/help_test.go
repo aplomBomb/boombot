@@ -8,15 +8,15 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/andersfylling/disgord"
-	mockSendMsg "github.com/aplombomb/boombot/_mocks/generated/discord"
+
+	mockClient "github.com/aplombomb/boombot/_mocks/generated/discordclient"
 	"github.com/aplombomb/boombot/discord"
 	discordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 func TestHelpCommandClient_SendHelpMsg(t *testing.T) {
 	c := gomock.NewController(t)
-	msm := mockSendMsg.NewMockDisgordClientAPI(c)
-
+	mc := mockClient.NewMockDisgordClientAPI(c)
 	testMessage := &disgord.Message{
 		ChannelID: 123,
 		Timestamp: disgord.Time{Time: time.Now()},
@@ -37,10 +37,10 @@ func TestHelpCommandClient_SendHelpMsg(t *testing.T) {
 		{
 			name: "help | sendmsg success",
 			fields: func() fields {
-				msm.EXPECT().SendMsg(gomock.Any(), gomock.Any(), gomock.Any()).Return(&disgord.Message{}, nil)
+				mc.EXPECT().SendMsg(gomock.Any(), gomock.Any(), gomock.Any()).Return(&disgord.Message{}, nil)
 				return fields{
 					testMessage,
-					msm,
+					mc,
 				}
 			}(),
 			wantErr: false,
@@ -48,10 +48,10 @@ func TestHelpCommandClient_SendHelpMsg(t *testing.T) {
 		{
 			name: "help | sendmsg error",
 			fields: func() fields {
-				msm.EXPECT().SendMsg(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("help sndmsgERR"))
+				mc.EXPECT().SendMsg(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("help sndmsgERR"))
 				return fields{
 					testMessage,
-					msm,
+					mc,
 				}
 			}(),
 			wantErr: true,

@@ -83,26 +83,28 @@ type AdminReaction struct {
 
 // ReactionEventClient defines contextual data regarding a message react event
 type ReactionEventClient struct {
-	emoji         *disgord.Emoji
-	uID           disgord.Snowflake
-	chID          disgord.Snowflake
-	msgID         disgord.Snowflake
-	disgordClient disgordiface.DisgordClientAPI
+	emoji          *disgord.Emoji
+	uID            disgord.Snowflake
+	chID           disgord.Snowflake
+	msgID          disgord.Snowflake
+	disgordClient  disgordiface.DisgordClientAPI
+	disgordSession disgord.Session
 }
 
 // NewReactionEventClient returns a pointer to a new ReactionEventClient
-func NewReactionEventClient(emoji *disgord.Emoji, uID disgord.Snowflake, chID disgord.Snowflake, msgID disgord.Snowflake, disgordClient disgordiface.DisgordClientAPI) *ReactionEventClient {
+func NewReactionEventClient(emoji *disgord.Emoji, uID disgord.Snowflake, chID disgord.Snowflake, msgID disgord.Snowflake, disgordClient disgordiface.DisgordClientAPI, s disgord.Session) *ReactionEventClient {
 	return &ReactionEventClient{
 		emoji,
 		uID,
 		chID,
 		msgID,
 		disgordClient,
+		s,
 	}
 }
 
 //RespondToReaction contains logic for handling the reaction add event
-func (rec *ReactionEventClient) RespondToReaction(s disgord.Session) {
+func (rec *ReactionEventClient) RespondToReaction() error {
 	fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", rec.emoji.Name, rec.chID, rec.uID)
 
 	reactionEvent := &AdminReaction{
@@ -123,7 +125,7 @@ func (rec *ReactionEventClient) RespondToReaction(s disgord.Session) {
 			modName := ""
 			message, err := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
 			if err != nil {
-				fmt.Printf("\n\nCould not get message data for reaction!: %+v\n\n", err)
+				return err
 			}
 			msgFields := strings.Fields(message.Content)
 
@@ -150,7 +152,7 @@ func (rec *ReactionEventClient) RespondToReaction(s disgord.Session) {
 					},
 				},
 			}
-			message.Author.SendMsg(ctx, s, &dm)
+			message.Author.SendMsg(ctx, rec.disgordSession, &dm)
 			break
 		}
 	}
@@ -161,7 +163,7 @@ func (rec *ReactionEventClient) RespondToReaction(s disgord.Session) {
 			modName := ""
 			message, err := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
 			if err != nil {
-				fmt.Printf("\n\nCould not get message data for reaction!: %+v\n\n", err)
+				return err
 			}
 			msgFields := strings.Fields(message.Content)
 
@@ -188,8 +190,8 @@ func (rec *ReactionEventClient) RespondToReaction(s disgord.Session) {
 					},
 				},
 			}
-			message.Author.SendMsg(ctx, s, &dm)
-			go deleteMessage(message, 1*time.Hour, disgordGlobalClient)
+			message.Author.SendMsg(ctx, rec.disgordSession, &dm)
+			go deleteMessage(message, 3*time.Second, rec.disgordClient)
 			break
 		}
 	}
@@ -201,7 +203,7 @@ func (rec *ReactionEventClient) RespondToReaction(s disgord.Session) {
 			modName := ""
 			message, err := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
 			if err != nil {
-				fmt.Printf("\n\nCould not get message data for reaction!: %+v\n\n", err)
+				return err
 			}
 			msgFields := strings.Fields(message.Content)
 
@@ -229,11 +231,12 @@ func (rec *ReactionEventClient) RespondToReaction(s disgord.Session) {
 					},
 				},
 			}
-			message.Author.SendMsg(ctx, s, &dm)
-			go deleteMessage(message, 1*time.Hour, disgordGlobalClient)
+			message.Author.SendMsg(ctx, rec.disgordSession, &dm)
+			go deleteMessage(message, 3*time.Second, rec.disgordClient)
 			break
 		}
 	}
+	return nil
 }
 
 //ParseReaction bundles up reaction data for easier comparison

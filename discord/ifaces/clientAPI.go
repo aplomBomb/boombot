@@ -14,6 +14,7 @@ type DisgordClientAPI interface {
 	VoiceConnect(guildID, channelID disgord.Snowflake) (disgord.VoiceConnection, error)
 }
 
-type DisgordSessionAPI interface {
+// DisgordUserAPI provides an interface for mocking disgord user behavior
+type DisgordUserAPI interface {
 	SendMsg(ctx context.Context, session disgord.Session, message *disgord.Message) (channel *disgord.Channel, msg *disgord.Message, err error)
 }

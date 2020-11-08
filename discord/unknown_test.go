@@ -8,7 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/andersfylling/disgord"
-	mockSendMsg "github.com/aplombomb/boombot/_mocks/generated/discord"
+	mockSendMsg "github.com/aplombomb/boombot/_mocks/generated/discordclient"
 	"github.com/aplombomb/boombot/discord"
 	discordiface "github.com/aplombomb/boombot/discord/ifaces"
 )

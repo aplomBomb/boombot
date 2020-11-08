@@ -1,7 +1,6 @@
 package discord
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/andersfylling/disgord"
@@ -28,26 +27,13 @@ func NewCommandEventClient(data *disgord.Message, disgordClient disgordiface.Dis
 
 //RespondToCommand handles all messages that begin with the configured prefix
 func (cec *CommandEventClient) RespondToCommand() {
-	cmd, _ := cec.DisectCommand(cec.data)
-
+	cmd, _ := cec.DisectCommand()
 	switch cmd {
 	case "help", "h", "?", "wtf":
-		fmt.Println(cec.data.Content)
 		hcc := NewHelpCommandClient(cec.data, cec.disgordClient)
-
 		hcc.SendHelpMsg()
 	case "play":
-
-		// init the Youtube client here for test coverage's sake | will find another home for this later
-		// ctx := context.Background()
-
-		// if inVoice := ytClient.VerifyVoiceChat(s); inVoice == false {
-		// 	fmt.Println("User is not in voice channel")
-		// } else {
-		// 	fmt.Println("User is in voice channel")
-		// }
-
-		// yt.PrintIt(ytClient)
+		return
 	default:
 
 		uc := NewUnknownCommandClient(cec.data, cec.disgordClient)
@@ -60,7 +46,7 @@ func (cec *CommandEventClient) RespondToCommand() {
 }
 
 // DisectCommand returns the used command and all extraneous arguments
-func (cec *CommandEventClient) DisectCommand(data *disgord.Message) (string, []string) {
+func (cec *CommandEventClient) DisectCommand() (string, []string) {
 	var command string
 	var args []string
 	if len(cec.data.Content) > 0 {

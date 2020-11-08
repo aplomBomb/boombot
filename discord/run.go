@@ -91,6 +91,8 @@ func BotRun(client *disgord.Client, cf config.ConfJSONStruct) {
 func deleteMessage(resp *disgord.Message, sleep time.Duration, client discordiface.DisgordClientAPI) {
 	time.Sleep(sleep)
 
+	fmt.Printf("\nDeleting message '%+v' by user %+v \n", resp.Content, resp.Author.Username)
+
 	err := client.DeleteMessage(
 		ctx,
 		resp.ChannelID,
