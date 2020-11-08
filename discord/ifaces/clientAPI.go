@@ -14,6 +14,6 @@ type DisgordClientAPI interface {
 	VoiceConnect(guildID, channelID disgord.Snowflake) (disgord.VoiceConnection, error)
 }
 
-type DisgordUserAPI interface {
+type DisgordSessionAPI interface {
 	SendMsg(ctx context.Context, session disgord.Session, message *disgord.Message) (channel *disgord.Channel, msg *disgord.Message, err error)
 }
