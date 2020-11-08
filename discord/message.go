@@ -33,5 +33,4 @@ func (mec *MessageEventClient) FilterNonModLinks() {
 	default:
 		break
 	}
-
 }
