@@ -83,29 +83,29 @@ type AdminReaction struct {
 
 // ReactionEventClient defines contextual data regarding a message react event
 type ReactionEventClient struct {
-	emoji          *disgord.Emoji
-	uID            disgord.Snowflake
-	chID           disgord.Snowflake
-	msgID          disgord.Snowflake
-	disgordClient  disgordiface.DisgordClientAPI
-	disgordSession disgord.Session
+	emoji         *disgord.Emoji
+	uID           disgord.Snowflake
+	chID          disgord.Snowflake
+	msgID         disgord.Snowflake
+	disgordClient disgordiface.DisgordClientAPI
 }
 
 // NewReactionEventClient returns a pointer to a new ReactionEventClient
-func NewReactionEventClient(emoji *disgord.Emoji, uID disgord.Snowflake, chID disgord.Snowflake, msgID disgord.Snowflake, disgordClient disgordiface.DisgordClientAPI, s disgord.Session) *ReactionEventClient {
+func NewReactionEventClient(emoji *disgord.Emoji, uID disgord.Snowflake, chID disgord.Snowflake, msgID disgord.Snowflake, disgordClient disgordiface.DisgordClientAPI) *ReactionEventClient {
 	return &ReactionEventClient{
 		emoji,
 		uID,
 		chID,
 		msgID,
 		disgordClient,
-		s,
 	}
 }
 
-//RespondToReaction contains logic for handling the reaction add event
-func (rec *ReactionEventClient) RespondToReaction() error {
+//GenerateModResponse returns the applicable message response if reaction criteria are met
+func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) {
 	fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", rec.emoji.Name, rec.chID, rec.uID)
+
+	dm := disgord.Message{}
 
 	reactionEvent := &AdminReaction{
 		userID:    rec.uID,
@@ -123,9 +123,9 @@ func (rec *ReactionEventClient) RespondToReaction() error {
 		if reflect.DeepEqual(currentSeenReaction, reactionEvent) {
 			url := ""
 			modName := ""
-			message, err := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
+			message, err := rec.disgordClient.GetMessage(ctx, rec.chID, rec.msgID)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			msgFields := strings.Fields(message.Content)
 
@@ -138,7 +138,7 @@ func (rec *ReactionEventClient) RespondToReaction() error {
 					modName = urlFields[i]
 				}
 			}
-			dm := disgord.Message{
+			dm = disgord.Message{
 				Embeds: []*disgord.Embed{
 					&disgord.Embed{
 						Title:       fmt.Sprintf("**Your request to add %s is being reviewed**", modName),
@@ -152,7 +152,6 @@ func (rec *ReactionEventClient) RespondToReaction() error {
 					},
 				},
 			}
-			message.Author.SendMsg(ctx, rec.disgordSession, &dm)
 			break
 		}
 	}
@@ -161,9 +160,9 @@ func (rec *ReactionEventClient) RespondToReaction() error {
 		if reflect.DeepEqual(currentAcceptedReaction, reactionEvent) {
 			url := ""
 			modName := ""
-			message, err := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
+			message, err := rec.disgordClient.GetMessage(ctx, rec.chID, rec.msgID)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			msgFields := strings.Fields(message.Content)
 
@@ -176,7 +175,7 @@ func (rec *ReactionEventClient) RespondToReaction() error {
 					modName = urlFields[i]
 				}
 			}
-			dm := disgord.Message{
+			dm = disgord.Message{
 				Embeds: []*disgord.Embed{
 					&disgord.Embed{
 						Title:       fmt.Sprintf("**%s ACCEPTED!!**", modName),
@@ -190,7 +189,6 @@ func (rec *ReactionEventClient) RespondToReaction() error {
 					},
 				},
 			}
-			message.Author.SendMsg(ctx, rec.disgordSession, &dm)
 			go deleteMessage(message, 3*time.Second, rec.disgordClient)
 			break
 		}
@@ -201,9 +199,9 @@ func (rec *ReactionEventClient) RespondToReaction() error {
 		if reflect.DeepEqual(currentRejectedReaction, reactionEvent) {
 			url := ""
 			modName := ""
-			message, err := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
+			message, err := rec.disgordClient.GetMessage(ctx, rec.chID, rec.msgID)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			msgFields := strings.Fields(message.Content)
 
@@ -217,7 +215,7 @@ func (rec *ReactionEventClient) RespondToReaction() error {
 				}
 			}
 
-			dm := disgord.Message{
+			dm = disgord.Message{
 				Embeds: []*disgord.Embed{
 					&disgord.Embed{
 						Title:       fmt.Sprintf("**%s Rejected**", modName),
@@ -231,12 +229,11 @@ func (rec *ReactionEventClient) RespondToReaction() error {
 					},
 				},
 			}
-			message.Author.SendMsg(ctx, rec.disgordSession, &dm)
 			go deleteMessage(message, 3*time.Second, rec.disgordClient)
 			break
 		}
 	}
-	return nil
+	return &dm, nil
 }
 
 //ParseReaction bundles up reaction data for easier comparison

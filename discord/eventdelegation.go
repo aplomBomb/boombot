@@ -41,10 +41,19 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 
 // RespondToReaction delegates actions when reactions are added to messages
 func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
-	// user, _ := disgordGlobalClient.GetUser(ctx, data.UserID)
+	user, _ := disgordGlobalClient.GetUser(ctx, data.UserID)
 	// fmt.Printf("Message reaction %+v by user %+v | %+v\n", data.PartialEmoji.Name, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
-	rec := NewReactionEventClient(data.PartialEmoji, data.UserID, data.ChannelID, data.MessageID, disgordGlobalClient, s)
-	rec.RespondToReaction()
+	rec := NewReactionEventClient(data.PartialEmoji, data.UserID, data.ChannelID, data.MessageID, disgordGlobalClient)
+	msg, err := rec.GenerateModResponse()
+	if err != nil {
+		fmt.Printf("\nError generating mod reaction response: %+v\n", err)
+	}
+	//TO-DO Sending the dm here as opposed having it sent via GenerateModResponse for testing purposes
+	// Using it here at least allows me to get full coverage of the reactions logic
+	// The SendMsg method of disgord.User requires session arg which has proven difficult to mock
+	if msg != nil {
+		user.SendMsg(ctx, s, msg)
+	}
 }
 
 // RespondToVoiceChannelUpdate delegates actions when voice state events are triggered
