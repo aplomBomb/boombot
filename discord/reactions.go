@@ -12,63 +12,63 @@ import (
 )
 
 var (
-	seenEmojis = []disgord.Emoji{
-		disgord.Emoji{
+	seenEmojis = []*disgord.Emoji{
+		&disgord.Emoji{
 			Name: "👀",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "eyes",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "monkaEyesZoom",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "eyesFlipped",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "freakouteyes",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "monkaUltraEyes",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "PepeHmm",
 		},
 	}
-	acceptedEmojis = []disgord.Emoji{
-		disgord.Emoji{
+	acceptedEmojis = []*disgord.Emoji{
+		&disgord.Emoji{
 			Name: "✅",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "check",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "👍",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "ablobyes",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "Check",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "seemsgood",
 		},
 	}
-	rejectedEmojis = []disgord.Emoji{
-		disgord.Emoji{
+	rejectedEmojis = []*disgord.Emoji{
+		&disgord.Emoji{
 			Name: "🚫",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "no",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "steve_nope",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "❌",
 		},
-		disgord.Emoji{
+		&disgord.Emoji{
 			Name: "xmark",
 		},
 	}
@@ -78,12 +78,12 @@ var (
 type AdminReaction struct {
 	userID    snowflake.Snowflake
 	channelID snowflake.Snowflake
-	emoji     disgord.Emoji
+	emoji     *disgord.Emoji
 }
 
 // ReactionEventClient defines contextual data regarding a message react event
 type ReactionEventClient struct {
-	emoji         disgord.Emoji
+	emoji         *disgord.Emoji
 	uID           disgord.Snowflake
 	chID          disgord.Snowflake
 	msgID         disgord.Snowflake
@@ -91,7 +91,7 @@ type ReactionEventClient struct {
 }
 
 // NewReactionEventClient returns a pointer to a new ReactionEventClient
-func NewReactionEventClient(emoji disgord.Emoji, uID disgord.Snowflake, chID disgord.Snowflake, msgID disgord.Snowflake, disgordClient disgordiface.DisgordClientAPI) *ReactionEventClient {
+func NewReactionEventClient(emoji *disgord.Emoji, uID disgord.Snowflake, chID disgord.Snowflake, msgID disgord.Snowflake, disgordClient disgordiface.DisgordClientAPI) *ReactionEventClient {
 	return &ReactionEventClient{
 		emoji,
 		uID,
@@ -121,7 +121,10 @@ func (rec *ReactionEventClient) RespondToReaction(s disgord.Session) {
 		if reflect.DeepEqual(currentSeenReaction, reactionEvent) {
 			url := ""
 			modName := ""
-			message, _ := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
+			message, err := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
+			if err != nil {
+				fmt.Printf("\n\nCould not get message data for reaction!: %+v\n\n", err)
+			}
 			msgFields := strings.Fields(message.Content)
 
 			//snag the url and the mod name from the request
@@ -156,7 +159,10 @@ func (rec *ReactionEventClient) RespondToReaction(s disgord.Session) {
 		if reflect.DeepEqual(currentAcceptedReaction, reactionEvent) {
 			url := ""
 			modName := ""
-			message, _ := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
+			message, err := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
+			if err != nil {
+				fmt.Printf("\n\nCould not get message data for reaction!: %+v\n\n", err)
+			}
 			msgFields := strings.Fields(message.Content)
 
 			//snag the url and the mod name from the request
@@ -193,7 +199,10 @@ func (rec *ReactionEventClient) RespondToReaction(s disgord.Session) {
 		if reflect.DeepEqual(currentRejectedReaction, reactionEvent) {
 			url := ""
 			modName := ""
-			message, _ := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
+			message, err := disgordGlobalClient.GetMessage(ctx, rec.chID, rec.msgID)
+			if err != nil {
+				fmt.Printf("\n\nCould not get message data for reaction!: %+v\n\n", err)
+			}
 			msgFields := strings.Fields(message.Content)
 
 			//snag the url and the mod name from the request
@@ -228,7 +237,7 @@ func (rec *ReactionEventClient) RespondToReaction(s disgord.Session) {
 }
 
 //ParseReaction bundles up reaction data for easier comparison
-func createReactions(emojis []disgord.Emoji) []*AdminReaction {
+func createReactions(emojis []*disgord.Emoji) []*AdminReaction {
 	reactions := []*AdminReaction{}
 	for _, emoji := range emojis {
 		reactions = append(reactions, &AdminReaction{

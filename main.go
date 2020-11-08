@@ -15,9 +15,9 @@ func main() {
 
 	client := disgord.New(disgord.Config{
 		BotToken: os.Getenv("BOOMBOT_TOKEN"),
+		// Will use this in future disgord version once it actually works
 		// Cache:    &disgord.CacheNop{},
 	})
-	// run(client)
 
 	discord.BotRun(client, conf)
 }

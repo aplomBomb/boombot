@@ -18,18 +18,18 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 // RespondToMessage delegates actions when messages are created
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
-	// mec := NewMessageEventClient(data.Message, client)
+	mec := NewMessageEventClient(data.Message, disgordGlobalClient)
 
-	// mec.FilterNonModLinks()
+	mec.FilterNonModLinks()
 
 }
 
 // RespondToReaction delegates actions when reactions are added to messages
 func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 
-	rec := NewReactionEventClient(*data.PartialEmoji, data.UserID, data.ChannelID, data.MessageID, disgordGlobalClient)
+	rec := NewReactionEventClient(data.PartialEmoji, data.UserID, data.ChannelID, data.MessageID, disgordGlobalClient)
 
-	rec.RespondToReaction
+	rec.RespondToReaction(s)
 }
 
 // func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {

@@ -13,3 +13,7 @@ type DisgordClientAPI interface {
 	DeleteMessage(ctx context.Context, channelID, msgID disgord.Snowflake, flags ...disgord.Flag) (err error)
 	VoiceConnect(guildID, channelID disgord.Snowflake) (disgord.VoiceConnection, error)
 }
+
+type DisgordUserAPI interface {
+	SendMsg(ctx context.Context, session disgord.Session, message *disgord.Message) (channel *disgord.Channel, msg *disgord.Message, err error)
+}
