@@ -61,5 +61,6 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 
 // RespondToVoiceChannelUpdate delegates actions when voice state events are triggered
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
-
+	fmt.Printf("\nChannelID: %+v\n", data.ChannelID)
+	s.VoiceConnect(data.GuildID, data.ChannelID)
 }
