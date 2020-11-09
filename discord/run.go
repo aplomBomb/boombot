@@ -99,6 +99,6 @@ func deleteMessage(resp *disgord.Message, sleep time.Duration, client discordifa
 		resp.ID,
 	)
 	if err != nil {
-		fmt.Println("error deleting message :", err)
+		fmt.Printf("\nError deleting message :%+v \n", err)
 	}
 }

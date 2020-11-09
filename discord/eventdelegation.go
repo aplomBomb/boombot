@@ -14,7 +14,7 @@ import (
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	user, err := disgordGlobalClient.GetUser(ctx, data.Message.Author.ID)
 	if err != nil {
-		fmt.Println("Failed to fetch user")
+		fmt.Println("Failed to fetch user (probably a webhook)")
 		user = &disgord.User{
 			Username: "unknown",
 		}
@@ -29,14 +29,17 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	user, err := disgordGlobalClient.GetUser(ctx, data.Message.Author.ID)
 	if err != nil {
-		fmt.Println("Failed to fetch user (probably a webhook message)")
+		fmt.Println("Failed to fetch user (probably a webhook)")
 		user = &disgord.User{
 			Username: "unknown",
 		}
 	}
 	fmt.Printf("Message %+v by user %+v | %+v\n", data.Message.Content, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	mec := NewMessageEventClient(data.Message, disgordGlobalClient)
-	mec.FilterNonModLinks()
+	err = mec.FilterNonModLinks()
+	if err != nil {
+		fmt.Printf("\nError filtering non-mod link: %+v\n", err)
+	}
 }
 
 // RespondToReaction delegates actions when reactions are added to messages
