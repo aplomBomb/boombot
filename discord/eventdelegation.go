@@ -22,7 +22,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	cec := NewCommandEventClient(data.Message, disgordGlobalClient, ytService.Search)
 	command, _ := cec.DisectCommand()
 	fmt.Printf("Command %+v by user %+v | %+v\n", command, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
-	cec.RespondToCommand()
+	cec.Delegate()
 }
 
 // RespondToMessage delegates actions when messages are created
@@ -62,5 +62,8 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 // RespondToVoiceChannelUpdate delegates actions when voice state events are triggered
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 	fmt.Printf("\nChannelID: %+v\n", data.ChannelID)
-	s.VoiceConnect(data.GuildID, data.ChannelID)
+	// data.Member
+	// s.UpdateStatusString("Suckin Farts")
+	// s.VoiceConnect(data.GuildID, data.ChannelID)
+
 }

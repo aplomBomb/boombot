@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/andersfylling/disgord"
 	"github.com/aplombomb/boombot/config"
 	"github.com/aplombomb/boombot/discord"
@@ -14,7 +12,7 @@ func main() {
 	conf := config.Retrieve("./config/config.json")
 
 	client := disgord.New(disgord.Config{
-		BotToken: os.Getenv("BOOMBOT_TOKEN"),
+		BotToken: conf.BotToken,
 		// Will use this in future disgord version once it actually works
 		// Cache:    &disgord.CacheNop{},
 	})

@@ -25,15 +25,15 @@ func NewCommandEventClient(data *disgord.Message, disgordClient disgordiface.Dis
 	}
 }
 
-//RespondToCommand handles all messages that begin with the configured prefix
-func (cec *CommandEventClient) RespondToCommand() {
+// Delegate evaluates commands and sends them to be processed
+func (cec *CommandEventClient) Delegate() {
 	cmd, _ := cec.DisectCommand()
 	switch cmd {
 	case "help", "h", "?", "wtf":
 		hcc := NewHelpCommandClient(cec.data, cec.disgordClient)
 		hcc.SendHelpMsg()
 	case "play":
-		return
+		// cec.data.Author
 	default:
 
 		uc := NewUnknownCommandClient(cec.data, cec.disgordClient)
