@@ -25,10 +25,8 @@ WORKDIR /dist
 # Copy binary from build to main folder
 RUN cp /boombot/main .
 
+# ADD config directory for auth
 ADD /config /dist/config/
-
-# Export necessary port
-# EXPOSE 3000
 
 # Command to run when starting the container
 CMD ["/dist/main"]
