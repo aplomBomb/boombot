@@ -13,6 +13,7 @@ func main() {
 	// Get the config from config.json
 	conf := config.Retrieve("./config/config.json")
 
+	// Fetch auth tokens from SecretsManager
 	creds, err := config.GetSecrets()
 	if err != nil {
 		log.Fatalf("Error retrieving secrets: %+v", err)
