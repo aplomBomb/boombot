@@ -28,6 +28,7 @@ func New(ytS *youtube.Service, query string, creator *disgord.User) (*YoutubeCli
 func (yt *YoutubeClient) Search(query string) string {
 	// result, err := yt.service.Search()
 	return "test"
+
 }
 
 // func (yt *YoutubeClient) VerifyVoiceChat(sess disgord.Session) bool {
