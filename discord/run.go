@@ -45,13 +45,13 @@ func init() {
 }
 
 // BotRun | Start the bot and handle events
-func BotRun(client *disgord.Client, cf config.ConfJSONStruct) {
+func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.BoombotCreds) {
 	// sets the config for the whole disc package
 	conf = cf
 
 	disgordGlobalClient = client
 
-	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(cf.YoutubeToken))
+	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(creds.YoutubeToken))
 
 	// filter incomming messages & set the prefix
 	filter, _ := std.NewMsgFilter(ctx, client)

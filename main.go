@@ -24,5 +24,5 @@ func main() {
 		// Cache:    &disgord.CacheNop{},
 	})
 
-	discord.BotRun(client, conf)
+	discord.BotRun(client, conf, creds)
 }
