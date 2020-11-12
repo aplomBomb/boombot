@@ -63,7 +63,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 	fmt.Printf("\nChannelID: %+v\n", data.ChannelID)
 	// data.Member
-	// s.UpdateStatusString("Suckin Farts")
+	s.UpdateStatusString("music")
 	// s.VoiceConnect(data.GuildID, data.ChannelID)
 
 }
