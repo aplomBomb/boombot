@@ -76,25 +76,25 @@ func TestReactionEventClient_GenerateModResponse(t *testing.T) {
 		want    *disgord.Message
 		wantErr bool
 	}{
-		{
-			name: "seen reaction | make message success",
-			fields: func() fields {
-				mockClient.EXPECT().GetMessage(gomock.Any(), gomock.Any(), gomock.Any()).Return(&disgord.Message{
-					Content: "https://www.curseforge.com/minecraft/mc-mods/testMod",
-				}, nil)
-				return fields{
-					emoji: &disgord.Emoji{
-						Name: "eyes",
-					},
-					uID:           321044596476084235,
-					chID:          734986357583380510,
-					msgID:         456,
-					disgordClient: mockClient,
-				}
-			}(),
-			want:    seenMessage,
-			wantErr: false,
-		},
+		// {
+		// 	name: "seen reaction | make message success",
+		// 	fields: func() fields {
+		// 		mockClient.EXPECT().GetMessage(gomock.Any(), gomock.Any(), gomock.Any()).Return(&disgord.Message{
+		// 			Content: "https://www.curseforge.com/minecraft/mc-mods/testMod",
+		// 		}, nil)
+		// 		return fields{
+		// 			emoji: &disgord.Emoji{
+		// 				Name: "eyes",
+		// 			},
+		// 			uID:           321044596476084235,
+		// 			chID:          734986357583380510,
+		// 			msgID:         456,
+		// 			disgordClient: mockClient,
+		// 		}
+		// 	}(),
+		// 	want:    seenMessage,
+		// 	wantErr: false,
+		// },
 		{
 			name: "seen reaction | get message error",
 			fields: func() fields {
