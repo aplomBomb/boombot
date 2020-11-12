@@ -55,6 +55,7 @@ func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.Boom
 
 	// filter incomming messages & set the prefix
 	filter, _ := std.NewMsgFilter(ctx, client)
+
 	filter.SetPrefix(cf.Prefix)
 	//create a handler and bind it to new command events
 	go client.On(disgord.EvtMessageCreate,
