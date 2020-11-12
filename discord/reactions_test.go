@@ -18,20 +18,20 @@ func TestReactionEventClient_GenerateModResponse(t *testing.T) {
 	c := gomock.NewController(t)
 	mockClient := clientMock.NewMockDisgordClientAPI(c)
 
-	seenMessage := &disgord.Message{
-		Embeds: []*disgord.Embed{
-			&disgord.Embed{
-				Title:       fmt.Sprintf("**Your request to add %s is being reviewed**", "testMod"),
-				URL:         "https://www.curseforge.com/minecraft/mc-mods/testMod",
-				Description: fmt.Sprintf("*Bomb is reviewing your request to add %s*", "testMod"),
-				Color:       0xcc0000,
-				Footer: &disgord.EmbedFooter{
-					Text:    "Sit tight partner!",
-					IconURL: "https://cdn.discordapp.com/emojis/745396324215685201.gif?v=1",
-				},
-			},
-		},
-	}
+	// seenMessage := &disgord.Message{
+	// 	Embeds: []*disgord.Embed{
+	// 		&disgord.Embed{
+	// 			Title:       fmt.Sprintf("**Your request to add %s is being reviewed**", "testMod"),
+	// 			URL:         "https://www.curseforge.com/minecraft/mc-mods/testMod",
+	// 			Description: fmt.Sprintf("*Bomb is reviewing your request to add %s*", "testMod"),
+	// 			Color:       0xcc0000,
+	// 			Footer: &disgord.EmbedFooter{
+	// 				Text:    "Sit tight partner!",
+	// 				IconURL: "https://cdn.discordapp.com/emojis/745396324215685201.gif?v=1",
+	// 			},
+	// 		},
+	// 	},
+	// }
 
 	acceptedMessage := &disgord.Message{
 		Embeds: []*disgord.Embed{
