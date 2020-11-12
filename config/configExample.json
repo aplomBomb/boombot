@@ -1,5 +1,3 @@
 {
-  "Prefix": "**",
-  "Bot_Token": "BOT_TOKEN_HERE",
-  "YoutubeToken": "YOUTUBE_API_TOKEN_HERE"
+  "Prefix": "__"
 }
