@@ -62,8 +62,30 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 // RespondToVoiceChannelUpdate delegates actions when voice state events are triggered
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 	fmt.Printf("\nChannelID: %+v\n", data.ChannelID)
-	// data.Member
+
 	s.UpdateStatusString("music")
+
+	u, err := data.Member.GetUser(ctx, s)
+	if err != nil {
+		fmt.Printf("\nError getting user: %+v\n", err)
+	}
+	fmt.Printf("\nUserObject: %+v", u)
+
+	channels, err := s.GetGuildChannels(ctx, data.GuildID)
+	if err != nil {
+		fmt.Printf("\nError getting guild channels: %+v\n", err)
+	}
+
+	for i, v := range channels {
+		fmt.Printf("\nChannel %+v: %+v\n", i, v)
+	}
+
+	channel, err := s.GetChannel(ctx, channels[0].ID)
+	if err != nil {
+		fmt.Printf("\nError getting guild channel: %+v\n", err)
+	}
+	fmt.Printf("\nFetched Channel type: %+v\n", channel.Type)
+
 	// s.VoiceConnect(data.GuildID, data.ChannelID)
 
 }
