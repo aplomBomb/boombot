@@ -16,7 +16,10 @@ var voiceChannelCache = make(map[disgord.Snowflake]disgord.Snowflake)
 
 // RespondToCommand delegates actions when commands are issued
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
-	fmt.Printf("\nvoiceChannelCache: %+v\n", voiceChannelCache)
+	cec := NewCommandEventClient(data.Message, disgordGlobalClient)
+	command, args := cec.DisectCommand()
+
+	// fmt.Printf("\nvCommand: %+v | Args: %+v\n", command, args)
 
 	user, err := disgordGlobalClient.GetUser(ctx, data.Message.Author.ID)
 	if err != nil {
@@ -25,10 +28,16 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 			Username: "unknown",
 		}
 	}
-	cec := NewCommandEventClient(data.Message, disgordGlobalClient, ytService.Search)
-	command, _ := cec.DisectCommand()
+
 	fmt.Printf("Command %+v by user %+v | %+v\n", command, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
-	cec.Delegate()
+	switch command {
+	case "play":
+		ytc, err := yt.NewYoutbeClient()
+		yt.ParseQuery(args)
+	default:
+		cec.Delegate()
+	}
+
 }
 
 // RespondToMessage delegates actions when messages are created
