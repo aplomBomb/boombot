@@ -3,9 +3,11 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
@@ -18,12 +20,23 @@ type BoombotCreds struct {
 
 // GetSecrets retrieves all tokens required by the bot via AWS SecretsManager
 func GetSecrets() (*BoombotCreds, error) {
+	awsSession := &session.Session{}
 	secretName := "boombot_creds"
 	region := "us-east-2"
 
-	awsSession := session.Must(session.NewSessionWithOptions(session.Options{
-		Profile: "personal",
-	}))
+	if os.Getenv("ENV") == "container" {
+		fmt.Println("ENV CONTAINER")
+		awsSession, _ = session.NewSession(&aws.Config{
+			Region:      aws.String("us-west-2"),
+			Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), ""),
+		})
+
+	} else {
+		fmt.Println("ENV LOCAL")
+		awsSession = session.Must(session.NewSessionWithOptions(session.Options{
+			Profile: "personal",
+		}))
+	}
 
 	//Create a Secrets Manager client
 	svc := secretsmanager.New(awsSession,
