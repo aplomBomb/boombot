@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/andersfylling/disgord"
 	"github.com/aplombomb/boombot/config"
@@ -12,7 +14,7 @@ func main() {
 
 	// Get the config from config.json
 	conf := config.Retrieve("./config/config.json")
-
+	fmt.Printf("\naccess key id: %+v\n", os.Getenv("AWS_ACCESS_KEY_ID"))
 	// Fetch auth tokens from SecretsManager
 	creds, err := config.GetSecrets()
 	if err != nil {

@@ -2,6 +2,8 @@ package discord
 
 import (
 	"fmt"
+	"log"
+	"net/http"
 	"strings"
 
 	"github.com/andersfylling/disgord"
@@ -63,11 +65,11 @@ func (cec *CommandEventClient) Delegate() {
 		// printIDs("Videos", videos)
 		// printIDs("Channels", channels)
 		// printIDs("Playlists", playlists)
-		// resp, err := http.Get("http://localhost:8080/mp3/https://www.youtube.com/watch?v=cF1zJYkBW4A")
-		// if err != nil {
-		// 	log.Fatalf("\n\n\nERROR: %+v\n\n\n", err)
-		// }
-		// fmt.Printf("\n\n\nPayload: %+v\n\n\n", resp)
+		resp, err := http.Get("http://localhost:8080/mp3/https://www.youtube.com/watch?v=cF1zJYkBW4A")
+		if err != nil {
+			log.Fatalf("\n\n\nERROR: %+v\n\n\n", err)
+		}
+		fmt.Printf("\n\n\nPayload: %+v\n\n\n", resp)
 
 	default:
 

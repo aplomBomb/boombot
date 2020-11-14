@@ -3,9 +3,11 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
@@ -18,23 +20,31 @@ type BoombotCreds struct {
 
 // GetSecrets retrieves all tokens required by the bot via AWS SecretsManager
 func GetSecrets() (*BoombotCreds, error) {
+	awsSession := &session.Session{}
 	secretName := "boombot_creds"
 	region := "us-east-2"
 
-	awsSession := session.Must(session.NewSessionWithOptions(session.Options{
-		Profile: "personal",
-	}))
+	if os.Getenv("ENV") == "container" {
+		fmt.Println("ENV CONTAINER")
+		awsSession, _ = session.NewSession(&aws.Config{
+			Region:      aws.String("us-east-2"),
+			Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), ""),
+		})
+
+	} else {
+		fmt.Println("ENV LOCAL")
+		awsSession = session.Must(session.NewSessionWithOptions(session.Options{
+			Profile: "personal",
+		}))
+	}
 
 	//Create a Secrets Manager client
 	svc := secretsmanager.New(awsSession,
 		aws.NewConfig().WithRegion(region))
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId:     aws.String(secretName),
-		VersionStage: aws.String("AWSCURRENT"), // VersionStage defaults to AWSCURRENT if unspecified
+		VersionStage: aws.String("AWSCURRENT"),
 	}
-
-	// In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
-	// See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
 
 	result, err := svc.GetSecretValue(input)
 	if err != nil {
@@ -69,7 +79,6 @@ func GetSecrets() (*BoombotCreds, error) {
 	}
 
 	// Decrypts secret using the associated KMS CMK.
-	// Depending on whether the secret is a string or binary, one of these fields will be populated.
 	var secretString string
 	if result.SecretString != nil {
 		secretString = *result.SecretString
