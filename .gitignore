@@ -4,3 +4,4 @@ boombot
 config.json
 coverage.out
 
+*.mp3
