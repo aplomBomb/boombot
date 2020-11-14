@@ -67,18 +67,17 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 
 // RespondToVoiceChannelUpdate updates the server's voice channel member cache every time an update is emitted
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
-	// TO-DO make cache into a map: [userID]channelID
-	// Delete entry when user leaves a voice channel \ when channelID on event is 0
-
 	channel, err := s.GetChannel(ctx, data.ChannelID)
 	if err != nil {
 		fmt.Printf("\nError getting channel: %+v\n", err)
 	}
 
 	switch data.ChannelID {
+	// If ChannelID is 0, then a user left a channel, delete them from the cache
 	case 0:
 		fmt.Printf("\nUser left %+v\n", voiceChannelCache[data.UserID])
 		delete(voiceChannelCache, data.UserID)
+		// Add userID and ChannelID to the voiceChannelCache upon join
 	default:
 		fmt.Printf("\nUser joined %+v\n", channel.Name)
 		voiceChannelCache[data.UserID] = channel.ID

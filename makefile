@@ -12,3 +12,8 @@ mocks:
 runtests:
 	@echo "Running tests..."
 	@go test ./...
+
+image: 
+	@echo "Building docker image"...
+	@docker build . -t boombot-local
+	
