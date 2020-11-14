@@ -27,7 +27,7 @@ func GetSecrets() (*BoombotCreds, error) {
 	if os.Getenv("ENV") == "container" {
 		fmt.Println("ENV CONTAINER")
 		awsSession, _ = session.NewSession(&aws.Config{
-			Region:      aws.String("us-west-2"),
+			Region:      aws.String("us-east-2"),
 			Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), ""),
 		})
 
@@ -43,11 +43,8 @@ func GetSecrets() (*BoombotCreds, error) {
 		aws.NewConfig().WithRegion(region))
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId:     aws.String(secretName),
-		VersionStage: aws.String("AWSCURRENT"), // VersionStage defaults to AWSCURRENT if unspecified
+		VersionStage: aws.String("AWSCURRENT"),
 	}
-
-	// In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
-	// See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
 
 	result, err := svc.GetSecretValue(input)
 	if err != nil {
@@ -82,7 +79,6 @@ func GetSecrets() (*BoombotCreds, error) {
 	}
 
 	// Decrypts secret using the associated KMS CMK.
-	// Depending on whether the secret is a string or binary, one of these fields will be populated.
 	var secretString string
 	if result.SecretString != nil {
 		secretString = *result.SecretString
