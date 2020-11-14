@@ -83,16 +83,14 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 
 // RespondToVoiceChannelUpdate updates the server's voice channel member cache every time an update is emitted
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
-
+	// TO-DO make cache into a map: [userID]channelID
+	// Delete entry when user leaves a voice channel \ when channelID on event is 0
 	newVoiceChannelCache := VoiceChannels{}
-
 	channels, err := s.GetGuildChannels(ctx, data.GuildID)
 	if err != nil {
 		fmt.Printf("\nError getting guild channels: %+v\n", err)
 	}
-
 	for _, v := range channels {
-
 		if v.Type == 2 {
 			channel, err := s.GetChannel(ctx, v.ID)
 			if err != nil {
@@ -108,7 +106,6 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 			voiceChannelCache = newVoiceChannelCache
 		}
 	}
-
 	u, err := data.Member.GetUser(ctx, s)
 	if err != nil {
 		fmt.Printf("\nError getting user: %+v\n", err)
