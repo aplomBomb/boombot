@@ -9,7 +9,6 @@ import (
 
 // TO-DO All of the voice related logic will be moved to the yt package
 // Getting everything working in here first
-
 var voiceChannelCache = make(map[disgord.Snowflake]disgord.Snowflake)
 
 // Using this for access to the global clients FOR NOW as passing it through the handlers has proven tricky
@@ -18,9 +17,6 @@ var voiceChannelCache = make(map[disgord.Snowflake]disgord.Snowflake)
 // RespondToCommand delegates actions when commands are issued
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	fmt.Printf("\nvoiceChannelCache: %+v\n", voiceChannelCache)
-	for i, v := range voiceChannelCache {
-		fmt.Printf("\nvoiceChannelCache channel %+v users: %+v\n", i, v)
-	}
 
 	user, err := disgordGlobalClient.GetUser(ctx, data.Message.Author.ID)
 	if err != nil {
@@ -87,33 +83,5 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 		fmt.Printf("\nUser joined %+v\n", channel.Name)
 		voiceChannelCache[data.UserID] = channel.ID
 	}
-
-	// channels, err := s.GetGuildChannels(ctx, data.GuildID)
-	// if err != nil {
-	// 	fmt.Printf("\nError getting guild channels: %+v\n", err)
-	// }
-	// for _, v := range channels {
-	// 	if v.Type == 2 {
-	// 		channel, err := s.GetChannel(ctx, v.ID)
-	// 		if err != nil {
-	// 			fmt.Printf("\nError getting guild channel: %+v\n", err)
-	// 		}
-	// 		fmt.Printf("\nVoice Channel recipients: %+v", channel.Recipients)
-	// 		newChannelDetails := &VoiceChannel{
-	// 			ID:    v.ID,
-	// 			Name:  v.Name,
-	// 			Users: channel.Recipients,
-	// 		}
-	// 		newVoiceChannelCache.Channels = append(newVoiceChannelCache.Channels, newChannelDetails)
-	// 		voiceChannelCache = newVoiceChannelCache
-	// 	}
-	// }
-	// u, err := data.Member.GetUser(ctx, s)
-	// if err != nil {
-	// 	fmt.Printf("\nError getting user: %+v\n", err)
-	// }
-	// fmt.Printf("\nUserObject: %+v", u)
-
-	// s.VoiceConnect(data.GuildID, data.ChannelID)
 
 }
