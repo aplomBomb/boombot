@@ -10,8 +10,15 @@ type Client struct {
 }
 
 // NewYoutubeClient returns a pointer to a new YtClient
-func NewYoutubeClient() *Client {
-	return &Client{}
+func NewYoutubeClient(ss youtubeIface.YoutubeSearchServiceAPI) *Client {
+	return &Client{
+		YoutubeClient: ss,
+	}
+}
+
+// CreateQuery returns a string search query based off the provided play command arguments
+func (ytc *Client) CreateQuery(args []string) (string, error) {
+	return "success", nil
 }
 
 // queries := flag.String("query", "deadmau5", "Search term")

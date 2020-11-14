@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/api/youtube/v3"
+
 	"github.com/andersfylling/disgord"
+	yt "github.com/aplombomb/boombot/youtube"
 )
 
 // TO-DO All of the voice related logic will be moved to the yt package
@@ -32,8 +35,12 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	fmt.Printf("Command %+v by user %+v | %+v\n", command, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	switch command {
 	case "play":
-		ytc, err := yt.NewYoutbeClient()
-		yt.ParseQuery(args)
+		ss := youtube.NewSearchService(ytService)
+		ytc := yt.NewYoutubeClient(ss)
+		query, _ := ytc.CreateQuery(args)
+
+		fmt.Println(query)
+
 	default:
 		cec.Delegate()
 	}
