@@ -1,9 +1,9 @@
 package yt
 
-import (
-	"fmt"
-)
+// import (
+// 	"fmt"
+// )
 
-func PrintIt(ytC YoutubeClient) {
-	fmt.Println(ytC)
-}
+// func PrintIt(ytC YoutubeClient) {
+// 	fmt.Println(ytC)
+// }

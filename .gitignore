@@ -5,3 +5,4 @@ config.json
 coverage.out
 
 *.mp3
+*.dca

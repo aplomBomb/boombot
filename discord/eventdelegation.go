@@ -2,9 +2,11 @@ package discord
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/andersfylling/disgord"
+	"github.com/jonas747/dca"
 )
 
 // TO-DO All of the voice related logic will be moved to the yt package
@@ -16,7 +18,10 @@ var voiceChannelCache = make(map[disgord.Snowflake]disgord.Snowflake)
 
 // RespondToCommand delegates actions when commands are issued
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
-	fmt.Printf("\nvoiceChannelCache: %+v\n", voiceChannelCache)
+	cec := NewCommandEventClient(data.Message, disgordGlobalClient)
+	command, _ := cec.DisectCommand()
+
+	// fmt.Printf("\nvCommand: %+v | Args: %+v\n", command, args)
 
 	user, err := disgordGlobalClient.GetUser(ctx, data.Message.Author.ID)
 	if err != nil {
@@ -25,10 +30,56 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 			Username: "unknown",
 		}
 	}
-	cec := NewCommandEventClient(data.Message, disgordGlobalClient, ytService.Search)
-	command, _ := cec.DisectCommand()
+
 	fmt.Printf("Command %+v by user %+v | %+v\n", command, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
-	cec.Delegate()
+	switch command {
+	case "play":
+
+		// ss := youtube.NewSearchService(ytService)
+		// ytc := yt.NewYoutubeClient(ss)
+		// payload, _ := ytc.SearchAndDownload(args[0])
+
+		// out, err := os.Create(fmt.Sprintf("%+v.mp3", args[0]))
+		// if err != nil {
+		// 	// panic?
+		// }
+
+		encodeSess, err := dca.EncodeFile("tKi9Z-f6qX4.mp3", dca.StdEncodeOptions)
+		if err != nil {
+			fmt.Printf("\nERROR ENCODING: %+v\n", err)
+		}
+
+		// io.Copy(out, payload.Body)
+
+		vc, err := s.VoiceConnect(data.Message.GuildID, 737468810222895125)
+		if err != nil {
+			fmt.Printf("\nERROR CONNECTING TO VOICE CHANNEL: %+v\n", err)
+		}
+		err = vc.StartSpeaking()
+		if err != nil {
+			fmt.Printf("\nERROR SPEAKING: %+v\n", err)
+		}
+		song, err := os.Open("./discord/strobe.dca")
+		fmt.Printf("\nERROR OPENING: %+v\n", err)
+		fmt.Printf("\nSONG: %+v\n", song)
+		err = vc.SendDCA(encodeSess)
+		if err != nil {
+			fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
+		}
+
+		time.Sleep(5 * time.Second)
+		vc.StopSpeaking()
+		time.Sleep(5 * time.Second)
+		s.Disconnect()
+
+		// defer out.Close()
+		// defer encodeSess.Cleanup()
+		// defer payload.Body.Close()
+
+	default:
+		cec.Delegate()
+	}
+
 }
 
 // RespondToMessage delegates actions when messages are created
