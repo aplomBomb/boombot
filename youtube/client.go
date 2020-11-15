@@ -1,6 +1,10 @@
 package yt
 
 import (
+	"fmt"
+	"log"
+	"net/http"
+
 	youtubeIface "github.com/aplombomb/boombot/youtube/ifaces"
 )
 
@@ -16,9 +20,24 @@ func NewYoutubeClient(ss youtubeIface.YoutubeSearchServiceAPI) *Client {
 	}
 }
 
-// CreateQuery returns a string search query based off the provided play command arguments
-func (ytc *Client) CreateQuery(args []string) (string, error) {
-	return "success", nil
+// SearchAndDownload returns a string search query based off the provided play command arguments
+func (ytc *Client) SearchAndDownload(arg string) (*http.Response, error) {
+
+	resp, err := http.Get(fmt.Sprintf("http://localhost:8080/mp3/https://www.youtube.com/watch?v=%+v", arg))
+	if err != nil {
+		log.Fatalf("\n\n\nERROR: %+v\n\n\n", err)
+	}
+	fmt.Printf("\n\n\nPayload: %+v\n\n\n", resp)
+
+	// for _, v := range args {
+
+	// 	if strings.Contains(v, "https://www.youtube.com/watch") {
+	// 		return v, nil
+	// 	}
+
+	// }
+
+	return resp, nil
 }
 
 // queries := flag.String("query", "deadmau5", "Search term")
