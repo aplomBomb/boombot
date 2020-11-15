@@ -2,6 +2,7 @@ package discord
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/andersfylling/disgord"
@@ -35,7 +36,6 @@ func (vcc *VoiceChannelCache) UpdateCache(chID disgord.Snowflake, uID disgord.Sn
 	case 0:
 		delete(vcCache.Cache, uID)
 	default:
-
 		vcCache.Cache[uID] = chID
 	}
 }
@@ -48,7 +48,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	cec := NewCommandEventClient(data.Message, disgordGlobalClient)
 	command, args := cec.DisectCommand()
 
-	// fmt.Printf("\nvCommand: %+v | Args: %+v\n", command, args)
+	fmt.Printf("\nvUserID: %+v\n", data.Message.Author.ID)
 
 	user, err := disgordGlobalClient.GetUser(ctx, data.Message.Author.ID)
 	if err != nil {
@@ -64,22 +64,44 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 		ss := youtube.NewSearchService(ytService)
 		ytc := yt.NewYoutubeClient(ss)
-		file, _ := ytc.SearchAndDownload(args[0])
+		filename, err := ytc.SearchAndDownload(args[0])
+		if err != nil {
+			fmt.Printf("\nERROR WITH FILE: %+v\n", err)
+		}
 
-		encodeSess, err := dca.EncodeFile(file.Name(), dca.StdEncodeOptions)
+		fmt.Printf("\nFILENAME: %+v\n", filename)
+
+		encodeSess, err := dca.EncodeFile(filename, &dca.EncodeOptions{
+			Volume:           256,
+			Channels:         2,
+			FrameRate:        48000,
+			FrameDuration:    20,
+			Bitrate:          64,
+			Application:      "audio",
+			CompressionLevel: 10,
+			PacketLoss:       1,
+			BufferedFrames:   1000, // At 20ms frames that's 2s
+			VBR:              true,
+			StartTime:        0,
+			RawOutput:        true,
+		})
 		if err != nil {
 			fmt.Printf("\nERROR ENCODING: %+v\n", err)
 		}
 
-		vc, err := s.VoiceConnect(data.Message.GuildID, 737468810222895125)
+		vc, err := s.VoiceConnect(data.Message.GuildID, vcCache.Cache[data.Message.Author.ID])
 		if err != nil {
 			fmt.Printf("\nERROR CONNECTING TO VOICE CHANNEL: %+v\n", err)
+			return
 		}
 		err = vc.StartSpeaking()
 		if err != nil {
 			fmt.Printf("\nERROR SPEAKING: %+v\n", err)
 		}
 		err = vc.SendDCA(encodeSess)
+		if err := recover(); err != nil {
+			log.Println("panic occurred:", err)
+		}
 		if err != nil {
 			fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
 		}
@@ -133,20 +155,5 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 
 // RespondToVoiceChannelUpdate updates the server's voice channel cache every time an update is emitted
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
-	channel, err := s.GetChannel(ctx, data.ChannelID)
-	if err != nil {
-		fmt.Printf("\nError getting channel: %+v\n", err)
-	}
-
-	switch data.ChannelID {
-	// If ChannelID is 0, then a user left a channel, delete them from the cache
-	case 0:
-		fmt.Printf("\nUser left %+v\n", vcCache.Cache[data.UserID])
-		delete(vcCache.Cache, data.UserID)
-		// Add userID and ChannelID to the voiceChannelCache upon join
-	default:
-		fmt.Printf("\nUser joined %+v\n", channel.Name)
-		vcCache.Cache[data.UserID] = channel.ID
-	}
-
+	vcCache.UpdateCache(data.ChannelID, data.UserID)
 }
