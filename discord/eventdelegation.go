@@ -2,16 +2,43 @@ package discord
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/andersfylling/disgord"
+	yt "github.com/aplombomb/boombot/youtube"
 	"github.com/jonas747/dca"
+	"google.golang.org/api/youtube/v3"
 )
 
 // TO-DO All of the voice related logic will be moved to the yt package
 // Getting everything working in here first
-var voiceChannelCache = make(map[disgord.Snowflake]disgord.Snowflake)
+
+// VoiceChannelCache keeps a map record of userID's and the channelID that user currently belongs to
+type VoiceChannelCache struct {
+	Cache map[disgord.Snowflake]disgord.Snowflake
+}
+
+// NewVoiceChannelCache return a pointer to a new voicechannelcache
+func NewVoiceChannelCache() *VoiceChannelCache {
+	cacheMap := make(map[disgord.Snowflake]disgord.Snowflake)
+	return &VoiceChannelCache{
+		Cache: cacheMap,
+	}
+}
+
+var vcCache = NewVoiceChannelCache()
+
+// UpdateCache updates the voicechannel cache based upon the set channel id on voice state updates
+// A channelID of 0 means a user left, in that case remove them from the cache
+func (vcc *VoiceChannelCache) UpdateCache(chID disgord.Snowflake, uID disgord.Snowflake) {
+	switch chID {
+	case 0:
+		delete(vcCache.Cache, uID)
+	default:
+
+		vcCache.Cache[uID] = chID
+	}
+}
 
 // Using this for access to the global clients FOR NOW as passing it through the handlers has proven tricky
 // TO-DO find a solution to get rid of the global variables, including the client
@@ -19,7 +46,7 @@ var voiceChannelCache = make(map[disgord.Snowflake]disgord.Snowflake)
 // RespondToCommand delegates actions when commands are issued
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	cec := NewCommandEventClient(data.Message, disgordGlobalClient)
-	command, _ := cec.DisectCommand()
+	command, args := cec.DisectCommand()
 
 	// fmt.Printf("\nvCommand: %+v | Args: %+v\n", command, args)
 
@@ -35,21 +62,14 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	switch command {
 	case "play":
 
-		// ss := youtube.NewSearchService(ytService)
-		// ytc := yt.NewYoutubeClient(ss)
-		// payload, _ := ytc.SearchAndDownload(args[0])
+		ss := youtube.NewSearchService(ytService)
+		ytc := yt.NewYoutubeClient(ss)
+		file, _ := ytc.SearchAndDownload(args[0])
 
-		// out, err := os.Create(fmt.Sprintf("%+v.mp3", args[0]))
-		// if err != nil {
-		// 	// panic?
-		// }
-
-		encodeSess, err := dca.EncodeFile("tKi9Z-f6qX4.mp3", dca.StdEncodeOptions)
+		encodeSess, err := dca.EncodeFile(file.Name(), dca.StdEncodeOptions)
 		if err != nil {
 			fmt.Printf("\nERROR ENCODING: %+v\n", err)
 		}
-
-		// io.Copy(out, payload.Body)
 
 		vc, err := s.VoiceConnect(data.Message.GuildID, 737468810222895125)
 		if err != nil {
@@ -59,9 +79,6 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		if err != nil {
 			fmt.Printf("\nERROR SPEAKING: %+v\n", err)
 		}
-		song, err := os.Open("./discord/strobe.dca")
-		fmt.Printf("\nERROR OPENING: %+v\n", err)
-		fmt.Printf("\nSONG: %+v\n", song)
 		err = vc.SendDCA(encodeSess)
 		if err != nil {
 			fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
@@ -72,9 +89,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		time.Sleep(5 * time.Second)
 		s.Disconnect()
 
-		// defer out.Close()
-		// defer encodeSess.Cleanup()
-		// defer payload.Body.Close()
+		defer encodeSess.Cleanup()
 
 	default:
 		cec.Delegate()
@@ -116,7 +131,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	}
 }
 
-// RespondToVoiceChannelUpdate updates the server's voice channel member cache every time an update is emitted
+// RespondToVoiceChannelUpdate updates the server's voice channel cache every time an update is emitted
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 	channel, err := s.GetChannel(ctx, data.ChannelID)
 	if err != nil {
@@ -126,12 +141,12 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 	switch data.ChannelID {
 	// If ChannelID is 0, then a user left a channel, delete them from the cache
 	case 0:
-		fmt.Printf("\nUser left %+v\n", voiceChannelCache[data.UserID])
-		delete(voiceChannelCache, data.UserID)
+		fmt.Printf("\nUser left %+v\n", vcCache.Cache[data.UserID])
+		delete(vcCache.Cache, data.UserID)
 		// Add userID and ChannelID to the voiceChannelCache upon join
 	default:
 		fmt.Printf("\nUser joined %+v\n", channel.Name)
-		voiceChannelCache[data.UserID] = channel.ID
+		vcCache.Cache[data.UserID] = channel.ID
 	}
 
 }
