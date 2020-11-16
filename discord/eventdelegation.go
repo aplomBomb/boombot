@@ -6,9 +6,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord"
-	yt "github.com/aplombomb/boombot/youtube"
 	"github.com/jonas747/dca"
-	"google.golang.org/api/youtube/v3"
 )
 
 // TO-DO All of the voice related logic will be moved to the yt package
@@ -61,60 +59,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	fmt.Printf("Command %+v by user %+v | %+v\n", command, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	switch command {
 	case "play":
-
-		ss := youtube.NewSearchService(ytService)
-		ytc := yt.NewYoutubeClient(ss)
-		filename, err := ytc.SearchAndDownload(args[0])
-		if err != nil {
-			fmt.Printf("\nERROR WITH FILE: %+v\n", err)
-		}
-
-		fmt.Printf("\nFILENAME: %+v\n", filename)
-
-		go deleteMessage(data.Message, 5*time.Second, disgordGlobalClient)
-
-		encodeSess, err := dca.EncodeFile(filename, &dca.EncodeOptions{
-			Volume:           256,
-			Channels:         2,
-			FrameRate:        48000,
-			FrameDuration:    20,
-			Bitrate:          64,
-			Application:      "audio",
-			CompressionLevel: 1,
-			PacketLoss:       1,
-			BufferedFrames:   1000, // At 20ms frames that's 2s
-			VBR:              true,
-			StartTime:        0,
-			RawOutput:        true,
-		})
-		if err != nil {
-			fmt.Printf("\nERROR ENCODING: %+v\n", err)
-		}
-
-		vc, err := s.VoiceConnect(data.Message.GuildID, vcCache.Cache[data.Message.Author.ID])
-		if err != nil {
-			fmt.Printf("\nERROR CONNECTING TO VOICE CHANNEL: %+v\n", err)
-			return
-		}
-		err = vc.StartSpeaking()
-		if err != nil {
-			fmt.Printf("\nERROR SPEAKING: %+v\n", err)
-		}
-		err = vc.SendDCA(encodeSess)
-		if err := recover(); err != nil {
-			log.Println("panic occurred:", err)
-		}
-		if err != nil {
-			fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
-		}
-
-		time.Sleep(5 * time.Second)
-		vc.StopSpeaking()
-		time.Sleep(5 * time.Second)
-		s.Disconnect()
-
-		defer encodeSess.Cleanup()
-
+		go processAndPlay(s, data, args[0])
 	default:
 		cec.Delegate()
 	}
@@ -158,4 +103,71 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 // RespondToVoiceChannelUpdate updates the server's voice channel cache every time an update is emitted
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 	vcCache.UpdateCache(data.ChannelID, data.UserID)
+}
+
+func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) {
+	// ss := youtube.NewSearchService(ytService)
+	// ytc := yt.NewYoutubeClient(ss)
+	// filename, err := ytc.SearchAndDownload(arg)
+	// if err != nil {
+	// 	fmt.Printf("\nERROR WITH FILE: %+v\n", err)
+	// }
+
+	// fmt.Printf("\nFILENAME: %+v\n", filename)
+
+	go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
+	requestURL := fmt.Sprintf("http://localhost:8080/mp3/%+v", arg)
+	encodeSess, err := dca.EncodeFile(requestURL, &dca.EncodeOptions{
+		Volume:           256,
+		Channels:         2,
+		FrameRate:        48000,
+		FrameDuration:    20,
+		Bitrate:          64,
+		Application:      "audio",
+		CompressionLevel: 5,
+		PacketLoss:       1,
+		BufferedFrames:   200, // At 20ms frames that's 2s
+		VBR:              true,
+		StartTime:        0,
+		RawOutput:        true,
+		Threads:          0,
+	})
+	if err != nil {
+		fmt.Printf("\nERROR ENCODING: %+v\n", err)
+	}
+
+	// defer encodeSess.Cleanup()
+
+	vc, err := s.VoiceConnect(data.Message.GuildID, vcCache.Cache[data.Message.Author.ID])
+	if err != nil {
+		fmt.Printf("\nERROR CONNECTING TO VOICE CHANNEL: %+v\n", err)
+		return
+	}
+	err = vc.StartSpeaking()
+	if err != nil {
+		fmt.Printf("\nERROR SPEAKING: %+v\n", err)
+	}
+
+	err = vc.SendDCA(encodeSess)
+	if err := recover(); err != nil {
+		log.Println("panic occurred:", err)
+	}
+	if err != nil {
+		fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
+	}
+
+	for {
+		time.Sleep(1 * time.Second)
+		if encodeSess.Running() == false {
+
+			fmt.Printf("\n\nSTOPPING SPEAKING NOW!\n\n")
+			vc.StopSpeaking()
+
+			fmt.Printf("\n\nLEAVING VOICE CHAT\n\n")
+			vc.Close()
+
+			return
+		}
+	}
+
 }

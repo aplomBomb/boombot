@@ -84,7 +84,10 @@ func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.Boom
 
 	fmt.Println("BoomBot is running")
 
-	client.StayConnectedUntilInterrupted(ctx)
+	err := client.StayConnectedUntilInterrupted(ctx)
+	if err != nil {
+		fmt.Printf("\n\nERROR: %+v\n\n", err)
+	}
 	//client.Gateway().StayConnectedUntilInterrupted()
 }
 

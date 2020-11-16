@@ -35,7 +35,6 @@ func (ytc *Client) SearchAndDownload(arg string) (string, error) {
 
 	out, err := os.Create(filename)
 	if err != nil {
-
 	}
 
 	io.Copy(out, resp.Body)
