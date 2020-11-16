@@ -37,8 +37,11 @@ func (ytc *Client) SearchAndDownload(arg string) (string, error) {
 	if err != nil {
 
 	}
-	// defer out.Close()
+
 	io.Copy(out, resp.Body)
-	// defer resp.Body.Close()
+
+	defer out.Close()
+	defer resp.Body.Close()
+
 	return filename, nil
 }

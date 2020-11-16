@@ -71,6 +71,8 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 		fmt.Printf("\nFILENAME: %+v\n", filename)
 
+		go deleteMessage(data.Message, 5*time.Second, disgordGlobalClient)
+
 		encodeSess, err := dca.EncodeFile(filename, &dca.EncodeOptions{
 			Volume:           256,
 			Channels:         2,
@@ -78,7 +80,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 			FrameDuration:    20,
 			Bitrate:          64,
 			Application:      "audio",
-			CompressionLevel: 10,
+			CompressionLevel: 1,
 			PacketLoss:       1,
 			BufferedFrames:   1000, // At 20ms frames that's 2s
 			VBR:              true,
