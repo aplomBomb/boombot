@@ -2,7 +2,6 @@ package discord
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/andersfylling/disgord"
@@ -148,16 +147,22 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 		fmt.Printf("\nERROR SPEAKING: %+v\n", err)
 	}
 
-	err = vc.SendDCA(encodeSess)
-	if err := recover(); err != nil {
-		log.Println("panic occurred:", err)
-	}
-	if err != nil {
-		fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
-	}
+	go func() {
+		err = vc.SendDCA(encodeSess)
+		if err != nil {
+			fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
+		}
+	}()
+	// if err := recover(); err != nil {
+	// 	log.Println("panic occurred:", err)
+	// }
 
 	for {
 		time.Sleep(1 * time.Second)
+		err = vc.StartSpeaking()
+		if err != nil {
+			fmt.Printf("\nERROR SPEAKING: %+v\n", err)
+		}
 		if encodeSess.Running() == false {
 
 			fmt.Printf("\n\nSTOPPING SPEAKING NOW!\n\n")
@@ -169,5 +174,4 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 			return
 		}
 	}
-
 }
