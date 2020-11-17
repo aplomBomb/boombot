@@ -8,6 +8,7 @@ import (
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/snowflake/v4"
+	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 var (
@@ -86,11 +87,11 @@ type ReactionEventClient struct {
 	uID           disgord.Snowflake
 	chID          disgord.Snowflake
 	msgID         disgord.Snowflake
-	disgordClient *disgord.Client
+	disgordClient disgordiface.DisgordClientAPI
 }
 
 // NewReactionEventClient returns a pointer to a new ReactionEventClient
-func NewReactionEventClient(emoji *disgord.Emoji, uID disgord.Snowflake, chID disgord.Snowflake, msgID disgord.Snowflake, disgordClient *disgord.Client) *ReactionEventClient {
+func NewReactionEventClient(emoji *disgord.Emoji, uID disgord.Snowflake, chID disgord.Snowflake, msgID disgord.Snowflake, disgordClient disgordiface.DisgordClientAPI) *ReactionEventClient {
 	return &ReactionEventClient{
 		emoji,
 		uID,

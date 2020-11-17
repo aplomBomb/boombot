@@ -35,6 +35,20 @@ func (m *MockDisgordClientAPI) EXPECT() *MockDisgordClientAPIMockRecorder {
 	return m.recorder
 }
 
+// Channel mocks base method
+func (m *MockDisgordClientAPI) Channel(arg0 snowflake.Snowflake) disgord.ChannelQueryBuilder {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Channel", arg0)
+	ret0, _ := ret[0].(disgord.ChannelQueryBuilder)
+	return ret0
+}
+
+// Channel indicates an expected call of Channel
+func (mr *MockDisgordClientAPIMockRecorder) Channel(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Channel", reflect.TypeOf((*MockDisgordClientAPI)(nil).Channel), arg0)
+}
+
 // Delete mocks base method
 func (m *MockDisgordClientAPI) Delete(arg0 ...disgord.Flag) error {
 	m.ctrl.T.Helper()

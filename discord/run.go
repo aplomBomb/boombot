@@ -12,6 +12,7 @@ import (
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
 	"github.com/aplombomb/boombot/config"
+	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 // CmdArguments represents the arguments entered by the user after a command
@@ -21,6 +22,7 @@ type msgEvent disgord.Message
 // TO-DO Get rid of these global variables
 var ctx = context.Background()
 
+var disgordGlobalAPI disgordiface.DisgordClientAPI
 var disgordGlobalClient *disgord.Client
 var ytService *youtube.Service
 var session disgord.Session
@@ -87,7 +89,7 @@ func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.Boom
 
 }
 
-func deleteMessage(resp *disgord.Message, sleep time.Duration, client *disgord.Client) {
+func deleteMessage(resp *disgord.Message, sleep time.Duration, client disgordiface.DisgordClientAPI) {
 	time.Sleep(sleep)
 
 	fmt.Printf("\nDeleting message '%+v' by user %+v \n", resp.Content, resp.Author.Username)

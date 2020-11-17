@@ -5,16 +5,17 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord"
+	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 // UnknownCommandClient represents the data neccessary for unknown command processing
 type UnknownCommandClient struct {
 	data          *disgord.Message
-	disgordClient *disgord.Client
+	disgordClient disgordiface.DisgordClientAPI
 }
 
 // NewUnknownCommandClient returns a new instance
-func NewUnknownCommandClient(data *disgord.Message, disgordClient *disgord.Client) *UnknownCommandClient {
+func NewUnknownCommandClient(data *disgord.Message, disgordClient disgordiface.DisgordClientAPI) *UnknownCommandClient {
 	return &UnknownCommandClient{
 		data:          data,
 		disgordClient: disgordClient,

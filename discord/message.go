@@ -5,16 +5,17 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord"
+	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 // MessageEventClient contains the data necessary for handling all non-command messages
 type MessageEventClient struct {
 	data          *disgord.Message
-	disgordClient *disgord.Client
+	disgordClient disgordiface.DisgordClientAPI
 }
 
 // NewMessageEventClient return a new MessageEventClient
-func NewMessageEventClient(data *disgord.Message, disgordClient *disgord.Client) *MessageEventClient {
+func NewMessageEventClient(data *disgord.Message, disgordClient disgordiface.DisgordClientAPI) *MessageEventClient {
 	return &MessageEventClient{
 		data,
 		disgordClient,

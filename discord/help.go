@@ -5,16 +5,17 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord"
+	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 // HelpCommandClient contains the resources needed for handling help requests
 type HelpCommandClient struct {
 	data          *disgord.Message
-	disgordClient *disgord.Client
+	disgordClient disgordiface.DisgordClientAPI
 }
 
 // NewHelpCommandClient returns a new instance of the HelpCommandClient
-func NewHelpCommandClient(data *disgord.Message, disgordClient *disgord.Client) *HelpCommandClient {
+func NewHelpCommandClient(data *disgord.Message, disgordClient disgordiface.DisgordClientAPI) *HelpCommandClient {
 	return &HelpCommandClient{
 		data:          data,
 		disgordClient: disgordClient,

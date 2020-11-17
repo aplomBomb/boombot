@@ -12,6 +12,7 @@ type DisgordClientAPI interface {
 	GetMessage(ctx context.Context, channelID, messageID disgord.Snowflake, flags ...disgord.Flag) (message *disgord.Message, err error)
 	VoiceConnect(guildID, channelID disgord.Snowflake) (disgord.VoiceConnection, error)
 	Delete(flags ...disgord.Flag) (err error)
+	Channel(id disgord.Snowflake) disgord.ChannelQueryBuilder
 }
 
 type DisgordMessageAPI interface {
