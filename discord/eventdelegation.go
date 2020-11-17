@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord"
-	"github.com/jonas747/dca"
 )
 
 // TO-DO All of the voice related logic will be moved to the yt package
@@ -43,22 +42,16 @@ func (vcc *VoiceChannelCache) UpdateCache(chID disgord.Snowflake, uID disgord.Sn
 // RespondToCommand delegates actions when commands are issued
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	cec := NewCommandEventClient(data.Message, disgordGlobalClient)
-	command, args := cec.DisectCommand()
+	command, _ := cec.DisectCommand()
 
 	fmt.Printf("\nvUserID: %+v\n", data.Message.Author.ID)
 
-	user, err := disgordGlobalClient.GetUser(ctx, data.Message.Author.ID)
-	if err != nil {
-		fmt.Println("Failed to fetch user (probably a webhook)")
-		user = &disgord.User{
-			Username: "unknown",
-		}
-	}
+	user := data.Message.Author
 
 	fmt.Printf("Command %+v by user %+v | %+v\n", command, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	switch command {
 	case "play":
-		go processAndPlay(s, data, args[0])
+		// go processAndPlay(s, data, args[0])
 	default:
 		cec.Delegate()
 	}
@@ -67,16 +60,11 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 // RespondToMessage delegates actions when messages are created
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
-	user, err := disgordGlobalClient.GetUser(ctx, data.Message.Author.ID)
-	if err != nil {
-		fmt.Println("Failed to fetch user (probably a webhook)")
-		user = &disgord.User{
-			Username: "unknown",
-		}
-	}
+	user := data.Message.Author
+
 	fmt.Printf("Message %+v by user %+v | %+v\n", data.Message.Content, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	mec := NewMessageEventClient(data.Message, disgordGlobalClient)
-	err = mec.FilterNonModLinks()
+	err := mec.FilterNonModLinks()
 	if err != nil {
 		fmt.Printf("\nError filtering non-mod link: %+v\n", err)
 	}
@@ -84,7 +72,13 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 
 // RespondToReaction delegates actions when reactions are added to messages
 func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
-	user, _ := disgordGlobalClient.GetUser(ctx, data.UserID)
+	userQueryBuilder := disgordGlobalClient.User(data.UserID)
+
+	user, err := userQueryBuilder.Get()
+
+	if err != nil {
+		fmt.Printf("\nError getting user: %+v\n", err)
+	}
 	// fmt.Printf("Message reaction %+v by user %+v | %+v\n", data.PartialEmoji.Name, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	rec := NewReactionEventClient(data.PartialEmoji, data.UserID, data.ChannelID, data.MessageID, disgordGlobalClient)
 	msg, err := rec.GenerateModResponse()
@@ -104,74 +98,74 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 	vcCache.UpdateCache(data.ChannelID, data.UserID)
 }
 
-func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) {
-	// ss := youtube.NewSearchService(ytService)
-	// ytc := yt.NewYoutubeClient(ss)
-	// filename, err := ytc.SearchAndDownload(arg)
-	// if err != nil {
-	// 	fmt.Printf("\nERROR WITH FILE: %+v\n", err)
-	// }
+// func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) {
+// 	ss := youtube.NewSearchService(ytService)
+// 	ytc := yt.NewYoutubeClient(ss)
+// 	filename, err := ytc.SearchAndDownload(arg)
+// 	if err != nil {
+// 		fmt.Printf("\nERROR WITH FILE: %+v\n", err)
+// 	}
 
-	// fmt.Printf("\nFILENAME: %+v\n", filename)
+// 	fmt.Printf("\nFILENAME: %+v\n", filename)
 
-	go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
-	requestURL := fmt.Sprintf("http://localhost:8080/mp3/%+v", arg)
-	encodeSess, err := dca.EncodeFile(requestURL, &dca.EncodeOptions{
-		Volume:           256,
-		Channels:         2,
-		FrameRate:        48000,
-		FrameDuration:    20,
-		Bitrate:          64,
-		Application:      "audio",
-		CompressionLevel: 5,
-		PacketLoss:       1,
-		BufferedFrames:   200, // At 20ms frames that's 2s
-		VBR:              true,
-		StartTime:        0,
-		RawOutput:        true,
-		Threads:          0,
-	})
-	if err != nil {
-		fmt.Printf("\nERROR ENCODING: %+v\n", err)
-	}
+// 	go deleteMessage(data.Message, 1*time.Second, *disgordGlobalClient)
+// 	requestURL := fmt.Sprintf("http://localhost:8080/mp3/%+v", arg)
+// 	encodeSess, err := dca.EncodeFile(requestURL, &dca.EncodeOptions{
+// 		Volume:           256,
+// 		Channels:         2,
+// 		FrameRate:        48000,
+// 		FrameDuration:    20,
+// 		Bitrate:          64,
+// 		Application:      "audio",
+// 		CompressionLevel: 5,
+// 		PacketLoss:       1,
+// 		BufferedFrames:   200, // At 20ms frames that's 2s
+// 		VBR:              true,
+// 		StartTime:        0,
+// 		RawOutput:        true,
+// 		Threads:          0,
+// 	})
+// 	if err != nil {
+// 		fmt.Printf("\nERROR ENCODING: %+v\n", err)
+// 	}
 
-	// defer encodeSess.Cleanup()
+// 	// defer encodeSess.Cleanup()
 
-	vc, err := s.VoiceConnect(data.Message.GuildID, vcCache.Cache[data.Message.Author.ID])
-	if err != nil {
-		fmt.Printf("\nERROR CONNECTING TO VOICE CHANNEL: %+v\n", err)
-		return
-	}
-	err = vc.StartSpeaking()
-	if err != nil {
-		fmt.Printf("\nERROR SPEAKING: %+v\n", err)
-	}
+// 	vc, err := s.VoiceConnect(data.Message.GuildID, vcCache.Cache[data.Message.Author.ID])
+// 	if err != nil {
+// 		fmt.Printf("\nERROR CONNECTING TO VOICE CHANNEL: %+v\n", err)
+// 		return
+// 	}
+// 	err = vc.StartSpeaking()
+// 	if err != nil {
+// 		fmt.Printf("\nERROR SPEAKING: %+v\n", err)
+// 	}
 
-	go func() {
-		err = vc.SendDCA(encodeSess)
-		if err != nil {
-			fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
-		}
-	}()
-	// if err := recover(); err != nil {
-	// 	log.Println("panic occurred:", err)
-	// }
+// 	go func() {
+// 		err = vc.SendDCA(encodeSess)
+// 		if err != nil {
+// 			fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
+// 		}
+// 	}()
+// 	// if err := recover(); err != nil {
+// 	// 	log.Println("panic occurred:", err)
+// 	// }
 
-	for {
-		time.Sleep(1 * time.Second)
-		err = vc.StartSpeaking()
-		if err != nil {
-			fmt.Printf("\nERROR SPEAKING: %+v\n", err)
-		}
-		if encodeSess.Running() == false {
+// 	for {
+// 		time.Sleep(1 * time.Second)
+// 		err = vc.StartSpeaking()
+// 		if err != nil {
+// 			fmt.Printf("\nERROR SPEAKING: %+v\n", err)
+// 		}
+// 		if encodeSess.Running() == false {
 
-			fmt.Printf("\n\nSTOPPING SPEAKING NOW!\n\n")
-			vc.StopSpeaking()
+// 			fmt.Printf("\n\nSTOPPING SPEAKING NOW!\n\n")
+// 			vc.StopSpeaking()
 
-			fmt.Printf("\n\nLEAVING VOICE CHAT\n\n")
-			vc.Close()
+// 			fmt.Printf("\n\nLEAVING VOICE CHAT\n\n")
+// 			vc.Close()
 
-			return
-		}
-	}
-}
+// 			return
+// 		}
+// 	}
+// }

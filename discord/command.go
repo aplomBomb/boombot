@@ -5,18 +5,16 @@ import (
 	"strings"
 
 	"github.com/andersfylling/disgord"
-
-	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 // CommandEventClient contains the data for all command processing
 type CommandEventClient struct {
 	data          *disgord.Message
-	disgordClient disgordiface.DisgordClientAPI
+	disgordClient *disgord.Client
 }
 
 // NewCommandEventClient returns a pointer to a new CommandEventClient
-func NewCommandEventClient(data *disgord.Message, disgordClient disgordiface.DisgordClientAPI) *CommandEventClient {
+func NewCommandEventClient(data *disgord.Message, disgordClient *disgord.Client) *CommandEventClient {
 	return &CommandEventClient{
 		data:          data,
 		disgordClient: disgordClient,

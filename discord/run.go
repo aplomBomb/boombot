@@ -12,7 +12,6 @@ import (
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
 	"github.com/aplombomb/boombot/config"
-	discordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 // CmdArguments represents the arguments entered by the user after a command
@@ -57,51 +56,48 @@ func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.Boom
 	filter, _ := std.NewMsgFilter(ctx, client)
 	filter.SetPrefix(cf.Prefix)
 	//create a handler and bind it to new command events
-	go client.On(disgord.EvtMessageCreate,
-		filter.NotByBot,
-		filter.HasPrefix,
-		std.CopyMsgEvt,
-		filter.StripPrefix,
+	// go client.On(disgord.EvtMessageCreate,
+	// 	filter.NotByBot,
+	// 	filter.HasPrefix,
+	// 	std.CopyMsgEvt,
+	// 	filter.StripPrefix,
 
-		RespondToCommand,
-	)
+	// 	RespondToCommand,
+	// )
 
 	//Bind a handler to new message reactions
-	go client.On(disgord.EvtMessageReactionAdd, RespondToReaction)
+	// go client.On(disgord.EvtMessageReactionAdd, RespondToReaction)
 
 	//Bind a handler to voice channel update events
-	go client.On(disgord.EvtVoiceStateUpdate, RespondToVoiceChannelUpdate)
+	// go client.On(disgord.EvtVoiceStateUpdate, RespondToVoiceChannelUpdate)
 
 	//Bind a handler to message events
-	go client.On(disgord.EvtMessageCreate, RespondToMessage)
+	// go client.On(disgord.EvtMessageCreate, RespondToMessage)
 
 	// The Gateway handler will replace the on handler once disgord becomse more stable
 	// Keeping this here until that day comes
-	// go client.Gateway().WithMiddleware(filter.NotByBot, filter.HasPrefix, std.CopyMsgEvt, filter.StripPrefix).MessageCreate(RespondToCommand)
-	// go client.Gateway().MessageReactionAdd(RespondToReaction)
-	// go client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
-	// go client.Gateway().MessageCreate(RespondToMessage)
+	client.Gateway().WithMiddleware(filter.NotByBot, filter.HasPrefix, std.CopyMsgEvt, filter.StripPrefix).MessageCreate(RespondToCommand)
+	client.Gateway().MessageReactionAdd(RespondToReaction)
+	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
+	client.Gateway().MessageCreate(RespondToMessage)
 
 	fmt.Println("BoomBot is running")
 
-	err := client.StayConnectedUntilInterrupted(ctx)
-	if err != nil {
-		fmt.Printf("\n\nERROR: %+v\n\n", err)
-	}
-	//client.Gateway().StayConnectedUntilInterrupted()
+	defer client.Gateway().StayConnectedUntilInterrupted()
+
 }
 
-func deleteMessage(resp *disgord.Message, sleep time.Duration, client discordiface.DisgordClientAPI) {
+func deleteMessage(resp *disgord.Message, sleep time.Duration, client *disgord.Client) {
 	time.Sleep(sleep)
 
 	fmt.Printf("\nDeleting message '%+v' by user %+v \n", resp.Content, resp.Author.Username)
 
-	err := client.DeleteMessage(
-		ctx,
-		resp.ChannelID,
-		resp.ID,
-	)
-	if err != nil {
-		fmt.Printf("\nError deleting message :%+v \n", err)
-	}
+	channel := client.Channel(resp.ChannelID)
+	msgQueryBuilder := channel.Message(resp.ID)
+	// if err != nil {
+	// 	fmt.Printf("\nERROR DELETING MESSAGE: %+v\n", err)
+	// }
+
+	msgQueryBuilder.Delete()
+
 }

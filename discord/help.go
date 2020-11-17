@@ -5,17 +5,16 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord"
-	discord "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 // HelpCommandClient contains the resources needed for handling help requests
 type HelpCommandClient struct {
 	data          *disgord.Message
-	disgordClient discord.DisgordClientAPI
+	disgordClient *disgord.Client
 }
 
 // NewHelpCommandClient returns a new instance of the HelpCommandClient
-func NewHelpCommandClient(data *disgord.Message, disgordClient discord.DisgordClientAPI) *HelpCommandClient {
+func NewHelpCommandClient(data *disgord.Message, disgordClient *disgord.Client) *HelpCommandClient {
 	return &HelpCommandClient{
 		data:          data,
 		disgordClient: disgordClient,
@@ -25,7 +24,7 @@ func NewHelpCommandClient(data *disgord.Message, disgordClient discord.DisgordCl
 // SendHelpMsg sends the default help message to the channel that received the help command
 func (hcc *HelpCommandClient) SendHelpMsg() error {
 	resp, err := hcc.disgordClient.SendMsg(
-		ctx,
+		// ctx,
 		hcc.data.ChannelID,
 		&disgord.CreateMessageParams{
 			Embed: &disgord.Embed{
