@@ -21,7 +21,6 @@ type msgEvent disgord.Message
 
 // TO-DO Get rid of these global variables
 var ctx = context.Background()
-
 var disgordGlobalAPI disgordiface.DisgordClientAPI
 var disgordGlobalClient *disgord.Client
 var ytService *youtube.Service
