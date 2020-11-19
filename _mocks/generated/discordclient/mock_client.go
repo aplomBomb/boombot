@@ -5,7 +5,6 @@
 package mock_disgordclient
 
 import (
-	context "context"
 	disgord "github.com/andersfylling/disgord"
 	snowflake "github.com/andersfylling/snowflake/v4"
 	gomock "github.com/golang/mock/gomock"
@@ -49,44 +48,6 @@ func (mr *MockDisgordClientAPIMockRecorder) Channel(arg0 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Channel", reflect.TypeOf((*MockDisgordClientAPI)(nil).Channel), arg0)
 }
 
-// Delete mocks base method
-func (m *MockDisgordClientAPI) Delete(arg0 ...disgord.Flag) error {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{}
-	for _, a := range arg0 {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "Delete", varargs...)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete
-func (mr *MockDisgordClientAPIMockRecorder) Delete(arg0 ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDisgordClientAPI)(nil).Delete), arg0...)
-}
-
-// GetMessage mocks base method
-func (m *MockDisgordClientAPI) GetMessage(arg0 context.Context, arg1, arg2 snowflake.Snowflake, arg3 ...disgord.Flag) (*disgord.Message, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1, arg2}
-	for _, a := range arg3 {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GetMessage", varargs...)
-	ret0, _ := ret[0].(*disgord.Message)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetMessage indicates an expected call of GetMessage
-func (mr *MockDisgordClientAPIMockRecorder) GetMessage(arg0, arg1, arg2 interface{}, arg3 ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessage", reflect.TypeOf((*MockDisgordClientAPI)(nil).GetMessage), varargs...)
-}
-
 // SendMsg mocks base method
 func (m *MockDisgordClientAPI) SendMsg(arg0 snowflake.Snowflake, arg1 ...interface{}) (*disgord.Message, error) {
 	m.ctrl.T.Helper()
@@ -107,17 +68,17 @@ func (mr *MockDisgordClientAPIMockRecorder) SendMsg(arg0 interface{}, arg1 ...in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMsg", reflect.TypeOf((*MockDisgordClientAPI)(nil).SendMsg), varargs...)
 }
 
-// VoiceConnect mocks base method
-func (m *MockDisgordClientAPI) VoiceConnect(arg0, arg1 snowflake.Snowflake) (disgord.VoiceConnection, error) {
+// VoiceConnectOptions mocks base method
+func (m *MockDisgordClientAPI) VoiceConnectOptions(arg0, arg1 snowflake.Snowflake, arg2, arg3 bool) (disgord.VoiceConnection, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VoiceConnect", arg0, arg1)
+	ret := m.ctrl.Call(m, "VoiceConnectOptions", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(disgord.VoiceConnection)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// VoiceConnect indicates an expected call of VoiceConnect
-func (mr *MockDisgordClientAPIMockRecorder) VoiceConnect(arg0, arg1 interface{}) *gomock.Call {
+// VoiceConnectOptions indicates an expected call of VoiceConnectOptions
+func (mr *MockDisgordClientAPIMockRecorder) VoiceConnectOptions(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VoiceConnect", reflect.TypeOf((*MockDisgordClientAPI)(nil).VoiceConnect), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VoiceConnectOptions", reflect.TypeOf((*MockDisgordClientAPI)(nil).VoiceConnectOptions), arg0, arg1, arg2, arg3)
 }

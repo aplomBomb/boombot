@@ -3,7 +3,7 @@ module github.com/aplombomb/boombot
 go 1.15
 
 require (
-	github.com/andersfylling/disgord v0.21.0
+	github.com/andersfylling/disgord v0.21.1-0.20201118211648-e7e8dc53dcd6
 	github.com/andersfylling/snowflake/v4 v4.0.2
 	github.com/aws/aws-sdk-go v1.35.26
 	github.com/bwmarrin/discordgo v0.19.0

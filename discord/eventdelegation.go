@@ -2,12 +2,11 @@ package discord
 
 import (
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/andersfylling/disgord"
-	yt "github.com/aplombomb/boombot/youtube"
 	"github.com/jonas747/dca"
-	"google.golang.org/api/youtube/v3"
 )
 
 // TO-DO All of the voice related logic will be moved to the yt package
@@ -102,14 +101,12 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 }
 
 func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) {
-	ss := youtube.NewSearchService(ytService)
-	ytc := yt.NewYoutubeClient(ss)
-	filename, err := ytc.SearchAndDownload(arg)
-	if err != nil {
-		fmt.Printf("\nERROR WITH FILE: %+v\n", err)
-	}
-
-	fmt.Printf("\nFILENAME: %+v\n", filename)
+	// ss := youtube.NewSearchService(ytService)
+	// ytc := yt.NewYoutubeClient(ss)
+	// _, err := ytc.SearchAndDownload(arg)
+	// if err != nil {
+	// 	fmt.Printf("\nERROR WITH FILE: %+v\n", err)
+	// }
 
 	go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 	requestURL := fmt.Sprintf("http://localhost:8080/mp3/%+v", arg)
@@ -132,43 +129,67 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 		fmt.Printf("\nERROR ENCODING: %+v\n", err)
 	}
 
-	defer encodeSess.Cleanup()
+	// defer encodeSess.Cleanup()
 
-	vc, err := disgordGlobalClient.VoiceConnectOptions(data.Message.GuildID, data.Message.ChannelID, true, false)
+	fmt.Printf("\nENCODESESS: %+v", encodeSess)
+
+	fmt.Printf("\nGUILDID: %+v | CHANNELID: %+v\n", data.Message.GuildID, data.Message.ChannelID)
+
+	vc, err := disgordGlobalClient.VoiceConnectOptions(data.Message.GuildID, vcCache.Cache[data.Message.Author.ID], true, false)
 	if err != nil {
 		fmt.Printf("\nERROR CONNECTING TO VOICE CHANNEL: %+v\n", err)
-		return
+		// return
 	}
 	err = vc.StartSpeaking()
 	if err != nil {
 		fmt.Printf("\nERROR SPEAKING: %+v\n", err)
 	}
 
+	// go func() {
+	// 	err = vc.SendDCA(encodeSess)
+	// 	if err != nil {
+	// 		fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
+	// 	}
+	// }()
+
 	go func() {
-		err = vc.SendDCA(encodeSess)
-		if err != nil {
-			fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
+		for {
+			time.Sleep(20 * time.Millisecond)
+			nextFrame, err := encodeSess.OpusFrame()
+			if err != nil && err != io.EOF {
+				fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
+			}
+			if err == io.EOF {
+				err := vc.StopSpeaking()
+				if err != nil && err != io.EOF {
+					fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+				}
+				time.Sleep(1 * time.Second)
+				err = vc.Close()
+				if err != nil && err != io.EOF {
+					fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
+				}
+				return
+			}
+			err = vc.SendOpusFrame(nextFrame)
 		}
 	}()
-	// if err := recover(); err != nil {
-	// 	log.Println("panic occurred:", err)
+
+	// for {
+	// 	time.Sleep(1 * time.Second)
+
+	// 	if err == "EOF" {
+	// 		fmt.Printf("\nERROR SPEAKING: %+v\n", err)
+	// 	}
+	// 	if encodeSess.Running() == "EOF" {
+
+	// 		fmt.Printf("\n\nSTOPPING SPEAKING NOW!\n\n")
+	// 		vc.StopSpeaking()
+
+	// 		fmt.Printf("\n\nLEAVING VOICE CHAT\n\n")
+	// 		vc.Close()
+
+	// 		return
+	// 	}
 	// }
-
-	for {
-		time.Sleep(1 * time.Second)
-		err = vc.StartSpeaking()
-		if err != nil {
-			fmt.Printf("\nERROR SPEAKING: %+v\n", err)
-		}
-		if encodeSess.Running() == false {
-
-			fmt.Printf("\n\nSTOPPING SPEAKING NOW!\n\n")
-			vc.StopSpeaking()
-
-			fmt.Printf("\n\nLEAVING VOICE CHAT\n\n")
-			vc.Close()
-
-			return
-		}
-	}
 }
