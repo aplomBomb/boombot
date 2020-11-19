@@ -129,11 +129,9 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 		fmt.Printf("\nERROR ENCODING: %+v\n", err)
 	}
 
-	defer encodeSess.Cleanup()
+	// fmt.Printf("\nENCODESESS: %+v", encodeSess)
 
-	fmt.Printf("\nENCODESESS: %+v", encodeSess)
-
-	fmt.Printf("\nGUILDID: %+v | CHANNELID: %+v\n", data.Message.GuildID, data.Message.ChannelID)
+	// fmt.Printf("\nGUILDID: %+v | CHANNELID: %+v\n", data.Message.GuildID, data.Message.ChannelID)
 
 	vc, err := disgordGlobalClient.VoiceConnectOptions(data.Message.GuildID, vcCache.Cache[data.Message.Author.ID], true, false)
 	if err != nil {
@@ -150,6 +148,7 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 	eofChannel := make(chan bool)
 
 	go func() {
+		defer encodeSess.Cleanup()
 		for {
 			select {
 			case <-done:
@@ -162,7 +161,7 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 				if err != nil && err != io.EOF {
 					fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
 				}
-				fmt.Println("\nDONE!!!")
+				fmt.Println("\nLEAVING VOICE CHANNEL")
 				return
 			case <-ticker.C:
 				nextFrame, err := encodeSess.OpusFrame()
@@ -170,7 +169,7 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 					fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
 				}
 				if err == io.EOF {
-					fmt.Println("\nEOF!!!")
+					fmt.Println("\nPLAYBACK FINISHED")
 					eofChannel <- true
 				}
 				err = vc.SendOpusFrame(nextFrame)
@@ -184,6 +183,7 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 			select {
 			case <-eofChannel:
 				done <- true
+				return
 			}
 		}
 	}()
