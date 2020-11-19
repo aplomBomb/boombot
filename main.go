@@ -44,13 +44,13 @@ func main() {
 		},
 		Presence: &disgord.UpdateStatusPayload{
 			Game: &disgord.Activity{
-				Name: "mewzek'",
-				Type: 4,
-				Emoji: &disgord.ActivityEmoji{
-					Name:     "pepeSadJam",
-					ID:       779044106294263848,
-					Animated: true,
-				},
+				Name: "mewzek",
+				// Type: 4,
+				// Emoji: &disgord.ActivityEmoji{
+				// 	Name:     "pepeSadJam",
+				// 	ID:       779044106294263848,
+				// 	Animated: true,
+				// },
 			},
 		},
 		Cache: &disgord.CacheNop{},

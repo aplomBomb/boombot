@@ -147,6 +147,7 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 
 	ticker := time.NewTicker(20 * time.Millisecond)
 	done := make(chan bool)
+	eofChannel := make(chan bool)
 
 	go func() {
 		for {
@@ -161,6 +162,7 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 				if err != nil && err != io.EOF {
 					fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
 				}
+				fmt.Println("\nDONE!!!")
 				return
 			case <-ticker.C:
 				nextFrame, err := encodeSess.OpusFrame()
@@ -168,9 +170,20 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 					fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
 				}
 				if err == io.EOF {
-					done <- true
+					fmt.Println("\nEOF!!!")
+					eofChannel <- true
 				}
 				err = vc.SendOpusFrame(nextFrame)
+			}
+		}
+	}()
+
+	go func() {
+		for {
+			time.Sleep(1 * time.Second)
+			select {
+			case <-eofChannel:
+				done <- true
 			}
 		}
 	}()
