@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"time"
 
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
@@ -61,17 +60,5 @@ func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.Boom
 	fmt.Println("BoomBot is running")
 
 	defer client.Gateway().StayConnectedUntilInterrupted()
-
-}
-
-func deleteMessage(resp *disgord.Message, sleep time.Duration, client disgordiface.DisgordClientAPI) {
-	time.Sleep(sleep)
-
-	fmt.Printf("\nDeleting message '%+v' by user %+v \n", resp.Content, resp.Author.Username)
-
-	channel := client.Channel(resp.ChannelID)
-	msgQueryBuilder := channel.Message(resp.ID)
-
-	msgQueryBuilder.Delete()
 
 }
