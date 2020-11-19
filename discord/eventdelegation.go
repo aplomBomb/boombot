@@ -129,7 +129,7 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 		fmt.Printf("\nERROR ENCODING: %+v\n", err)
 	}
 
-	// defer encodeSess.Cleanup()
+	defer encodeSess.Cleanup()
 
 	fmt.Printf("\nENCODESESS: %+v", encodeSess)
 
