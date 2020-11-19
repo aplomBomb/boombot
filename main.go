@@ -29,7 +29,7 @@ func main() {
 	}
 
 	client := disgord.New(disgord.Config{
-		ProjectName: "MyBot",
+		ProjectName: "BoomBot",
 		BotToken:    creds.BotToken,
 		Logger:      log,
 		RejectEvents: []string{
@@ -44,7 +44,13 @@ func main() {
 		},
 		Presence: &disgord.UpdateStatusPayload{
 			Game: &disgord.Activity{
-				Name: "music",
+				Name: "mewzek'",
+				Type: 4,
+				Emoji: &disgord.ActivityEmoji{
+					Name:     "pepeSadJam",
+					ID:       779044106294263848,
+					Animated: true,
+				},
 			},
 		},
 		Cache: &disgord.CacheNop{},

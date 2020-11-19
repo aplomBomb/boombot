@@ -145,24 +145,13 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 		fmt.Printf("\nERROR SPEAKING: %+v\n", err)
 	}
 
-	// go func() {
-	// 	err = vc.SendDCA(encodeSess)
-	// 	if err != nil {
-	// 		fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
-	// 	}
-	// }()
+	ticker := time.NewTicker(20 * time.Millisecond)
+	done := make(chan bool)
 
 	go func() {
 		for {
-			// ticker := time.NewTicker(20 * time.Millisecond)
-			// done := make(chan bool)
-
-			time.Sleep(20 * time.Millisecond)
-			nextFrame, err := encodeSess.OpusFrame()
-			if err != nil && err != io.EOF {
-				fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
-			}
-			if err == io.EOF {
+			select {
+			case <-done:
 				err := vc.StopSpeaking()
 				if err != nil && err != io.EOF {
 					fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
@@ -173,26 +162,16 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 					fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
 				}
 				return
+			case <-ticker.C:
+				nextFrame, err := encodeSess.OpusFrame()
+				if err != nil && err != io.EOF {
+					fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
+				}
+				if err == io.EOF {
+					done <- true
+				}
+				err = vc.SendOpusFrame(nextFrame)
 			}
-			err = vc.SendOpusFrame(nextFrame)
 		}
 	}()
-
-	// for {
-	// 	time.Sleep(1 * time.Second)
-
-	// 	if err == "EOF" {
-	// 		fmt.Printf("\nERROR SPEAKING: %+v\n", err)
-	// 	}
-	// 	if encodeSess.Running() == "EOF" {
-
-	// 		fmt.Printf("\n\nSTOPPING SPEAKING NOW!\n\n")
-	// 		vc.StopSpeaking()
-
-	// 		fmt.Printf("\n\nLEAVING VOICE CHAT\n\n")
-	// 		vc.Close()
-
-	// 		return
-	// 	}
-	// }
 }
