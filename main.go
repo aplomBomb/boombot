@@ -35,7 +35,6 @@ func main() {
 		RejectEvents: []string{
 			// rarely used, and causes unnecessary spam
 			disgord.EvtTypingStart,
-
 			// these require special privilege
 			// https://discord.com/developers/docs/topics/gateway#privileged-intents
 			disgord.EvtPresenceUpdate,
@@ -45,11 +44,10 @@ func main() {
 		},
 		Presence: &disgord.UpdateStatusPayload{
 			Game: &disgord.Activity{
-				Name: "buttsex",
+				Name: "music",
 			},
 		},
-		// Will use this in future disgord version once it actually works
-		// Cache:    &disgord.CacheNop{},
+		Cache: &disgord.CacheNop{},
 	})
 
 	discord.BotRun(client, conf, creds)

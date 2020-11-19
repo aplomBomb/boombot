@@ -108,7 +108,7 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 	// 	fmt.Printf("\nERROR WITH FILE: %+v\n", err)
 	// }
 
-	go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
+	go deleteMessage(data.Message, 20*time.Second, disgordGlobalClient)
 	requestURL := fmt.Sprintf("http://localhost:8080/mp3/%+v", arg)
 	encodeSess, err := dca.EncodeFile(requestURL, &dca.EncodeOptions{
 		Volume:           256,
@@ -154,6 +154,9 @@ func processAndPlay(s disgord.Session, data *disgord.MessageCreate, arg string) 
 
 	go func() {
 		for {
+			// ticker := time.NewTicker(20 * time.Millisecond)
+			// done := make(chan bool)
+
 			time.Sleep(20 * time.Millisecond)
 			nextFrame, err := encodeSess.OpusFrame()
 			if err != nil && err != io.EOF {
