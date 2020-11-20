@@ -86,12 +86,13 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				})
 				if err != nil {
 					fmt.Printf("\nERROR SENDING NO CHANNELID MESSSAGE: %+v\n", err)
-					//Delete url from queue slice
-					copy(q.UserQueue[0:], q.UserQueue[0+1:])
-					q.UserQueue[len(q.UserQueue)-1] = ""
-					q.UserQueue = q.UserQueue[:len(q.UserQueue)-1]
 				}
+				//Delete url from queue slice
+				copy(q.UserQueue[0:], q.UserQueue[0+1:])
+				q.UserQueue[len(q.UserQueue)-1] = ""
+				q.UserQueue = q.UserQueue[:len(q.UserQueue)-1]
 				go deleteMessage(msg, 10*time.Second, disgordClientAPI)
+				wg.Done()
 				continue
 			}
 			err = vc.StartSpeaking()
