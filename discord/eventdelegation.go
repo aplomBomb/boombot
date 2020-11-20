@@ -13,7 +13,7 @@ import (
 // RespondToCommand delegates actions when commands are issued
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	cec := NewCommandEventClient(data.Message, disgordGlobalClient)
-	command, _ := cec.DisectCommand()
+	command, args := cec.DisectCommand()
 
 	fmt.Printf("\nvUserID: %+v\n", data.Message.Author.ID)
 
@@ -22,7 +22,10 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	fmt.Printf("Command %+v by user %+v | %+v\n", command, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	switch command {
 	case "play":
+		globalQueue.UpdateQueueState(data.Message.ChannelID, data.Message.Author.ID, args[0])
+		fmt.Printf("\nQUEUE: %+v\n", globalQueue)
 		go deleteMessage(data.Message, 20*time.Second, disgordGlobalClient)
+		fmt.Printf("\nURL REQUESTED!!: %+v\n", globalQueue.UserQueue[0])
 	default:
 		cec.Delegate()
 	}
