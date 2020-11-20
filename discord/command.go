@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/andersfylling/disgord"
-
 	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 

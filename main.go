@@ -2,13 +2,20 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/andersfylling/disgord"
 	"github.com/aplombomb/boombot/config"
 	"github.com/aplombomb/boombot/discord"
+	"github.com/sirupsen/logrus"
 )
+
+var log = &logrus.Logger{
+	Out:       os.Stderr,
+	Formatter: new(logrus.TextFormatter),
+	Hooks:     make(logrus.LevelHooks),
+	Level:     logrus.ErrorLevel,
+}
 
 func main() {
 
@@ -22,9 +29,31 @@ func main() {
 	}
 
 	client := disgord.New(disgord.Config{
-		BotToken: creds.BotToken,
-		// Will use this in future disgord version once it actually works
-		// Cache:    &disgord.CacheNop{},
+		ProjectName: "BoomBot",
+		BotToken:    creds.BotToken,
+		Logger:      log,
+		RejectEvents: []string{
+			// rarely used, and causes unnecessary spam
+			disgord.EvtTypingStart,
+			// these require special privilege
+			// https://discord.com/developers/docs/topics/gateway#privileged-intents
+			disgord.EvtPresenceUpdate,
+			disgord.EvtGuildMemberAdd,
+			disgord.EvtGuildMemberUpdate,
+			disgord.EvtGuildMemberRemove,
+		},
+		Presence: &disgord.UpdateStatusPayload{
+			Game: &disgord.Activity{
+				Name: "mewzek",
+				// Type: 4,
+				// Emoji: &disgord.ActivityEmoji{
+				// 	Name:     "pepeSadJam",
+				// 	ID:       779044106294263848,
+				// 	Animated: true,
+				// },
+			},
+		},
+		Cache: &disgord.CacheNop{},
 	})
 
 	discord.BotRun(client, conf, creds)

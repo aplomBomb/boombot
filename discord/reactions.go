@@ -123,11 +123,11 @@ func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) 
 		if reflect.DeepEqual(currentSeenReaction, reactionEvent) {
 			url := ""
 			modName := ""
-			message, err := rec.disgordClient.GetMessage(ctx, rec.chID, rec.msgID)
-			if err != nil {
-				return nil, err
-			}
-			msgFields := strings.Fields(message.Content)
+			chQueryBuilder := rec.disgordClient.Channel(rec.chID)
+			message, _ := chQueryBuilder.GetMessages(&disgord.GetMessagesParams{
+				Around: rec.msgID,
+			})
+			msgFields := strings.Fields(message[0].Content)
 
 			//snag the url and the mod name from the request
 			for _, field := range msgFields {
@@ -160,11 +160,11 @@ func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) 
 		if reflect.DeepEqual(currentAcceptedReaction, reactionEvent) {
 			url := ""
 			modName := ""
-			message, err := rec.disgordClient.GetMessage(ctx, rec.chID, rec.msgID)
-			if err != nil {
-				return nil, err
-			}
-			msgFields := strings.Fields(message.Content)
+			chQueryBuilder := rec.disgordClient.Channel(rec.chID)
+			message, _ := chQueryBuilder.GetMessages(&disgord.GetMessagesParams{
+				Around: rec.msgID,
+			})
+			msgFields := strings.Fields(message[0].Content)
 
 			//snag the url and the mod name from the request
 			for _, field := range msgFields {
@@ -189,7 +189,7 @@ func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) 
 					},
 				},
 			}
-			go deleteMessage(message, 3*time.Second, rec.disgordClient)
+			go deleteMessage(message[0], 3*time.Second, rec.disgordClient)
 			break
 		}
 	}
@@ -199,11 +199,11 @@ func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) 
 		if reflect.DeepEqual(currentRejectedReaction, reactionEvent) {
 			url := ""
 			modName := ""
-			message, err := rec.disgordClient.GetMessage(ctx, rec.chID, rec.msgID)
-			if err != nil {
-				return nil, err
-			}
-			msgFields := strings.Fields(message.Content)
+			chQueryBuilder := rec.disgordClient.Channel(rec.chID)
+			message, _ := chQueryBuilder.GetMessages(&disgord.GetMessagesParams{
+				Around: rec.msgID,
+			})
+			msgFields := strings.Fields(message[0].Content)
 
 			//snag the url and the mod name from the request
 			for _, field := range msgFields {
@@ -229,7 +229,7 @@ func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) 
 					},
 				},
 			}
-			go deleteMessage(message, 3*time.Second, rec.disgordClient)
+			go deleteMessage(message[0], 3*time.Second, rec.disgordClient)
 			break
 		}
 	}

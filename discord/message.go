@@ -1,22 +1,22 @@
 package discord
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/andersfylling/disgord"
-	discord "github.com/aplombomb/boombot/discord/ifaces"
-	discordiface "github.com/aplombomb/boombot/discord/ifaces"
+	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
 // MessageEventClient contains the data necessary for handling all non-command messages
 type MessageEventClient struct {
 	data          *disgord.Message
-	disgordClient discordiface.DisgordClientAPI
+	disgordClient disgordiface.DisgordClientAPI
 }
 
 // NewMessageEventClient return a new MessageEventClient
-func NewMessageEventClient(data *disgord.Message, disgordClient discord.DisgordClientAPI) *MessageEventClient {
+func NewMessageEventClient(data *disgord.Message, disgordClient disgordiface.DisgordClientAPI) *MessageEventClient {
 	return &MessageEventClient{
 		data,
 		disgordClient,
@@ -35,4 +35,16 @@ func (mec *MessageEventClient) FilterNonModLinks() error {
 		break
 	}
 	return nil
+}
+
+func deleteMessage(resp *disgord.Message, sleep time.Duration, client disgordiface.DisgordClientAPI) {
+	time.Sleep(sleep)
+
+	fmt.Printf("\nDeleting message '%+v' by user %+v \n", resp.Content, resp.Author.Username)
+
+	channel := client.Channel(resp.ChannelID)
+	msgQueryBuilder := channel.Message(resp.ID)
+
+	msgQueryBuilder.Delete()
+
 }
