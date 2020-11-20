@@ -2,7 +2,6 @@ package discord
 
 import (
 	"context"
-	"flag"
 	"fmt"
 
 	"google.golang.org/api/option"
@@ -25,7 +24,7 @@ var disgordGlobalClient *disgord.Client
 var ytService *youtube.Service
 var session disgord.Session
 var conf config.ConfJSONStruct
-var query = flag.String("query", "Google", "Search term")
+var globalQueue *Queue
 
 //Version of BoomBot
 const Version = "v0.0.0-alpha"
@@ -60,5 +59,9 @@ func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.Boom
 	fmt.Println("BoomBot is running")
 
 	defer client.Gateway().StayConnectedUntilInterrupted()
+
+	queue := NewQueue(disgord.ParseSnowflakeString(conf.GuildID))
+	globalQueue = queue
+	go globalQueue.ListenAndProcessQueue(client)
 
 }

@@ -10,36 +10,37 @@ import (
 	"github.com/jonas747/dca"
 )
 
-// VoiceEventClient keeps a map record of userID's and the channelID that user currently belongs to
-type VoiceEventClient struct {
-	Cache         map[disgord.Snowflake]disgord.Snowflake
-	disgordClient disgordiface.DisgordClientAPI
+// Queue defines the data neccessary for the bot to track users/songs and where to play them
+type Queue struct {
+	UserQueue  map[disgord.Snowflake][]string
+	VoiceCache map[disgord.Snowflake]disgord.Snowflake
+	GuildID    disgord.Snowflake
 }
 
-// NewVoiceChannelCache return a pointer to a new voicechannelcache
-func NewVoiceChannelCache(disgordClient disgordiface.DisgordClientAPI) *VoiceEventClient {
-	cacheMap := make(map[disgord.Snowflake]disgord.Snowflake)
-	return &VoiceEventClient{
-		Cache: cacheMap,
+// NewQueue returns a new Queue instance
+func NewQueue(gID disgord.Snowflake) *Queue {
+	return &Queue{
+		UserQueue:  map[disgord.Snowflake][]string{},
+		VoiceCache: map[disgord.Snowflake]disgord.Snowflake{},
+		GuildID:    gID,
 	}
 }
 
-// UpdateCache updates the voicechannel cache based upon the set channel id on voice state updates
+// UpdateVoiceCache updates the voicechannel cache based upon the set channel id on voice state updates
 // A channelID of 0 means a user left, in that case remove them from the cache
-func (vec *VoiceEventClient) UpdateCache(chID disgord.Snowflake, uID disgord.Snowflake) {
+func (q *Queue) UpdateVoiceCache(chID disgord.Snowflake, uID disgord.Snowflake) {
 	switch chID {
 	case 0:
-		delete(vcCache.Cache, uID)
+		delete(q.VoiceCache, uID)
 	default:
-		vcCache.Cache[uID] = chID
+		q.VoiceCache[uID] = chID
 	}
 }
 
-// ProcessAndPlay takes a message content string to fetch\encode\play
+// ListenAndProcessQueue takes a message content string to fetch\encode\play
 // audio in the voice channel the author currently resides in
-func ProcessAndPlay(gID disgord.Snowflake, uID disgord.Snowflake, arg string, disgordClientAPI disgordiface.DisgordClientAPI) {
-
-	requestURL := fmt.Sprintf("http://localhost:8080/mp3/%+v", arg)
+func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI) {
+	requestURL := fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[0])
 	encodeSess, err := dca.EncodeFile(requestURL, &dca.EncodeOptions{
 		Volume:           256,
 		Channels:         2,
@@ -58,23 +59,28 @@ func ProcessAndPlay(gID disgord.Snowflake, uID disgord.Snowflake, arg string, di
 	if err != nil {
 		fmt.Printf("\nERROR ENCODING: %+v\n", err)
 	}
-
-	vc, err := disgordClientAPI.VoiceConnectOptions(gID, vcCache.Cache[uID], true, false)
+	vc, err := disgordClientAPI.VoiceConnectOptions(q.GuildID, q.VoiceCache[uID], true, false)
 	if err != nil {
 		fmt.Printf("\nERROR CONNECTING TO VOICE CHANNEL: %+v\n", err)
-		// return
+		msg, err := disgordClientAPI.SendMsg(chID, disgord.Message{
+			Content: "**You need to be in a voice channel for me to play!**",
+		})
+		if err != nil {
+			fmt.Printf("\nERROR SENDING NO CHANNELID MESSSAGE: %+v\n", err)
+		}
+		go deleteMessage(msg, 10*time.Second, disgordClientAPI)
+		return
 	}
 	err = vc.StartSpeaking()
 	if err != nil {
 		fmt.Printf("\nERROR SPEAKING: %+v\n", err)
 	}
-
 	ticker := time.NewTicker(20 * time.Millisecond)
 	done := make(chan bool)
 	eofChannel := make(chan bool)
-
 	go func() {
 		defer encodeSess.Cleanup()
+		defer ticker.Stop()
 		for {
 			select {
 			case <-done:
@@ -102,7 +108,6 @@ func ProcessAndPlay(gID disgord.Snowflake, uID disgord.Snowflake, arg string, di
 			}
 		}
 	}()
-
 	go func() {
 		for {
 			time.Sleep(1 * time.Second)

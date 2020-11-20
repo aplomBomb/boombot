@@ -7,15 +7,13 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
-var vcCache = NewVoiceChannelCache(disgordGlobalClient)
-
 // Using this for access to the global clients FOR NOW as passing it through the handlers has proven tricky
 // TO-DO find a solution to get rid of the global variables, including the client
 
 // RespondToCommand delegates actions when commands are issued
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	cec := NewCommandEventClient(data.Message, disgordGlobalClient)
-	command, args := cec.DisectCommand()
+	command, _ := cec.DisectCommand()
 
 	fmt.Printf("\nvUserID: %+v\n", data.Message.Author.ID)
 
@@ -24,7 +22,6 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	fmt.Printf("Command %+v by user %+v | %+v\n", command, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	switch command {
 	case "play":
-		go ProcessAndPlay(data.Message.GuildID, data.Message.Author.ID, args[0], disgordGlobalClient)
 		go deleteMessage(data.Message, 20*time.Second, disgordGlobalClient)
 	default:
 		cec.Delegate()
@@ -37,7 +34,7 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	user := data.Message.Author
 
 	fmt.Printf("Message %+v by user %+v | %+v\n", data.Message.Content, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
-	mec := NewMessageEventClient(data.Message, disgordGlobalAPI)
+	mec := NewMessageEventClient(data.Message, disgordGlobalClient)
 	err := mec.FilterNonModLinks()
 	if err != nil {
 		fmt.Printf("\nError filtering non-mod link: %+v\n", err)
@@ -69,5 +66,5 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 
 // RespondToVoiceChannelUpdate updates the server's voice channel cache every time an update is emitted
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
-	vcCache.UpdateCache(data.ChannelID, data.UserID)
+	globalQueue.UpdateVoiceCache(data.ChannelID, data.UserID)
 }
