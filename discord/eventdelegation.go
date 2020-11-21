@@ -2,7 +2,10 @@ package discord
 
 import (
 	"fmt"
+	"strings"
 	"time"
+
+	yt "github.com/aplombomb/boombot/youtube"
 
 	"github.com/andersfylling/disgord"
 )
@@ -22,10 +25,22 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	fmt.Printf("Command %+v by user %+v | %+v\n", command, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	switch command {
 	case "play":
-		globalQueue.UpdateQueueState(data.Message.ChannelID, data.Message.Author.ID, args[0])
-		fmt.Printf("\nQUEUE: %+v\n", globalQueue)
-		go deleteMessage(data.Message, 20*time.Second, disgordGlobalClient)
-		fmt.Printf("\nURL REQUESTED!!: %+v\n", globalQueue.UserQueue[0])
+		if strings.Contains(args[0], "list=") {
+			plis := ytService.PlaylistItems.List([]string{"snippet"})
+			ytc := yt.NewYoutubeClient(plis)
+			urls, err := ytc.GetPlaylist(args[0])
+			if err != nil {
+				fmt.Printf("\nERROR GETTING PLAYLIST URLS: %+v\n", err)
+			}
+			globalQueue.UpdateQueueStateBulk(data.Message.ChannelID, data.Message.Author.ID, urls)
+
+		} else {
+			globalQueue.UpdateQueueState(data.Message.ChannelID, data.Message.Author.ID, args[0])
+			fmt.Printf("\nQUEUE: %+v\n", globalQueue)
+			go deleteMessage(data.Message, 20*time.Second, disgordGlobalClient)
+			fmt.Printf("\nURL REQUESTED!!: %+v\n", globalQueue.UserQueue[0])
+		}
+
 	default:
 		cec.Delegate()
 	}

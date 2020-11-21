@@ -31,11 +31,21 @@ func NewQueue(gID disgord.Snowflake) *Queue {
 	}
 }
 
-// UpdateQueueState updates the Queue cache on play command events
+// UpdateQueueState updates the Queue cache on single song play requests
 func (q *Queue) UpdateQueueState(chID disgord.Snowflake, uID disgord.Snowflake, arg string) {
 	q.LastMessageUID = uID
 	q.LastMessageCHID = chID
 	q.UserQueue = append(q.UserQueue, arg)
+}
+
+// UpdateQueueStateBulk updates the Queue cache for playlist payload requests
+func (q *Queue) UpdateQueueStateBulk(chID disgord.Snowflake, uID disgord.Snowflake, args []string) {
+	q.LastMessageUID = uID
+	q.LastMessageCHID = chID
+
+	for _, v := range args {
+		q.UserQueue = append(q.UserQueue, v)
+	}
 }
 
 // UpdateVoiceCache updates the voicechannel cache based upon the set channel id on voice state updates
@@ -127,6 +137,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						nextFrame, err := encodeSess.OpusFrame()
 						if err != nil && err != io.EOF {
 							fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
+
 						}
 						if err == io.EOF {
 							fmt.Println("\nPLAYBACK FINISHED")
