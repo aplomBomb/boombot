@@ -35,9 +35,7 @@ func NewQueue(gID disgord.Snowflake) *Queue {
 func (q *Queue) UpdateQueueState(chID disgord.Snowflake, uID disgord.Snowflake, arg string) {
 	q.LastMessageUID = uID
 	q.LastMessageCHID = chID
-
 	q.UserQueue = append(q.UserQueue, arg)
-
 }
 
 // UpdateVoiceCache updates the voicechannel cache based upon the set channel id on voice state updates
@@ -56,7 +54,7 @@ func (q *Queue) UpdateVoiceCache(chID disgord.Snowflake, uID disgord.Snowflake) 
 func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI) {
 	wg := sync.WaitGroup{}
 	for {
-		fmt.Println(q.UserQueue)
+		time.Sleep(3 * time.Second)
 		if len(q.UserQueue) > 0 {
 			wg.Add(1)
 			requestURL := fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[0])
