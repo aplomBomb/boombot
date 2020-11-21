@@ -54,7 +54,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 		fmt.Printf("\nError getting user: %+v\n", err)
 	}
 	// fmt.Printf("Message reaction %+v by user %+v | %+v\n", data.PartialEmoji.Name, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
-	rec := NewReactionEventClient(data.PartialEmoji, data.UserID, data.ChannelID, data.MessageID, disgordGlobalAPI)
+	rec := NewReactionEventClient(data.PartialEmoji, data.UserID, data.ChannelID, data.MessageID, disgordGlobalClient)
 	msg, err := rec.GenerateModResponse()
 	if err != nil {
 		fmt.Printf("\nError generating mod reaction response: %+v\n", err)
