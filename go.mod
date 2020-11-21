@@ -13,5 +13,6 @@ require (
 	github.com/jonas747/dca v0.0.0-20201113050843-65838623978b
 	github.com/jonas747/ogg v0.0.0-20161220051205-b4f6f4cf3757 // indirect
 	github.com/sirupsen/logrus v1.7.0
+	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	google.golang.org/api v0.33.0
 )

@@ -42,10 +42,7 @@ func (q *Queue) UpdateQueueState(chID disgord.Snowflake, uID disgord.Snowflake, 
 func (q *Queue) UpdateQueueStateBulk(chID disgord.Snowflake, uID disgord.Snowflake, args []string) {
 	q.LastMessageUID = uID
 	q.LastMessageCHID = chID
-
-	for _, v := range args {
-		q.UserQueue = append(q.UserQueue, v)
-	}
+	q.UserQueue = append(q.UserQueue, args...)
 }
 
 // UpdateVoiceCache updates the voicechannel cache based upon the set channel id on voice state updates

@@ -24,6 +24,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 	fmt.Printf("Command %+v by user %+v | %+v\n", command, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	switch command {
+	// TO-DO clean up this god awful repetitive code
 	case "play":
 		if strings.Contains(args[0], "list=") {
 			plis := ytService.PlaylistItems.List([]string{"snippet"})
@@ -32,14 +33,121 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 			if err != nil {
 				fmt.Printf("\nERROR GETTING PLAYLIST URLS: %+v\n", err)
 			}
-			globalQueue.UpdateQueueStateBulk(data.Message.ChannelID, data.Message.Author.ID, urls)
+			if globalQueue.VoiceCache[data.Message.Author.ID] != 0 {
+				resp, err := disgordGlobalClient.SendMsg(
+					data.Message.ChannelID,
+					&disgord.CreateMessageParams{
+						Embed: &disgord.Embed{
+							Title:       "**PLAYLIST ACCEPTED**",
+							Description: fmt.Sprintf("%+v entries have been added", len(urls)),
+
+							Footer: &disgord.EmbedFooter{
+								Text: fmt.Sprintf("*%s's playlist added to queue*", data.Message.Author.Username),
+							},
+							Timestamp: data.Message.Timestamp,
+							Color:     0xeec400,
+						},
+					},
+				)
+				if err != nil {
+					fmt.Printf("\nERROR ADDING TO QUEUE: %+v\n", err)
+				}
+				globalQueue.UpdateQueueStateBulk(data.Message.ChannelID, data.Message.Author.ID, urls)
+				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
+				go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
+			} else {
+				resp, err := disgordGlobalClient.SendMsg(
+					data.Message.ChannelID,
+					&disgord.CreateMessageParams{
+						Embed: &disgord.Embed{
+							Title:       "**PLAYLIST REJECTED**",
+							Description: "*You need to be in a voice channel*",
+
+							Footer: &disgord.EmbedFooter{
+								Text: fmt.Sprintf("*%s's playlist rejected*", data.Message.Author.Username),
+							},
+							Timestamp: data.Message.Timestamp,
+							Color:     0xeec400,
+						},
+					},
+				)
+				if err != nil {
+					fmt.Printf("\nERROR ADDING TO QUEUE: %+v\n", err)
+				}
+				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
+				go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
+			}
 
 		} else {
-			globalQueue.UpdateQueueState(data.Message.ChannelID, data.Message.Author.ID, args[0])
-			fmt.Printf("\nQUEUE: %+v\n", globalQueue)
-			go deleteMessage(data.Message, 20*time.Second, disgordGlobalClient)
-			fmt.Printf("\nURL REQUESTED!!: %+v\n", globalQueue.UserQueue[0])
+			if globalQueue.VoiceCache[data.Message.Author.ID] != 0 {
+				resp, err := disgordGlobalClient.SendMsg(
+					data.Message.ChannelID,
+					&disgord.CreateMessageParams{
+						Embed: &disgord.Embed{
+							Title:       "**SONG ACCEPTED**",
+							Description: "_Song added_",
+
+							Footer: &disgord.EmbedFooter{
+								Text: fmt.Sprintf("*%s's song added to queue*", data.Message.Author.Username),
+							},
+							Timestamp: data.Message.Timestamp,
+							Color:     0xeec400,
+						},
+					},
+				)
+				if err != nil {
+					fmt.Printf("\nERROR ADDING TO QUEUE: %+v\n", err)
+				}
+				globalQueue.UpdateQueueState(data.Message.ChannelID, data.Message.Author.ID, args[0])
+				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
+				go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
+			} else {
+				resp, err := disgordGlobalClient.SendMsg(
+					data.Message.ChannelID,
+					&disgord.CreateMessageParams{
+						Embed: &disgord.Embed{
+							Title:       "**SONG REJECTED**",
+							Description: "*You need to be in a voice channel*",
+
+							Footer: &disgord.EmbedFooter{
+								Text: fmt.Sprintf("*%s's song rejected*", data.Message.Author.Username),
+							},
+							Timestamp: data.Message.Timestamp,
+							Color:     0xeec400,
+						},
+					},
+				)
+				if err != nil {
+					fmt.Printf("\nERROR ADDING TO QUEUE: %+v\n", err)
+				}
+				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
+				go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
+			}
+
 		}
+	case "purge":
+		resp, err := disgordGlobalClient.SendMsg(
+			data.Message.ChannelID,
+			&disgord.CreateMessageParams{
+				Embed: &disgord.Embed{
+					Title:       "**QUEUE PURGED**",
+					Description: fmt.Sprintf("%+v entries have been purged", len(globalQueue.UserQueue)),
+
+					Footer: &disgord.EmbedFooter{
+						Text: fmt.Sprintf("Purged by %s", data.Message.Author.Username),
+					},
+					Timestamp: data.Message.Timestamp,
+					Color:     0xeec400,
+				},
+			},
+		)
+		if err != nil {
+			fmt.Printf("\nERROR CREATING PURGE MESSAGE: %+v\n", err)
+		}
+		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
+		go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
+
+		globalQueue.UserQueue = []string{globalQueue.UserQueue[0]}
 
 	default:
 		cec.Delegate()
