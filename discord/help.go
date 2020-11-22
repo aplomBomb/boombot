@@ -48,7 +48,7 @@ func (hcc *HelpCommandClient) SendHelpMsg() error {
 	if err != nil {
 		return err
 	}
-	go deleteMessage(hcc.data, 150*time.Millisecond, hcc.disgordClient)
+	go deleteMessage(hcc.data, 1*time.Second, hcc.disgordClient)
 	go deleteMessage(resp, 30*time.Second, hcc.disgordClient)
 	return nil
 }

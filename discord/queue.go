@@ -239,7 +239,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 			}
 		}
 		if len(msgs) > 1 {
-			go deleteMessage(msgs[1], 1*time.Millisecond, disgordClient)
+			go deleteMessage(msgs[1], 1*time.Second, disgordClient)
 		}
 	}
 }

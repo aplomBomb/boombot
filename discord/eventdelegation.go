@@ -29,17 +29,17 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		go func() {
 			globalQueue.Next <- true
 		}()
-		go deleteMessage(data.Message, 10*time.Millisecond, disgordGlobalClient)
+		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 	case "shuffle":
 		go func() {
 			globalQueue.Shuffle <- true
 		}()
-		go deleteMessage(data.Message, 10*time.Millisecond, disgordGlobalClient)
+		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 	case "stop":
 		go func() {
 			globalQueue.Stop <- true
 		}()
-		go deleteMessage(data.Message, 10*time.Millisecond, disgordGlobalClient)
+		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 	case "play":
 		if strings.Contains(args[0], "list=") {
 			plis := ytService.PlaylistItems.List([]string{"snippet"})
@@ -167,8 +167,17 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 // RespondToMessage delegates actions when messages are created
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
-	user := data.Message.Author
 
+	switch data.Message.ChannelID {
+	case 779836590503624734:
+		data.Message.React(ctx, s, "\u26D4")
+		time.Sleep(1 * time.Second)
+		data.Message.React(ctx, s, "\u267B")
+		time.Sleep(1 * time.Second)
+		data.Message.React(ctx, s, "\u23E9")
+	}
+
+	user := data.Message.Author
 	fmt.Printf("Message %+v by user %+v | %+v\n", data.Message.Content, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	mec := NewMessageEventClient(data.Message, disgordGlobalClient)
 	err := mec.FilterNonModLinks()
@@ -180,14 +189,13 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 // RespondToReaction delegates actions when reactions are added to messages
 func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	userQueryBuilder := disgordGlobalClient.User(data.UserID)
-
 	user, err := userQueryBuilder.Get()
-
 	if err != nil {
 		fmt.Printf("\nError getting user: %+v\n", err)
 	}
 	// fmt.Printf("Message reaction %+v by user %+v | %+v\n", data.PartialEmoji.Name, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	rec := NewReactionEventClient(data.PartialEmoji, data.UserID, data.ChannelID, data.MessageID, disgordGlobalClient)
+	rec.HandleJukeboxReact(globalQueue)
 	msg, err := rec.GenerateModResponse()
 	if err != nil {
 		fmt.Printf("\nError generating mod reaction response: %+v\n", err)

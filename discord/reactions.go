@@ -101,9 +101,32 @@ func NewReactionEventClient(emoji *disgord.Emoji, uID disgord.Snowflake, chID di
 	}
 }
 
+// HandleJukeboxReact triggers the playback channels of the queue in response to user reaction
+func (rec *ReactionEventClient) HandleJukeboxReact(queue *Queue) {
+	if rec.uID != 739154323015204935 {
+		switch rec.emoji.Name {
+		case "\u26D4":
+			go func() {
+				queue.Stop <- true
+				return
+			}()
+		case "\u267B":
+			go func() {
+				queue.Shuffle <- true
+				return
+			}()
+		case "\u23E9":
+			go func() {
+				queue.Next <- true
+				return
+			}()
+		}
+	}
+}
+
 //GenerateModResponse returns the applicable message response if reaction criteria are met
 func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) {
-	fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", rec.emoji.Name, rec.chID, rec.uID)
+	// fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", rec.emoji.Name, rec.chID, rec.uID)
 
 	dm := disgord.Message{}
 
