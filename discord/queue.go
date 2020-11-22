@@ -3,6 +3,7 @@ package discord
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -18,6 +19,9 @@ type Queue struct {
 	GuildID         disgord.Snowflake
 	LastMessageUID  disgord.Snowflake
 	LastMessageCHID disgord.Snowflake
+	Next            chan bool
+	Stop            chan bool
+	Shuffle         chan bool
 }
 
 // NewQueue returns a new Queue instance
@@ -28,16 +32,24 @@ func NewQueue(gID disgord.Snowflake) *Queue {
 		GuildID:         gID,
 		LastMessageUID:  disgord.Snowflake(0),
 		LastMessageCHID: disgord.Snowflake(0),
+		Next:            make(chan bool),
+		Stop:            make(chan bool),
+		Shuffle:         make(chan bool),
 	}
 }
 
-// UpdateQueueState updates the Queue cache on play command events
+// UpdateQueueState updates the Queue cache on single song play requests
 func (q *Queue) UpdateQueueState(chID disgord.Snowflake, uID disgord.Snowflake, arg string) {
 	q.LastMessageUID = uID
 	q.LastMessageCHID = chID
-
 	q.UserQueue = append(q.UserQueue, arg)
+}
 
+// UpdateQueueStateBulk updates the Queue cache for playlist payload requests
+func (q *Queue) UpdateQueueStateBulk(chID disgord.Snowflake, uID disgord.Snowflake, args []string) {
+	q.LastMessageUID = uID
+	q.LastMessageCHID = chID
+	q.UserQueue = append(q.UserQueue, args...)
 }
 
 // UpdateVoiceCache updates the voicechannel cache based upon the set channel id on voice state updates
@@ -56,7 +68,7 @@ func (q *Queue) UpdateVoiceCache(chID disgord.Snowflake, uID disgord.Snowflake) 
 func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI) {
 	wg := sync.WaitGroup{}
 	for {
-		fmt.Println(q.UserQueue)
+		time.Sleep(3 * time.Second)
 		if len(q.UserQueue) > 0 {
 			wg.Add(1)
 			requestURL := fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[0])
@@ -99,6 +111,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			if err != nil {
 				fmt.Printf("\nERROR SPEAKING: %+v\n", err)
 			}
+			// Ticker needed for smooth opus frame delivery to prevent playback stuttering
 			ticker := time.NewTicker(20 * time.Millisecond)
 			done := make(chan bool)
 			eofChannel := make(chan bool)
@@ -108,6 +121,58 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				defer waitGroup.Done()
 				for {
 					select {
+					case <-q.Shuffle:
+						err := encodeSess.Stop()
+						if err != nil {
+							fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
+						}
+						err = vc.StopSpeaking()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+						}
+						time.Sleep(1 * time.Second)
+						err = vc.Close()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
+						}
+						fmt.Println("\nLEAVING VOICE CHANNEL")
+						q.ShuffleQueue()
+						return
+					case <-q.Stop:
+						err := encodeSess.Stop()
+						if err != nil {
+							fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
+						}
+						err = vc.StopSpeaking()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+						}
+						time.Sleep(1 * time.Second)
+						err = vc.Close()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
+						}
+						fmt.Println("\nLEAVING VOICE CHANNEL")
+						q.EmptyQueue()
+						return
+					case <-q.Next:
+						err := encodeSess.Stop()
+						if err != nil {
+							fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
+						}
+						fmt.Println("SKIPPING QUEUE ENTRY")
+						err = vc.StopSpeaking()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+						}
+						time.Sleep(1 * time.Second)
+						err = vc.Close()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
+						}
+						fmt.Println("\nLEAVING VOICE CHANNEL")
+						q.RemoveLastQueueEntry()
+						return
 					case <-done:
 						err := vc.StopSpeaking()
 						if err != nil && err != io.EOF {
@@ -119,11 +184,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
 						}
 						fmt.Println("\nLEAVING VOICE CHANNEL")
-						fmt.Printf("\nDELETING QUEUE ENTRY\n")
-						//Delete url from queue slice
-						copy(q.UserQueue[0:], q.UserQueue[0+1:])
-						q.UserQueue[len(q.UserQueue)-1] = ""
-						q.UserQueue = q.UserQueue[:len(q.UserQueue)-1]
+						q.RemoveLastQueueEntry()
 						return
 					case <-ticker.C:
 						nextFrame, err := encodeSess.OpusFrame()
@@ -134,7 +195,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Println("\nPLAYBACK FINISHED")
 							eofChannel <- true
 						}
-						err = vc.SendOpusFrame(nextFrame)
+						vc.SendOpusFrame(nextFrame)
 					}
 				}
 			}(&wg)
@@ -151,4 +212,52 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 		}
 		wg.Wait()
 	}
+}
+
+// ManageJukebox scans the userqueue and updates the embed in the jukebox designated channel
+func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
+	referenceEntry := ""
+	for {
+		time.Sleep(5 * time.Second)
+		msgs, err := disgordClient.Channel(779836590503624734).GetMessages(&disgord.GetMessagesParams{
+			Limit: 10,
+		})
+		if err != nil {
+			fmt.Printf("\nCOULD NOT GET MESSAGES FROM JUKEBOX CHANNEL: %+v", err)
+		}
+		if len(q.UserQueue) > 0 {
+			if referenceEntry != q.UserQueue[0] {
+				disgordClient.SendMsg(
+					779836590503624734,
+					&disgord.CreateMessageParams{
+						Content: q.UserQueue[0],
+					},
+				)
+				if len(q.UserQueue) > 0 {
+					referenceEntry = q.UserQueue[0]
+				}
+			}
+		}
+		if len(msgs) > 1 {
+			go deleteMessage(msgs[1], 1*time.Second, disgordClient)
+		}
+	}
+}
+
+// RemoveLastQueueEntry does what it says, removes the last entry in the queue
+func (q *Queue) RemoveLastQueueEntry() {
+	copy(q.UserQueue[0:], q.UserQueue[0+1:])
+	q.UserQueue[len(q.UserQueue)-1] = ""
+	q.UserQueue = q.UserQueue[:len(q.UserQueue)-1]
+}
+
+// ShuffleQueue randomizes the order of the queue entries for unpredictable playback
+func (q *Queue) ShuffleQueue() {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(q.UserQueue), func(i, j int) { q.UserQueue[i], q.UserQueue[j] = q.UserQueue[j], q.UserQueue[i] })
+}
+
+// EmptyQueue reverts queue to it's zero value state
+func (q *Queue) EmptyQueue() {
+	q.UserQueue = []string{}
 }
