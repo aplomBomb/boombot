@@ -3,6 +3,7 @@ package discord
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -18,6 +19,8 @@ type Queue struct {
 	GuildID         disgord.Snowflake
 	LastMessageUID  disgord.Snowflake
 	LastMessageCHID disgord.Snowflake
+	Next            chan bool
+	Stop            chan bool
 }
 
 // NewQueue returns a new Queue instance
@@ -28,6 +31,8 @@ func NewQueue(gID disgord.Snowflake) *Queue {
 		GuildID:         gID,
 		LastMessageUID:  disgord.Snowflake(0),
 		LastMessageCHID: disgord.Snowflake(0),
+		Next:            make(chan bool),
+		Stop:            make(chan bool),
 	}
 }
 
@@ -113,6 +118,24 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				defer waitGroup.Done()
 				for {
 					select {
+					case <-q.Next:
+						err := encodeSess.Stop()
+						if err != nil {
+							fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
+						}
+						fmt.Println("SKIPPING QUEUE ENTRY")
+						err = vc.StopSpeaking()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+						}
+						time.Sleep(1 * time.Second)
+						err = vc.Close()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
+						}
+						fmt.Println("\nLEAVING VOICE CHANNEL")
+						q.RemoveLastQueueEntry()
+						return
 					case <-done:
 						err := vc.StopSpeaking()
 						if err != nil && err != io.EOF {
@@ -124,23 +147,18 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
 						}
 						fmt.Println("\nLEAVING VOICE CHANNEL")
-						fmt.Printf("\nDELETING QUEUE ENTRY\n")
-						//Delete url from queue slice
-						copy(q.UserQueue[0:], q.UserQueue[0+1:])
-						q.UserQueue[len(q.UserQueue)-1] = ""
-						q.UserQueue = q.UserQueue[:len(q.UserQueue)-1]
+						q.RemoveLastQueueEntry()
 						return
 					case <-ticker.C:
 						nextFrame, err := encodeSess.OpusFrame()
 						if err != nil && err != io.EOF {
 							fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
-
 						}
 						if err == io.EOF {
 							fmt.Println("\nPLAYBACK FINISHED")
 							eofChannel <- true
 						}
-						err = vc.SendOpusFrame(nextFrame)
+						vc.SendOpusFrame(nextFrame)
 					}
 				}
 			}(&wg)
@@ -157,4 +175,17 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 		}
 		wg.Wait()
 	}
+}
+
+// RemoveLastQueueEntry does what it says, removes the last entry in the queue
+func (q *Queue) RemoveLastQueueEntry() {
+	copy(q.UserQueue[0:], q.UserQueue[0+1:])
+	q.UserQueue[len(q.UserQueue)-1] = ""
+	q.UserQueue = q.UserQueue[:len(q.UserQueue)-1]
+}
+
+// ShuffleQueue randomizes the order of the queue entries for unpredictable playback
+func (q *Queue) ShuffleQueue() {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(q.UserQueue), func(i, j int) { q.UserQueue[i], q.UserQueue[j] = q.UserQueue[j], q.UserQueue[i] })
 }

@@ -68,7 +68,6 @@ func (ytc *Client) GetPlaylist(arg string) ([]string, error) {
 		playlistID = id[0]
 		songIndex, _ = strconv.Atoi(urlFields[3])
 	}
-
 	URLS, err := ytc.aggregateIDS(playlistID)
 	if err != nil {
 		return nil, err
@@ -83,7 +82,6 @@ func (ytc *Client) GetPlaylist(arg string) ([]string, error) {
 			URLS = URLS[:len(URLS)-1]
 		}
 	}
-
 	return URLS, nil
 }
 

@@ -11,7 +11,7 @@ import (
 )
 
 // Using this for access to the global clients FOR NOW as passing it through the handlers has proven tricky
-// TO-DO find a solution to get rid of the global variables, including the client
+// TO-DO find a solution to get rid of the global variables
 
 // RespondToCommand delegates actions when commands are issued
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
@@ -24,7 +24,12 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 	fmt.Printf("Command %+v by user %+v | %+v\n", command, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	switch command {
-	// TO-DO clean up this god awful repetitive code
+	// TO-DO clean up this god awful repetitive code :D
+	case "next":
+		go func() {
+			globalQueue.Next <- true
+		}()
+		go deleteMessage(data.Message, 10*time.Millisecond, disgordGlobalClient)
 	case "play":
 		if strings.Contains(args[0], "list=") {
 			plis := ytService.PlaylistItems.List([]string{"snippet"})
@@ -77,7 +82,6 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 				go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
 			}
-
 		} else {
 			if globalQueue.VoiceCache[data.Message.Author.ID] != 0 {
 				resp, err := disgordGlobalClient.SendMsg(
@@ -123,7 +127,6 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 				go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
 			}
-
 		}
 	case "purge":
 		resp, err := disgordGlobalClient.SendMsg(
@@ -131,7 +134,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 			&disgord.CreateMessageParams{
 				Embed: &disgord.Embed{
 					Title:       "**QUEUE PURGED**",
-					Description: fmt.Sprintf("%+v entries have been purged", len(globalQueue.UserQueue)),
+					Description: fmt.Sprintf("%+v entries have been purged", len(globalQueue.UserQueue)-1),
 
 					Footer: &disgord.EmbedFooter{
 						Text: fmt.Sprintf("Purged by %s", data.Message.Author.Username),
@@ -146,13 +149,10 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		}
 		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 		go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
-
 		globalQueue.UserQueue = []string{globalQueue.UserQueue[0]}
-
 	default:
 		cec.Delegate()
 	}
-
 }
 
 // RespondToMessage delegates actions when messages are created
