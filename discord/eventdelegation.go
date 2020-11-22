@@ -30,6 +30,16 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 			globalQueue.Next <- true
 		}()
 		go deleteMessage(data.Message, 10*time.Millisecond, disgordGlobalClient)
+	case "shuffle":
+		go func() {
+			globalQueue.Shuffle <- true
+		}()
+		go deleteMessage(data.Message, 10*time.Millisecond, disgordGlobalClient)
+	case "stop":
+		go func() {
+			globalQueue.Stop <- true
+		}()
+		go deleteMessage(data.Message, 10*time.Millisecond, disgordGlobalClient)
 	case "play":
 		if strings.Contains(args[0], "list=") {
 			plis := ytService.PlaylistItems.List([]string{"snippet"})

@@ -21,6 +21,7 @@ type Queue struct {
 	LastMessageCHID disgord.Snowflake
 	Next            chan bool
 	Stop            chan bool
+	Shuffle         chan bool
 }
 
 // NewQueue returns a new Queue instance
@@ -33,6 +34,7 @@ func NewQueue(gID disgord.Snowflake) *Queue {
 		LastMessageCHID: disgord.Snowflake(0),
 		Next:            make(chan bool),
 		Stop:            make(chan bool),
+		Shuffle:         make(chan bool),
 	}
 }
 
@@ -109,6 +111,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			if err != nil {
 				fmt.Printf("\nERROR SPEAKING: %+v\n", err)
 			}
+			// Ticker needed for smooth opus frame delivery to prevent playback stuttering
 			ticker := time.NewTicker(20 * time.Millisecond)
 			done := make(chan bool)
 			eofChannel := make(chan bool)
@@ -118,6 +121,40 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				defer waitGroup.Done()
 				for {
 					select {
+					case <-q.Shuffle:
+						err := encodeSess.Stop()
+						if err != nil {
+							fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
+						}
+						err = vc.StopSpeaking()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+						}
+						time.Sleep(1 * time.Second)
+						err = vc.Close()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
+						}
+						fmt.Println("\nLEAVING VOICE CHANNEL")
+						q.ShuffleQueue()
+						return
+					case <-q.Stop:
+						err := encodeSess.Stop()
+						if err != nil {
+							fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
+						}
+						err = vc.StopSpeaking()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+						}
+						time.Sleep(1 * time.Second)
+						err = vc.Close()
+						if err != nil && err != io.EOF {
+							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
+						}
+						fmt.Println("\nLEAVING VOICE CHANNEL")
+						q.EmptyQueue()
+						return
 					case <-q.Next:
 						err := encodeSess.Stop()
 						if err != nil {
@@ -177,6 +214,36 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 	}
 }
 
+// ManageJukebox scans the userqueue and updates the embed in the jukebox designated channel
+func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
+	referenceEntry := ""
+	for {
+		time.Sleep(5 * time.Second)
+		msgs, err := disgordClient.Channel(779836590503624734).GetMessages(&disgord.GetMessagesParams{
+			Limit: 10,
+		})
+		if err != nil {
+			fmt.Printf("\nCOULD NOT GET MESSAGES FROM JUKEBOX CHANNEL: %+v", err)
+		}
+		if len(q.UserQueue) > 0 {
+			if referenceEntry != q.UserQueue[0] {
+				disgordClient.SendMsg(
+					779836590503624734,
+					&disgord.CreateMessageParams{
+						Content: q.UserQueue[0],
+					},
+				)
+				if len(q.UserQueue) > 0 {
+					referenceEntry = q.UserQueue[0]
+				}
+			}
+		}
+		if len(msgs) > 1 {
+			go deleteMessage(msgs[1], 1*time.Millisecond, disgordClient)
+		}
+	}
+}
+
 // RemoveLastQueueEntry does what it says, removes the last entry in the queue
 func (q *Queue) RemoveLastQueueEntry() {
 	copy(q.UserQueue[0:], q.UserQueue[0+1:])
@@ -188,4 +255,9 @@ func (q *Queue) RemoveLastQueueEntry() {
 func (q *Queue) ShuffleQueue() {
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(q.UserQueue), func(i, j int) { q.UserQueue[i], q.UserQueue[j] = q.UserQueue[j], q.UserQueue[i] })
+}
+
+// EmptyQueue reverts queue to it's zero value state
+func (q *Queue) EmptyQueue() {
+	q.UserQueue = []string{}
 }

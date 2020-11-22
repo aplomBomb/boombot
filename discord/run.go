@@ -63,4 +63,5 @@ func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.Boom
 	queue := NewQueue(disgord.ParseSnowflakeString(conf.GuildID))
 	globalQueue = queue
 	go globalQueue.ListenAndProcessQueue(client)
+	go globalQueue.ManageJukebox(client)
 }

@@ -39,12 +39,8 @@ func (mec *MessageEventClient) FilterNonModLinks() error {
 
 func deleteMessage(resp *disgord.Message, sleep time.Duration, client disgordiface.DisgordClientAPI) {
 	time.Sleep(sleep)
-
-	fmt.Printf("\nDeleting message '%+v' by user %+v \n", resp.Content, resp.Author.Username)
-
+	fmt.Printf("\nDeleting message '%+v' by user %+v", resp.Content, resp.Author.Username)
 	channel := client.Channel(resp.ChannelID)
 	msgQueryBuilder := channel.Message(resp.ID)
-
 	msgQueryBuilder.Delete()
-
 }
