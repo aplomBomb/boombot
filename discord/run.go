@@ -57,13 +57,4 @@ func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.Boom
 	go globalQueue.ListenAndProcessQueue(client)
 	go globalQueue.ManageJukebox(client)
 	defer client.Gateway().StayConnectedUntilInterrupted()
-
-	testMap := make(map[string][]string)
-
-	testMap["test"] = []string{"arg1", "arg2"}
-
-	testMap["test"] = append(testMap["test"], "arg3")
-
-	fmt.Printf("\ntestMap: %+v", testMap)
-
 }
