@@ -84,16 +84,20 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 	wg := sync.WaitGroup{}
 	for {
 		time.Sleep(3 * time.Second)
-		// fmt.Printf("\nCURRENTUSERQUEUE: %+v\n", q.UserQueue)
-		// fmt.Printf("\nLASTUSERCOMMANDQUEUE: %+v\n", q.UserQueue[q.LastMessageUID])
 		if len(q.UserQueue) > 0 {
 			wg.Add(1)
 			requestURL := ""
-			// songURL := ""
+			nextUID := disgord.Snowflake(0)
 			if q.NowPlayinguID == 0 {
-				requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.LastMessageUID][0])
+				fmt.Println("\nTEST")
+				// Get the uID of the next queue in line so we can fetch the first song from their queue
+				for k := range q.UserQueue {
+					nextUID = k
+					break
+				}
+				requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[nextUID][0])
 				fmt.Printf("\nPLAYING FROM USER PLAYLIST FROM LAST COMMAND\n")
-				q.NowPlayingURL = q.UserQueue[q.LastMessageUID][0]
+				q.NowPlayingURL = q.UserQueue[nextUID][0]
 			} else {
 				requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayinguID][0])
 				fmt.Printf("\nCONTINUING FROM USER PLAYLIST\n")
@@ -105,7 +109,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			if err != nil {
 				fmt.Printf("\nERROR ENCODING: %+v\n", err)
 			}
-			vc, err := disgordClientAPI.VoiceConnectOptions(q.GuildID, q.VoiceCache[q.LastMessageUID], true, false)
+			vc, err := disgordClientAPI.VoiceConnectOptions(q.GuildID, q.VoiceCache[q.NowPlayinguID], true, false)
 			if err != nil {
 				fmt.Printf("\nERROR CONNECTING TO VOICE CHANNEL: %+v\n", err)
 				msg, err := disgordClientAPI.SendMsg(q.LastMessageCHID, disgord.Message{
@@ -128,6 +132,8 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			ticker := time.NewTicker(20 * time.Millisecond)
 			done := make(chan bool)
 			eofChannel := make(chan bool)
+			// Goroutine just cycles through the opusFrames produced from the encoding process
+			// The channels allow for realtime interaction/playback control from events triggered by users
 			go func(waitGroup *sync.WaitGroup) {
 				defer es.Cleanup()
 				defer ticker.Stop()
@@ -257,8 +263,9 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 	referenceEntry := ""
 	for {
 		time.Sleep(2 * time.Second)
-		// fmt.Printf("\nCURRENTUSERQUEUE: %+v\n", q.UserQueue)
-		// fmt.Printf("\nLASTUSERCOMMANDQUEUE: %+v\n", q.UserQueue[q.LastMessageUID])
+		// TO-DO===============================================================
+		// I need to respond to a message create event rather than pinging discord's api every two seconds
+		//(2 seconds is the tightest interval before being rate-limited)
 		msgs, err := disgordClient.Channel(779836590503624734).GetMessages(&disgord.GetMessagesParams{
 			Limit: 10,
 		})
@@ -285,6 +292,8 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 }
 
 // RemoveQueueEntry removes the last queue entry and deletes the map if string slice is empty
+// This is insane looking/literally makes my eyes glaze over looking at it
+// Should devise a more user(reader)-friendly solution
 func (q *Queue) RemoveQueueEntry() {
 	copy(q.UserQueue[q.NowPlayinguID][0:], q.UserQueue[q.NowPlayinguID][0+1:])
 	q.UserQueue[q.NowPlayinguID][len(q.UserQueue[q.NowPlayinguID])-1] = ""
@@ -295,7 +304,7 @@ func (q *Queue) RemoveQueueEntry() {
 	}
 }
 
-// ShuffleQueue randomizes the order of the queue entries for randomized playback
+// ShuffleQueue reorganizes the order of the queue entries for randomized playback
 func (q *Queue) ShuffleQueue() {
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(q.UserQueue[q.NowPlayinguID]), func(i, j int) {
@@ -309,7 +318,7 @@ func (q *Queue) EmptyQueue() {
 	q.NowPlayinguID = 0
 }
 
-// NowPlayingSync keeps the NowPlayinguID updated with the currently playing queue item
+// NowPlayingSync keeps the NowPlayinguID updated with the ID of the user who's song is currently playing
 func (q *Queue) NowPlayingSync() {
 	currentUID := disgord.Snowflake(0)
 	i := 0
