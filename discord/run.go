@@ -41,27 +41,29 @@ func init() {
 
 // BotRun | Start the bot and handle events
 func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.BoombotCreds) {
-
 	conf = cf
+	queue := NewQueue(disgord.ParseSnowflakeString(conf.GuildID))
+	globalQueue = queue
 
 	disgordGlobalClient = client
-
 	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(creds.YoutubeToken))
-
 	filter, _ := std.NewMsgFilter(ctx, client)
 	filter.SetPrefix(cf.Prefix)
-
 	client.Gateway().WithMiddleware(filter.NotByBot, filter.HasPrefix, std.CopyMsgEvt, filter.StripPrefix).MessageCreate(RespondToCommand)
 	client.Gateway().MessageReactionAdd(RespondToReaction)
 	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
 	client.Gateway().MessageCreate(RespondToMessage)
-
 	fmt.Println("BoomBot is running")
-
-	defer client.Gateway().StayConnectedUntilInterrupted()
-
-	queue := NewQueue(disgord.ParseSnowflakeString(conf.GuildID))
-	globalQueue = queue
 	go globalQueue.ListenAndProcessQueue(client)
 	go globalQueue.ManageJukebox(client)
+	defer client.Gateway().StayConnectedUntilInterrupted()
+
+	testMap := make(map[string][]string)
+
+	testMap["test"] = []string{"arg1", "arg2"}
+
+	testMap["test"] = append(testMap["test"], "arg3")
+
+	fmt.Printf("\ntestMap: %+v", testMap)
+
 }
