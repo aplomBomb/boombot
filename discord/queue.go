@@ -90,6 +90,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			nextUID := disgord.Snowflake(0)
 			if q.NowPlayinguID == 0 {
 				fmt.Println("\nTEST")
+				// Get the uID of the next queue in line so we can fetch the first song from their queue
 				for k := range q.UserQueue {
 					nextUID = k
 					break
@@ -131,6 +132,8 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			ticker := time.NewTicker(20 * time.Millisecond)
 			done := make(chan bool)
 			eofChannel := make(chan bool)
+			// Goroutine just cycles through the opusFrames produced from the encoding process
+			// The channels allow for realtime interaction/playback control from events triggered by users
 			go func(waitGroup *sync.WaitGroup) {
 				defer es.Cleanup()
 				defer ticker.Stop()
@@ -260,8 +263,9 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 	referenceEntry := ""
 	for {
 		time.Sleep(2 * time.Second)
-		// fmt.Printf("\nCURRENTUSERQUEUE: %+v\n", q.UserQueue)
-		// fmt.Printf("\nLASTUSERCOMMANDQUEUE: %+v\n", q.UserQueue[q.LastMessageUID])
+		// TO-DO===============================================================
+		// I need to respond to a message create event rather than pinging discord's api every two seconds
+		//(2 seconds is the tightest interval before being rate-limited)
 		msgs, err := disgordClient.Channel(779836590503624734).GetMessages(&disgord.GetMessagesParams{
 			Limit: 10,
 		})
@@ -288,6 +292,8 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 }
 
 // RemoveQueueEntry removes the last queue entry and deletes the map if string slice is empty
+// This is insane looking/literally makes my eyes glaze over looking at it
+// Should devise a more user(reader)-friendly solution
 func (q *Queue) RemoveQueueEntry() {
 	copy(q.UserQueue[q.NowPlayinguID][0:], q.UserQueue[q.NowPlayinguID][0+1:])
 	q.UserQueue[q.NowPlayinguID][len(q.UserQueue[q.NowPlayinguID])-1] = ""
@@ -298,7 +304,7 @@ func (q *Queue) RemoveQueueEntry() {
 	}
 }
 
-// ShuffleQueue randomizes the order of the queue entries for randomized playback
+// ShuffleQueue reorganizes the order of the queue entries for randomized playback
 func (q *Queue) ShuffleQueue() {
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(q.UserQueue[q.NowPlayinguID]), func(i, j int) {
