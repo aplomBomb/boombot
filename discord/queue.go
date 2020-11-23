@@ -89,18 +89,14 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			requestURL := ""
 			nextUID := disgord.Snowflake(0)
 			if q.NowPlayinguID == 0 {
-				// I THINK THIS WORKS IDK
-				// I THINK THIS WORKS IDK
-				// I THINK THIS WORKS IDK
-				// I THINK THIS WORKS IDK
-				// I THINK THIS WORKS IDK
+				fmt.Println("\nTEST")
 				for k := range q.UserQueue {
 					nextUID = k
-					return
+					break
 				}
 				requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[nextUID][0])
 				fmt.Printf("\nPLAYING FROM USER PLAYLIST FROM LAST COMMAND\n")
-				q.NowPlayingURL = q.UserQueue[q.LastMessageUID][0]
+				q.NowPlayingURL = q.UserQueue[nextUID][0]
 			} else {
 				requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayinguID][0])
 				fmt.Printf("\nCONTINUING FROM USER PLAYLIST\n")
@@ -112,7 +108,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			if err != nil {
 				fmt.Printf("\nERROR ENCODING: %+v\n", err)
 			}
-			vc, err := disgordClientAPI.VoiceConnectOptions(q.GuildID, q.VoiceCache[q.LastMessageUID], true, false)
+			vc, err := disgordClientAPI.VoiceConnectOptions(q.GuildID, q.VoiceCache[q.NowPlayinguID], true, false)
 			if err != nil {
 				fmt.Printf("\nERROR CONNECTING TO VOICE CHANNEL: %+v\n", err)
 				msg, err := disgordClientAPI.SendMsg(q.LastMessageCHID, disgord.Message{

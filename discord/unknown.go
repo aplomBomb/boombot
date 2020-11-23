@@ -8,7 +8,7 @@ import (
 	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
-// UnknownCommandClient represents the data neccessary for unknown command processing
+// UnknownCommandClient represents the data necessary for unknown command processing
 type UnknownCommandClient struct {
 	data          *disgord.Message
 	disgordClient disgordiface.DisgordClientAPI
