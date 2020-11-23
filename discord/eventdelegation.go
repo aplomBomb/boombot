@@ -159,7 +159,9 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		}
 		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 		go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
-		globalQueue.UserQueue = []string{globalQueue.UserQueue[0]}
+		// globalQueue.UserQueue[globalQueue.NowPlayinguID] = []string{globalQueue.UserQueue[globalQueue.NowPlayinguID][0]}
+		globalQueue.NowPlayinguID = 0
+		delete(globalQueue.UserQueue, globalQueue.NowPlayinguID)
 	default:
 		cec.Delegate()
 	}
