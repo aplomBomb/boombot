@@ -84,14 +84,21 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 	wg := sync.WaitGroup{}
 	for {
 		time.Sleep(3 * time.Second)
-		// fmt.Printf("\nCURRENTUSERQUEUE: %+v\n", q.UserQueue)
-		// fmt.Printf("\nLASTUSERCOMMANDQUEUE: %+v\n", q.UserQueue[q.LastMessageUID])
 		if len(q.UserQueue) > 0 {
 			wg.Add(1)
 			requestURL := ""
-			// songURL := ""
+			nextUID := disgord.Snowflake(0)
 			if q.NowPlayinguID == 0 {
-				requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.LastMessageUID][0])
+				// I THINK THIS WORKS IDK
+				// I THINK THIS WORKS IDK
+				// I THINK THIS WORKS IDK
+				// I THINK THIS WORKS IDK
+				// I THINK THIS WORKS IDK
+				for k := range q.UserQueue {
+					nextUID = k
+					return
+				}
+				requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[nextUID][0])
 				fmt.Printf("\nPLAYING FROM USER PLAYLIST FROM LAST COMMAND\n")
 				q.NowPlayingURL = q.UserQueue[q.LastMessageUID][0]
 			} else {
@@ -309,7 +316,7 @@ func (q *Queue) EmptyQueue() {
 	q.NowPlayinguID = 0
 }
 
-// NowPlayingSync keeps the NowPlayinguID updated with the currently playing queue item
+// NowPlayingSync keeps the NowPlayinguID updated with the ID of the user who's song is currently playing
 func (q *Queue) NowPlayingSync() {
 	currentUID := disgord.Snowflake(0)
 	i := 0

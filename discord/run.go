@@ -26,11 +26,11 @@ var session disgord.Session
 var conf config.ConfJSONStruct
 var globalQueue *Queue
 
-//Version of BoomBot
-const Version = "v0.0.0-alpha"
+// Version of BoomBot
+const Version = "v1.0.0-alpha"
 
 func init() {
-	//BoomBot cli logo
+
 	fmt.Printf(`
 	▄▄▄▄·             • ▌ ▄ ·.  ▄▄▄▄      ▄▄▄▄▄▄▄
 	▐█ ▀█▪ ▄█▀▄  ▄█▀▄ ·██ ▐███▪▐█ ▀█▪ ▄█▀▄ •██
