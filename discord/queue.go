@@ -82,6 +82,10 @@ func (q *Queue) UpdateVoiceCache(chID disgord.Snowflake, uID disgord.Snowflake) 
 // audio in the voice channel the author currently resides in
 func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI) {
 	wg := sync.WaitGroup{}
+	vc, err := disgordClientAPI.VoiceConnectOptions(q.GuildID, 640284178755092505, true, false)
+	if err != nil {
+		fmt.Printf("\nERROR: %+v\n", err)
+	}
 	for {
 		time.Sleep(3 * time.Second)
 		if len(q.UserQueue) > 0 {
@@ -99,6 +103,9 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				fmt.Printf("\nPLAYING FROM USER PLAYLIST FROM LAST COMMAND\n")
 				q.NowPlayingURL = q.UserQueue[nextUID][0]
 			} else {
+				// Do some wacky shit to get the id of the next queue to alternate between qeueues for better group listening
+				// altID := q.getAlternatedQueueID()
+				// randID := q.getAlternatedQueueID()
 				requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayinguID][0])
 				fmt.Printf("\nCONTINUING FROM USER PLAYLIST\n")
 				q.NowPlayingURL = q.UserQueue[q.NowPlayinguID][0]
@@ -109,23 +116,10 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			if err != nil {
 				fmt.Printf("\nERROR ENCODING: %+v\n", err)
 			}
-			vc, err := disgordClientAPI.VoiceConnectOptions(q.GuildID, q.VoiceCache[q.NowPlayinguID], true, false)
+
+			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, q.VoiceCache[739154323015204935], q.VoiceCache[q.NowPlayinguID])
 			if err != nil {
-				fmt.Printf("\nERROR CONNECTING TO VOICE CHANNEL: %+v\n", err)
-				msg, err := disgordClientAPI.SendMsg(q.LastMessageCHID, disgord.Message{
-					Content: "**You need to be in a voice channel for me to play!**",
-				})
-				if err != nil {
-					fmt.Printf("\nERROR SENDING NO CHANNELID MESSSAGE: %+v\n", err)
-				}
-				q.RemoveQueueEntry()
-				go deleteMessage(msg, 5*time.Second, disgordClientAPI)
-				wg.Done()
-				continue
-			}
-			err = vc.StartSpeaking()
-			if err != nil {
-				fmt.Printf("\nERROR SPEAKING: %+v\n", err)
+				fmt.Printf("\nERROR: %+v\n", err)
 			}
 
 			// Ticker needed for smooth opus frame delivery to prevent playback stuttering
@@ -141,69 +135,20 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				for {
 					select {
 					case <-q.Shuffle:
-						err := es.Stop()
-						if err != nil {
-							fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
-						}
-						err = vc.StopSpeaking()
-						if err != nil && err != io.EOF {
-							fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
-						}
+						q.StopAndShuff(vc, es)
 						time.Sleep(1 * time.Second)
-						err = vc.Close()
-						if err != nil && err != io.EOF {
-							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
-						}
-						fmt.Println("\nLEAVING VOICE CHANNEL")
-						q.ShuffleQueue()
 						return
 					case <-q.Stop:
-						err := es.Stop()
-						if err != nil {
-							fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
-						}
-						err = vc.StopSpeaking()
-						if err != nil && err != io.EOF {
-							fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
-						}
+						q.StopAndNuke(vc, es)
 						time.Sleep(1 * time.Second)
-						err = vc.Close()
-						if err != nil && err != io.EOF {
-							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
-						}
-						fmt.Println("\nLEAVING VOICE CHANNEL")
-						q.EmptyQueue()
 						return
 					case <-q.Next:
-						err := es.Stop()
-						if err != nil {
-							fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
-						}
-						fmt.Println("SKIPPING QUEUE ENTRY")
-						err = vc.StopSpeaking()
-						if err != nil && err != io.EOF {
-							fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
-						}
+						q.StopAndPop(vc, es)
 						time.Sleep(1 * time.Second)
-						err = vc.Close()
-						if err != nil && err != io.EOF {
-							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
-						}
-						fmt.Println("\nLEAVING VOICE CHANNEL")
-						q.RemoveQueueEntry()
 						return
 					case <-done:
-						err := vc.StopSpeaking()
-						if err != nil && err != io.EOF {
-							fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
-						}
+						q.StopTalkingAndPop(vc)
 						time.Sleep(1 * time.Second)
-						err = vc.Close()
-						if err != nil && err != io.EOF {
-							fmt.Printf("\nERROR LEAVING VC: %+v\n", err)
-						}
-						fmt.Println("\nLEAVING VOICE CHANNEL")
-						q.RemoveQueueEntry()
 						return
 					case channelID := <-q.ChannelHop:
 						fmt.Printf("\nSong requester jumped to %+v!", channelID)
@@ -233,6 +178,97 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 		}
 		wg.Wait()
 	}
+}
+
+func (q *Queue) StopAndShuff(vc disgord.VoiceConnection, es *dca.EncodeSession) {
+	err := es.Stop()
+	if err != nil {
+		fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
+	}
+	err = vc.StopSpeaking()
+	if err != nil && err != io.EOF {
+		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+	}
+	q.ShuffleQueue()
+}
+
+func (q *Queue) StopAndNuke(vc disgord.VoiceConnection, es *dca.EncodeSession) {
+	err := es.Stop()
+	if err != nil {
+		fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
+	}
+	err = vc.StopSpeaking()
+	if err != nil && err != io.EOF {
+		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+	}
+	q.EmptyQueue()
+}
+
+func (q *Queue) StopAndPop(vc disgord.VoiceConnection, es *dca.EncodeSession) {
+	err := es.Stop()
+	if err != nil {
+		fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
+	}
+	fmt.Println("SKIPPING QUEUE ENTRY")
+	err = vc.StopSpeaking()
+	if err != nil && err != io.EOF {
+		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+	}
+	q.RemoveQueueEntry()
+}
+
+func (q *Queue) StopTalkingAndPop(vc disgord.VoiceConnection) {
+	err := vc.StopSpeaking()
+	if err != nil && err != io.EOF {
+		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+	}
+	q.RemoveQueueEntry()
+	// time.Sleep(1 * time.Second)
+}
+
+func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
+	if botChannelID == 0 {
+		vc, err := client.VoiceConnectOptions(q.GuildID, requesteeChannelID, true, false)
+		// queueCounter := 0
+		if err != nil {
+			return nil, err
+		}
+
+		err = vc.StartSpeaking()
+		if err != nil {
+			return nil, err
+		}
+
+		prevVC = vc
+		return vc, nil
+	}
+	if botChannelID != requesteeChannelID {
+		prevVC.Close()
+		newVC, err := client.VoiceConnectOptions(q.GuildID, requesteeChannelID, true, false)
+		// queueCounter := 0
+		if err != nil {
+			return nil, err
+		}
+
+		err = newVC.StartSpeaking()
+		if err != nil {
+			return nil, err
+		}
+
+		return newVC, nil
+	}
+	if botChannelID == requesteeChannelID {
+		fmt.Println("\nI AM ALREADY IN HERE!")
+
+		err := prevVC.StartSpeaking()
+		if err != nil {
+			return nil, err
+		}
+
+		return prevVC, nil
+	}
+
+	return prevVC, nil
 }
 
 // GetEncodeSession returns a dca encoded session
@@ -331,4 +367,17 @@ func (q *Queue) NowPlayingSync() {
 		i++
 	}
 	q.NowPlayinguID = currentUID
+}
+
+func (q *Queue) getAlternatedQueueID() disgord.Snowflake {
+	idBucket := []disgord.Snowflake{}
+	rand.Seed(time.Now().UnixNano())
+	for k := range q.UserQueue {
+		fmt.Println(k)
+		if k != q.NowPlayinguID {
+			idBucket = append(idBucket, k)
+		}
+	}
+
+	return idBucket[rand.Intn(len(idBucket))+0]
 }
