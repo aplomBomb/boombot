@@ -103,9 +103,6 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				fmt.Printf("\nPLAYING FROM USER PLAYLIST FROM LAST COMMAND\n")
 				q.NowPlayingURL = q.UserQueue[nextUID][0]
 			} else {
-				// Do some wacky shit to get the id of the next queue to alternate between qeueues for better group listening
-				// altID := q.getAlternatedQueueID()
-				// randID := q.getAlternatedQueueID()
 				requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayinguID][0])
 				fmt.Printf("\nCONTINUING FROM USER PLAYLIST\n")
 				q.NowPlayingURL = q.UserQueue[q.NowPlayinguID][0]
@@ -223,7 +220,6 @@ func (q *Queue) StopTalkingAndPop(vc disgord.VoiceConnection) {
 		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
 	}
 	q.RemoveQueueEntry()
-	// time.Sleep(1 * time.Second)
 }
 
 func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
