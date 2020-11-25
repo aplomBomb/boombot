@@ -159,9 +159,9 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		}
 		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 		go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
-		// globalQueue.UserQueue[globalQueue.NowPlayinguID] = []string{globalQueue.UserQueue[globalQueue.NowPlayinguID][0]}
-		globalQueue.NowPlayinguID = 0
-		delete(globalQueue.UserQueue, globalQueue.NowPlayinguID)
+		// globalQueue.UserQueue[globalQueue.NowPlayingUID] = []string{globalQueue.UserQueue[globalQueue.NowPlayingUID][0]}
+		globalQueue.NowPlayingUID = 0
+		delete(globalQueue.UserQueue, globalQueue.NowPlayingUID)
 	default:
 		cec.Delegate()
 	}
@@ -214,4 +214,11 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 // RespondToVoiceChannelUpdate updates the server's voice channel cache every time an update is emitted
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 	globalQueue.UpdateVoiceCache(data.ChannelID, data.UserID)
+	if data.ChannelID != 0 && data.UserID == globalQueue.NowPlayingUID && globalQueue.VoiceCache[data.UserID] != 0 {
+		fmt.Println("QUALIFIED JUMP!")
+		go func() {
+			globalQueue.ChannelHop <- data.ChannelID
+			return
+		}()
+	}
 }

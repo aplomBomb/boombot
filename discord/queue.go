@@ -15,13 +15,14 @@ import (
 
 // Queue defines the data neccessary for the bot to track users/songs and where to play them
 type Queue struct {
-	GlobalQueue     []string
 	UserQueue       map[disgord.Snowflake][]string
 	VoiceCache      map[disgord.Snowflake]disgord.Snowflake
 	GuildID         disgord.Snowflake
 	LastMessageUID  disgord.Snowflake
 	LastMessageCHID disgord.Snowflake
-	NowPlayinguID   disgord.Snowflake
+	NowPlayingUID   disgord.Snowflake
+	LastPlayingUID  disgord.Snowflake
+	NextPlayingUID  disgord.Snowflake
 	NowPlayingURL   string
 	Next            chan bool
 	Stop            chan bool
@@ -32,13 +33,14 @@ type Queue struct {
 // NewQueue returns a new Queue instance
 func NewQueue(gID disgord.Snowflake) *Queue {
 	return &Queue{
-		GlobalQueue:     []string{},
 		UserQueue:       map[disgord.Snowflake][]string{},
 		VoiceCache:      map[disgord.Snowflake]disgord.Snowflake{},
 		GuildID:         gID,
 		LastMessageUID:  disgord.Snowflake(0),
 		LastMessageCHID: disgord.Snowflake(0),
-		NowPlayinguID:   disgord.Snowflake(0),
+		LastPlayingUID:  disgord.Snowflake(0),
+		NowPlayingUID:   disgord.Snowflake(0),
+		NextPlayingUID:  disgord.Snowflake(0),
 		NowPlayingURL:   "",
 		Next:            make(chan bool, 1),
 		Stop:            make(chan bool, 1),
@@ -47,7 +49,7 @@ func NewQueue(gID disgord.Snowflake) *Queue {
 	}
 }
 
-// UpdateUserQueueState updates the UserQueue and GlobalQueue cache on single song play requests
+// UpdateUserQueueState updates the UserQueue cache on single song play requests
 func (q *Queue) UpdateUserQueueState(chID disgord.Snowflake, uID disgord.Snowflake, arg string) {
 	q.LastMessageUID = uID
 	q.LastMessageCHID = chID
@@ -56,7 +58,24 @@ func (q *Queue) UpdateUserQueueState(chID disgord.Snowflake, uID disgord.Snowfla
 	} else {
 		q.UserQueue[uID] = append(q.UserQueue[uID], arg)
 	}
-	q.GlobalQueue = append(q.GlobalQueue, arg)
+	// ================ I dont know if i should be doing this here =========================
+	// if this works, turn it into a method
+	uidbucket := []disgord.Snowflake{}
+	i := 0
+	for k := range q.UserQueue {
+		uidbucket = append(uidbucket, k)
+	}
+	for k, v := range uidbucket {
+		if v == q.LastPlayingUID {
+			i = k - 1
+		}
+	}
+	if i < 0 {
+		i = len(uidbucket) - 1
+	}
+	q.NextPlayingUID = uidbucket[i]
+
+	// =====================================================================================
 }
 
 // UpdateUserQueueStateBulk updates the UserQueue and GlobalQueue cache for playlist requests
@@ -69,7 +88,24 @@ func (q *Queue) UpdateUserQueueStateBulk(chID disgord.Snowflake, uID disgord.Sno
 	} else {
 		q.UserQueue[uID] = append(q.UserQueue[uID], args...)
 	}
-	q.GlobalQueue = append(q.GlobalQueue, args...)
+	// ================ I dont know if i should be doing this here =========================
+	// if this works, turn it into a method
+	uidbucket := []disgord.Snowflake{}
+	i := 0
+	for k := range q.UserQueue {
+		uidbucket = append(uidbucket, k)
+	}
+	for k, v := range uidbucket {
+		if v == q.LastPlayingUID {
+			i = k - 1
+		}
+	}
+	if i < 0 {
+		i = len(uidbucket) - 1
+	}
+	q.NextPlayingUID = uidbucket[i]
+
+	// =====================================================================================
 }
 
 // UpdateVoiceCache updates the voicechannel cache based upon the set channel id on voice state updates
@@ -78,14 +114,6 @@ func (q *Queue) UpdateUserQueueStateBulk(chID disgord.Snowflake, uID disgord.Sno
 func (q *Queue) UpdateVoiceCache(chID disgord.Snowflake, uID disgord.Snowflake) {
 	switch chID {
 	case 0:
-		// Clean the global queue of any entries requested by the user that left the voice channel
-		for _, userURL := range q.UserQueue[uID] {
-			for _, globalURL := range q.GlobalQueue {
-				if userURL == globalURL {
-					globalURL = ""
-				}
-			}
-		}
 		delete(q.VoiceCache, uID)
 	default:
 		q.VoiceCache[uID] = chID
@@ -105,30 +133,17 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 		if len(q.UserQueue) > 0 {
 			wg.Add(1)
 			requestURL := ""
-			nextUID := disgord.Snowflake(0)
-			if q.NowPlayinguID == 0 {
-				fmt.Println("\nTEST")
-				// Get the uID of the next queue in line so we can fetch the first song from their queue
-				for k := range q.UserQueue {
-					nextUID = k
-					break
-				}
-				requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[nextUID][0])
-				fmt.Printf("\nPLAYING FROM USER PLAYLIST FROM LAST COMMAND\n")
-				q.NowPlayingURL = q.UserQueue[nextUID][0]
-			} else {
-				requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayinguID][0])
-				fmt.Printf("\nCONTINUING FROM USER PLAYLIST\n")
-				q.NowPlayingURL = q.UserQueue[q.NowPlayinguID][0]
-			}
+			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NextPlayingUID][0])
+			fmt.Printf("\nPLAYING FROM USER PLAYLIST FROM LAST COMMAND\n")
+			q.NowPlayingURL = q.UserQueue[q.NextPlayingUID][0]
 			q.NowPlayingSync()
-			fmt.Printf("\nUSER CURRENT: %+v\n", q.NowPlayinguID)
+			fmt.Printf("\nUSER CURRENT: %+v\n", q.NowPlayingUID)
 			es, err := q.GetEncodeSession(requestURL)
 			if err != nil {
 				fmt.Printf("\nERROR ENCODING: %+v\n", err)
 			}
 
-			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, q.VoiceCache[739154323015204935], q.VoiceCache[q.NowPlayinguID])
+			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, q.VoiceCache[739154323015204935], q.VoiceCache[q.NowPlayingUID])
 			if err != nil {
 				fmt.Printf("\nERROR: %+v\n", err)
 			}
@@ -146,23 +161,33 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				for {
 					select {
 					case <-q.Shuffle:
-						q.stopAndShuff(vc, es)
+						q.stopPlaybackAndTalking(vc, es)
+						q.ShuffleQueue()
 						time.Sleep(1 * time.Second)
 						return
 					case <-q.Stop:
-						q.stopAndNuke(vc, es)
+						q.stopPlaybackAndTalking(vc, es)
+						q.EmptyQueue()
 						time.Sleep(1 * time.Second)
 						return
 					case <-q.Next:
-						q.stopAndPop(vc, es)
+						q.stopPlaybackAndTalking(vc, es)
+						q.RemoveQueueEntry()
 						time.Sleep(1 * time.Second)
 						return
 					case <-done:
-						q.stopTalkingAndPop(vc)
+						q.stopPlaybackAndTalking(vc, es)
+						q.RemoveQueueEntry()
 						time.Sleep(1 * time.Second)
+
 						return
 					case channelID := <-q.ChannelHop:
-						fmt.Printf("\nSong requester jumped to %+v!", channelID)
+						vc.StopSpeaking()
+						vc, err = q.establishVoiceConnection(vc, disgordClientAPI, 0, channelID)
+						if err != nil {
+							fmt.Printf("\nERROR: %+v\n", err)
+						}
+						vc.StartSpeaking()
 					case <-ticker.C:
 						nextFrame, err := es.OpusFrame()
 						if err != nil && err != io.EOF {
@@ -228,10 +253,10 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 		if err != nil {
 			fmt.Printf("\nCOULD NOT GET MESSAGES FROM JUKEBOX CHANNEL: %+v", err)
 		}
-		if len(q.UserQueue) > 0 && q.NowPlayinguID != 0 {
-			if referenceEntry != q.UserQueue[q.NowPlayinguID][0] {
+		if len(q.UserQueue) > 0 && q.NowPlayingUID != 0 {
+			if referenceEntry != q.UserQueue[q.NowPlayingUID][0] {
 
-				requesteeName, err := disgordClient.User(q.NowPlayinguID).Get()
+				requesteeName, err := disgordClient.User(q.NowPlayingUID).Get()
 				if err != nil {
 					fmt.Println("\n", err)
 				}
@@ -242,7 +267,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				disgordClient.SendMsg(
 					779836590503624734,
 					&disgord.CreateMessageParams{
-						Content: q.UserQueue[q.NowPlayinguID][0],
+						Content: q.UserQueue[q.NowPlayingUID][0],
 					},
 				)
 				disgordClient.SendMsg(
@@ -261,13 +286,13 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 								},
 							},
 							Footer: &disgord.EmbedFooter{
-								Text: fmt.Sprintf("%+v's queue: %+v", requesteeName.Username, strconv.Itoa(len(q.UserQueue[q.NowPlayinguID]))),
+								Text: fmt.Sprintf("%+v's queue: %+v", requesteeName.Username, strconv.Itoa(len(q.UserQueue[q.NowPlayingUID]))),
 							},
 						},
 					},
 				)
 				if len(q.UserQueue) > 0 {
-					referenceEntry = q.UserQueue[q.NowPlayinguID][0]
+					referenceEntry = q.UserQueue[q.NowPlayingUID][0]
 				}
 			}
 		}
@@ -285,30 +310,30 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 // This is insane looking/literally makes my eyes glaze over looking at it
 // Should devise a more user(reader)-friendly solution
 func (q *Queue) RemoveQueueEntry() {
-	copy(q.UserQueue[q.NowPlayinguID][0:], q.UserQueue[q.NowPlayinguID][0+1:])
-	q.UserQueue[q.NowPlayinguID][len(q.UserQueue[q.NowPlayinguID])-1] = ""
-	q.UserQueue[q.NowPlayinguID] = q.UserQueue[q.NowPlayinguID][:len(q.UserQueue[q.NowPlayinguID])-1]
-	if len(q.UserQueue[q.NowPlayinguID]) <= 0 {
-		delete(q.UserQueue, q.NowPlayinguID)
-		q.NowPlayinguID = 0
+	copy(q.UserQueue[q.NowPlayingUID][0:], q.UserQueue[q.NowPlayingUID][0+1:])
+	q.UserQueue[q.NowPlayingUID][len(q.UserQueue[q.NowPlayingUID])-1] = ""
+	q.UserQueue[q.NowPlayingUID] = q.UserQueue[q.NowPlayingUID][:len(q.UserQueue[q.NowPlayingUID])-1]
+	if len(q.UserQueue[q.NowPlayingUID]) <= 0 {
+		delete(q.UserQueue, q.NowPlayingUID)
+		q.NowPlayingUID = 0
 	}
 }
 
 // ShuffleQueue reorganizes the order of the queue entries for randomized playback
 func (q *Queue) ShuffleQueue() {
 	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(q.UserQueue[q.NowPlayinguID]), func(i, j int) {
-		q.UserQueue[q.NowPlayinguID][i], q.UserQueue[q.NowPlayinguID][j] = q.UserQueue[q.NowPlayinguID][j], q.UserQueue[q.NowPlayinguID][i]
+	rand.Shuffle(len(q.UserQueue[q.NowPlayingUID]), func(i, j int) {
+		q.UserQueue[q.NowPlayingUID][i], q.UserQueue[q.NowPlayingUID][j] = q.UserQueue[q.NowPlayingUID][j], q.UserQueue[q.NowPlayingUID][i]
 	})
 }
 
 // EmptyQueue deletes user's queue map
 func (q *Queue) EmptyQueue() {
-	delete(q.UserQueue, q.NowPlayinguID)
-	q.NowPlayinguID = 0
+	delete(q.UserQueue, q.NowPlayingUID)
+	q.NowPlayingUID = 0
 }
 
-// NowPlayingSync keeps the NowPlayinguID updated with the ID of the user who's song is currently playing
+// NowPlayingSync keeps the NowPlayingUID updated with the ID of the user who's song is currently playing
 func (q *Queue) NowPlayingSync() {
 	currentUID := disgord.Snowflake(0)
 	i := 0
@@ -320,34 +345,10 @@ func (q *Queue) NowPlayingSync() {
 		}
 		i++
 	}
-	q.NowPlayinguID = currentUID
+	q.NowPlayingUID = currentUID
 }
 
-func (q *Queue) stopAndShuff(vc disgord.VoiceConnection, es *dca.EncodeSession) {
-	err := es.Stop()
-	if err != nil {
-		fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
-	}
-	err = vc.StopSpeaking()
-	if err != nil && err != io.EOF {
-		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
-	}
-	q.ShuffleQueue()
-}
-
-func (q *Queue) stopAndNuke(vc disgord.VoiceConnection, es *dca.EncodeSession) {
-	err := es.Stop()
-	if err != nil {
-		fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
-	}
-	err = vc.StopSpeaking()
-	if err != nil && err != io.EOF {
-		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
-	}
-	q.EmptyQueue()
-}
-
-func (q *Queue) stopAndPop(vc disgord.VoiceConnection, es *dca.EncodeSession) {
+func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.EncodeSession) {
 	err := es.Stop()
 	if err != nil {
 		fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
@@ -357,15 +358,6 @@ func (q *Queue) stopAndPop(vc disgord.VoiceConnection, es *dca.EncodeSession) {
 	if err != nil && err != io.EOF {
 		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
 	}
-	q.RemoveQueueEntry()
-}
-
-func (q *Queue) stopTalkingAndPop(vc disgord.VoiceConnection) {
-	err := vc.StopSpeaking()
-	if err != nil && err != io.EOF {
-		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
-	}
-	q.RemoveQueueEntry()
 }
 
 func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
