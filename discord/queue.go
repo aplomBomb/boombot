@@ -235,7 +235,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				if err != nil {
 					fmt.Println("\n", err)
 				}
-				avatarURL, err := requesteeName.AvatarURL(1024, true)
+				avatarURL, err := requesteeName.AvatarURL(64, true)
 				if err != nil {
 					fmt.Println("\n", err)
 				}
@@ -249,21 +249,19 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 					779836590503624734,
 					&disgord.CreateMessageParams{
 						Embed: &disgord.Embed{
-							Title: "**Song info**",
+							Thumbnail: &disgord.EmbedThumbnail{
+								URL:    avatarURL,
+								Height: 64,
+								Width:  64,
+							},
 							Fields: []*disgord.EmbedField{
 								&disgord.EmbedField{
 									Name:  "Requested by",
 									Value: requesteeName.Username,
 								},
-								&disgord.EmbedField{
-									Name:  fmt.Sprintf("Songs left in %+v's queue", requesteeName.Username),
-									Value: strconv.Itoa(len(q.UserQueue[q.NowPlayinguID])),
-								},
 							},
-							Image: &disgord.EmbedImage{
-								URL:    avatarURL,
-								Height: 48,
-								Width:  48,
+							Footer: &disgord.EmbedFooter{
+								Text: fmt.Sprintf("%+v's queue: %+v", requesteeName.Username, strconv.Itoa(len(q.UserQueue[q.NowPlayinguID]))),
 							},
 						},
 					},
