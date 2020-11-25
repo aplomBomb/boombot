@@ -134,10 +134,8 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			wg.Add(1)
 			requestURL := ""
 			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NextPlayingUID][0])
-			fmt.Printf("\nPLAYING FROM USER PLAYLIST FROM LAST COMMAND\n")
 			q.NowPlayingURL = q.UserQueue[q.NextPlayingUID][0]
 			q.NowPlayingSync()
-			fmt.Printf("\nUSER CURRENT: %+v\n", q.NowPlayingUID)
 			es, err := q.GetEncodeSession(requestURL)
 			if err != nil {
 				fmt.Printf("\nERROR ENCODING: %+v\n", err)
@@ -194,7 +192,6 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
 						}
 						if err == io.EOF {
-							fmt.Println("\nPLAYBACK FINISHED")
 							eofChannel <- true
 						}
 						vc.SendOpusFrame(nextFrame)
@@ -303,6 +300,11 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				}
 			}
 		}
+		if len(q.UserQueue) == 0 && q.NowPlayingUID == 0 {
+			for k := range msgs {
+				go deleteMessage(msgs[k], 1*time.Second, disgordClient)
+			}
+		}
 	}
 }
 
@@ -353,7 +355,6 @@ func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.Encod
 	if err != nil {
 		fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
 	}
-	fmt.Println("\nSKIPPING QUEUE ENTRY")
 	err = vc.StopSpeaking()
 	if err != nil && err != io.EOF {
 		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
@@ -362,7 +363,6 @@ func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.Encod
 
 func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
 	if botChannelID == 0 {
-		fmt.Println("\nJoining requestee's voice channel")
 		vc, err := client.VoiceConnectOptions(q.GuildID, requesteeChannelID, true, false)
 		// queueCounter := 0
 		if err != nil {
@@ -378,7 +378,6 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 		return vc, nil
 	}
 	if botChannelID != requesteeChannelID {
-		fmt.Println("\nJoining requestee's voice channel")
 		prevVC.Close()
 		newVC, err := client.VoiceConnectOptions(q.GuildID, requesteeChannelID, true, false)
 		// queueCounter := 0
@@ -394,8 +393,6 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 		return newVC, nil
 	}
 	if botChannelID == requesteeChannelID {
-		fmt.Println("\nPlaying next song from playlist in same channel")
-
 		err := prevVC.StartSpeaking()
 		if err != nil {
 			return nil, err
@@ -403,6 +400,5 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 
 		return prevVC, nil
 	}
-
 	return prevVC, nil
 }
