@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"strconv"
 	"sync"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 // Queue defines the data neccessary for the bot to track users/songs and where to play them
 type Queue struct {
+	GlobalQueue     []string
 	UserQueue       map[disgord.Snowflake][]string
 	VoiceCache      map[disgord.Snowflake]disgord.Snowflake
 	GuildID         disgord.Snowflake
@@ -30,6 +32,7 @@ type Queue struct {
 // NewQueue returns a new Queue instance
 func NewQueue(gID disgord.Snowflake) *Queue {
 	return &Queue{
+		GlobalQueue:     []string{},
 		UserQueue:       map[disgord.Snowflake][]string{},
 		VoiceCache:      map[disgord.Snowflake]disgord.Snowflake{},
 		GuildID:         gID,
@@ -44,8 +47,8 @@ func NewQueue(gID disgord.Snowflake) *Queue {
 	}
 }
 
-// UpdateQueueState updates the Queue cache on single song play requests
-func (q *Queue) UpdateQueueState(chID disgord.Snowflake, uID disgord.Snowflake, arg string) {
+// UpdateUserQueueState updates the UserQueue and GlobalQueue cache on single song play requests
+func (q *Queue) UpdateUserQueueState(chID disgord.Snowflake, uID disgord.Snowflake, arg string) {
 	q.LastMessageUID = uID
 	q.LastMessageCHID = chID
 	if q.UserQueue[uID] == nil {
@@ -53,11 +56,12 @@ func (q *Queue) UpdateQueueState(chID disgord.Snowflake, uID disgord.Snowflake, 
 	} else {
 		q.UserQueue[uID] = append(q.UserQueue[uID], arg)
 	}
+	q.GlobalQueue = append(q.GlobalQueue, arg)
 }
 
-// UpdateQueueStateBulk updates the Queue cache for playlist requests
+// UpdateUserQueueStateBulk updates the UserQueue and GlobalQueue cache for playlist requests
 // AKA 'Playloads' lolol
-func (q *Queue) UpdateQueueStateBulk(chID disgord.Snowflake, uID disgord.Snowflake, args []string) {
+func (q *Queue) UpdateUserQueueStateBulk(chID disgord.Snowflake, uID disgord.Snowflake, args []string) {
 	q.LastMessageUID = uID
 	q.LastMessageCHID = chID
 	if q.UserQueue[uID] == nil {
@@ -65,13 +69,23 @@ func (q *Queue) UpdateQueueStateBulk(chID disgord.Snowflake, uID disgord.Snowfla
 	} else {
 		q.UserQueue[uID] = append(q.UserQueue[uID], args...)
 	}
+	q.GlobalQueue = append(q.GlobalQueue, args...)
 }
 
 // UpdateVoiceCache updates the voicechannel cache based upon the set channel id on voice state updates
 // A channelID of 0 means a user left, in that case remove them from the cache
+// If the user has a queue list when removed(leaves voice chat entirely) remove their queue entries from the global queue as well
 func (q *Queue) UpdateVoiceCache(chID disgord.Snowflake, uID disgord.Snowflake) {
 	switch chID {
 	case 0:
+		// Clean the global queue of any entries requested by the user that left the voice channel
+		for _, userURL := range q.UserQueue[uID] {
+			for _, globalURL := range q.GlobalQueue {
+				if userURL == globalURL {
+					globalURL = ""
+				}
+			}
+		}
 		delete(q.VoiceCache, uID)
 	default:
 		q.VoiceCache[uID] = chID
@@ -216,10 +230,42 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 		}
 		if len(q.UserQueue) > 0 && q.NowPlayinguID != 0 {
 			if referenceEntry != q.UserQueue[q.NowPlayinguID][0] {
+
+				requesteeName, err := disgordClient.User(q.NowPlayinguID).Get()
+				if err != nil {
+					fmt.Println("\n", err)
+				}
+				avatarURL, err := requesteeName.AvatarURL(1024, true)
+				if err != nil {
+					fmt.Println("\n", err)
+				}
 				disgordClient.SendMsg(
 					779836590503624734,
 					&disgord.CreateMessageParams{
 						Content: q.UserQueue[q.NowPlayinguID][0],
+					},
+				)
+				disgordClient.SendMsg(
+					779836590503624734,
+					&disgord.CreateMessageParams{
+						Embed: &disgord.Embed{
+							Title: "**Song info**",
+							Fields: []*disgord.EmbedField{
+								&disgord.EmbedField{
+									Name:  "Requested by",
+									Value: requesteeName.Username,
+								},
+								&disgord.EmbedField{
+									Name:  fmt.Sprintf("Songs left in %+v's queue", requesteeName.Username),
+									Value: strconv.Itoa(len(q.UserQueue[q.NowPlayinguID])),
+								},
+							},
+							Image: &disgord.EmbedImage{
+								URL:    avatarURL,
+								Height: 48,
+								Width:  48,
+							},
+						},
 					},
 				)
 				if len(q.UserQueue) > 0 {
@@ -227,8 +273,12 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				}
 			}
 		}
-		if len(msgs) > 1 {
-			go deleteMessage(msgs[1], 1*time.Second, disgordClient)
+		if len(msgs) > 2 {
+			for k := range msgs {
+				if k > 1 {
+					go deleteMessage(msgs[k], 1*time.Second, disgordClient)
+				}
+			}
 		}
 	}
 }
@@ -304,7 +354,7 @@ func (q *Queue) stopAndPop(vc disgord.VoiceConnection, es *dca.EncodeSession) {
 	if err != nil {
 		fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
 	}
-	fmt.Println("SKIPPING QUEUE ENTRY")
+	fmt.Println("\nSKIPPING QUEUE ENTRY")
 	err = vc.StopSpeaking()
 	if err != nil && err != io.EOF {
 		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
@@ -322,6 +372,7 @@ func (q *Queue) stopTalkingAndPop(vc disgord.VoiceConnection) {
 
 func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
 	if botChannelID == 0 {
+		fmt.Println("\nJoining requestee's voice channel")
 		vc, err := client.VoiceConnectOptions(q.GuildID, requesteeChannelID, true, false)
 		// queueCounter := 0
 		if err != nil {
@@ -337,6 +388,7 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 		return vc, nil
 	}
 	if botChannelID != requesteeChannelID {
+		fmt.Println("\nJoining requestee's voice channel")
 		prevVC.Close()
 		newVC, err := client.VoiceConnectOptions(q.GuildID, requesteeChannelID, true, false)
 		// queueCounter := 0
@@ -352,7 +404,7 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 		return newVC, nil
 	}
 	if botChannelID == requesteeChannelID {
-		fmt.Println("\nI AM ALREADY IN HERE!")
+		fmt.Println("\nPlaying next song from playlist in same channel")
 
 		err := prevVC.StartSpeaking()
 		if err != nil {

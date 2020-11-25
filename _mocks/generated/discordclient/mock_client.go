@@ -68,6 +68,20 @@ func (mr *MockDisgordClientAPIMockRecorder) SendMsg(arg0 interface{}, arg1 ...in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMsg", reflect.TypeOf((*MockDisgordClientAPI)(nil).SendMsg), varargs...)
 }
 
+// User mocks base method
+func (m *MockDisgordClientAPI) User(arg0 snowflake.Snowflake) disgord.UserQueryBuilder {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "User", arg0)
+	ret0, _ := ret[0].(disgord.UserQueryBuilder)
+	return ret0
+}
+
+// User indicates an expected call of User
+func (mr *MockDisgordClientAPIMockRecorder) User(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockDisgordClientAPI)(nil).User), arg0)
+}
+
 // VoiceConnectOptions mocks base method
 func (m *MockDisgordClientAPI) VoiceConnectOptions(arg0, arg1 snowflake.Snowflake, arg2, arg3 bool) (disgord.VoiceConnection, error) {
 	m.ctrl.T.Helper()

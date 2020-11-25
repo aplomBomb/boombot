@@ -67,7 +67,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 				if err != nil {
 					fmt.Printf("\nERROR ADDING TO QUEUE: %+v\n", err)
 				}
-				globalQueue.UpdateQueueStateBulk(data.Message.ChannelID, data.Message.Author.ID, urls)
+				globalQueue.UpdateUserQueueStateBulk(data.Message.ChannelID, data.Message.Author.ID, urls)
 				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 				go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
 			} else {
@@ -112,7 +112,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 				if err != nil {
 					fmt.Printf("\nERROR ADDING TO QUEUE: %+v\n", err)
 				}
-				globalQueue.UpdateQueueState(data.Message.ChannelID, data.Message.Author.ID, args[0])
+				globalQueue.UpdateUserQueueState(data.Message.ChannelID, data.Message.Author.ID, args[0])
 				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 				go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
 			} else {
@@ -177,6 +177,7 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 		data.Message.React(ctx, s, "\u267B")
 		time.Sleep(1 * time.Second)
 		data.Message.React(ctx, s, "\u23E9")
+		time.Sleep(1 * time.Second)
 	}
 
 	user := data.Message.Author
