@@ -42,8 +42,9 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 	case "play":
 		if strings.Contains(args[0], "list=") {
-			plis := ytService.PlaylistItems.List([]string{"snippet"})
-			ytc := yt.NewYoutubeClient(plis)
+			plis := ytService.PlaylistItems.List([]string{"snippet", "status", "contentDetails"})
+			ytc := yt.NewYoutubePlaylistClient(plis)
+
 			urls, err := ytc.GetPlaylist(args[0])
 			if err != nil {
 				fmt.Printf("\nERROR GETTING PLAYLIST URLS: %+v\n", err)
@@ -214,8 +215,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 // RespondToVoiceChannelUpdate updates the server's voice channel cache every time an update is emitted
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 	globalQueue.UpdateVoiceCache(data.ChannelID, data.UserID)
-	if data.ChannelID != 0 && data.UserID == globalQueue.NowPlayingUID && globalQueue.VoiceCache[data.UserID] != 0 {
-		fmt.Println("QUALIFIED JUMP!")
+	if data.ChannelID != 0 && data.ChannelID != globalQueue.VoiceCache[739154323015204935] && data.UserID == globalQueue.NowPlayingUID && globalQueue.VoiceCache[data.UserID] != 0 {
 		go func() {
 			globalQueue.ChannelHop <- data.ChannelID
 			return

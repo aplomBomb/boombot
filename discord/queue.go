@@ -5,8 +5,11 @@ import (
 	"io"
 	"math/rand"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
+
+	"google.golang.org/api/youtube/v3"
 
 	"github.com/andersfylling/disgord"
 	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
@@ -15,37 +18,39 @@ import (
 
 // Queue defines the data neccessary for the bot to track users/songs and where to play them
 type Queue struct {
-	UserQueue       map[disgord.Snowflake][]string
-	VoiceCache      map[disgord.Snowflake]disgord.Snowflake
-	GuildID         disgord.Snowflake
-	LastMessageUID  disgord.Snowflake
-	LastMessageCHID disgord.Snowflake
-	NowPlayingUID   disgord.Snowflake
-	LastPlayingUID  disgord.Snowflake
-	NextPlayingUID  disgord.Snowflake
-	NowPlayingURL   string
-	Next            chan bool
-	Stop            chan bool
-	Shuffle         chan bool
-	ChannelHop      chan disgord.Snowflake
+	UserQueue        map[disgord.Snowflake][]string
+	VoiceCache       map[disgord.Snowflake]disgord.Snowflake
+	GuildID          disgord.Snowflake
+	LastMessageUID   disgord.Snowflake
+	LastMessageCHID  disgord.Snowflake
+	NowPlayingUID    disgord.Snowflake
+	LastPlayingUID   disgord.Snowflake
+	NextPlayingUID   disgord.Snowflake
+	NowPlayingURL    string
+	LastPlayingIndex int
+	Next             chan bool
+	Stop             chan bool
+	Shuffle          chan bool
+	ChannelHop       chan disgord.Snowflake
 }
 
 // NewQueue returns a new Queue instance
 func NewQueue(gID disgord.Snowflake) *Queue {
 	return &Queue{
-		UserQueue:       map[disgord.Snowflake][]string{},
-		VoiceCache:      map[disgord.Snowflake]disgord.Snowflake{},
-		GuildID:         gID,
-		LastMessageUID:  disgord.Snowflake(0),
-		LastMessageCHID: disgord.Snowflake(0),
-		LastPlayingUID:  disgord.Snowflake(0),
-		NowPlayingUID:   disgord.Snowflake(0),
-		NextPlayingUID:  disgord.Snowflake(0),
-		NowPlayingURL:   "",
-		Next:            make(chan bool, 1),
-		Stop:            make(chan bool, 1),
-		Shuffle:         make(chan bool, 1),
-		ChannelHop:      make(chan disgord.Snowflake, 1),
+		UserQueue:        map[disgord.Snowflake][]string{},
+		VoiceCache:       map[disgord.Snowflake]disgord.Snowflake{},
+		GuildID:          gID,
+		LastMessageUID:   disgord.Snowflake(0),
+		LastMessageCHID:  disgord.Snowflake(0),
+		LastPlayingUID:   disgord.Snowflake(0),
+		NowPlayingUID:    disgord.Snowflake(0),
+		NextPlayingUID:   disgord.Snowflake(0),
+		NowPlayingURL:    "",
+		LastPlayingIndex: 0,
+		Next:             make(chan bool, 1),
+		Stop:             make(chan bool, 1),
+		Shuffle:          make(chan bool, 1),
+		ChannelHop:       make(chan disgord.Snowflake, 1),
 	}
 }
 
@@ -58,24 +63,7 @@ func (q *Queue) UpdateUserQueueState(chID disgord.Snowflake, uID disgord.Snowfla
 	} else {
 		q.UserQueue[uID] = append(q.UserQueue[uID], arg)
 	}
-	// ================ I dont know if i should be doing this here =========================
-	// if this works, turn it into a method
-	uidbucket := []disgord.Snowflake{}
-	i := 0
-	for k := range q.UserQueue {
-		uidbucket = append(uidbucket, k)
-	}
-	for k, v := range uidbucket {
-		if v == q.LastPlayingUID {
-			i = k - 1
-		}
-	}
-	if i < 0 {
-		i = len(uidbucket) - 1
-	}
-	q.NextPlayingUID = uidbucket[i]
-
-	// =====================================================================================
+	q.queueAlternator()
 }
 
 // UpdateUserQueueStateBulk updates the UserQueue and GlobalQueue cache for playlist requests
@@ -88,22 +76,7 @@ func (q *Queue) UpdateUserQueueStateBulk(chID disgord.Snowflake, uID disgord.Sno
 	} else {
 		q.UserQueue[uID] = append(q.UserQueue[uID], args...)
 	}
-	// ================ I dont know if i should be doing this here =========================
-	// if this works, turn it into a method
-	uidbucket := []disgord.Snowflake{}
-	i := 0
-	for k := range q.UserQueue {
-		uidbucket = append(uidbucket, k)
-	}
-	for k, v := range uidbucket {
-		if v == q.LastPlayingUID {
-			i = k - 1
-		}
-	}
-	if i < 0 {
-		i = len(uidbucket) - 1
-	}
-	q.NextPlayingUID = uidbucket[i]
+	q.queueAlternator()
 
 	// =====================================================================================
 }
@@ -122,13 +95,14 @@ func (q *Queue) UpdateVoiceCache(chID disgord.Snowflake, uID disgord.Snowflake) 
 
 // ListenAndProcessQueue takes a message content string to fetch\encode\play
 // audio in the voice channel the author currently resides in
-func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI) {
+func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, youtubeVideosListCall *youtube.VideosListCall) {
 	wg := sync.WaitGroup{}
 	vc, err := disgordClientAPI.VoiceConnectOptions(q.GuildID, 640284178755092505, true, false)
 	if err != nil {
 		fmt.Printf("\nERROR: %+v\n", err)
 	}
 	for {
+		fmt.Println("\nQueues: ", q.UserQueue)
 		time.Sleep(3 * time.Second)
 		if len(q.UserQueue) > 0 {
 			wg.Add(1)
@@ -136,11 +110,40 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NextPlayingUID][0])
 			q.NowPlayingURL = q.UserQueue[q.NextPlayingUID][0]
 			q.NowPlayingSync()
+			fmt.Println("\nURL: ", q.NowPlayingURL)
+			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
+			id := fields[1]
+			fmt.Println("\nID: ", id)
+			//=================================================================
+			call := youtubeVideosListCall.Id(id)
+			resp, err := call.Do()
+			if err != nil {
+				fmt.Println("\nERROR FETCHING VID DEETZ: ", err)
+			}
+
+			//=================================================================
+			if len(resp.Items) == 0 {
+				fmt.Println("\nGot nothin back")
+				q.RemoveQueueEntry()
+				wg.Done()
+				continue
+			}
+			fmt.Println("\nSONG NAME: ", resp.Items[0].Snippet.Title)
+			fmt.Println("\nSONG COPYRIGHT STRIKE?: ", resp.Items[0].ContentDetails.LicensedContent)
 			es, err := q.GetEncodeSession(requestURL)
 			if err != nil {
 				fmt.Printf("\nERROR ENCODING: %+v\n", err)
 			}
-
+			esData, err := es.ReadFrame()
+			if err != nil {
+				fmt.Println("\nError: ", err)
+			}
+			if esData == nil {
+				fmt.Println("\nNo audio data")
+				q.RemoveQueueEntry()
+				wg.Done()
+				continue
+			}
 			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, q.VoiceCache[739154323015204935], q.VoiceCache[q.NowPlayingUID])
 			if err != nil {
 				fmt.Printf("\nERROR: %+v\n", err)
@@ -241,6 +244,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 	referenceEntry := ""
 	for {
 		time.Sleep(2 * time.Second)
+		// fmt.Println("\nNOW PLAYING: ", q.UserQueue[q.NowPlayingUID])
 		// TO-DO===============================================================
 		// I need to respond to a message create event rather than pinging discord's api every two seconds
 		//(2 seconds is the tightest interval before being rate-limited)
@@ -319,6 +323,7 @@ func (q *Queue) RemoveQueueEntry() {
 		delete(q.UserQueue, q.NowPlayingUID)
 		q.NowPlayingUID = 0
 	}
+	q.queueAlternator()
 }
 
 // ShuffleQueue reorganizes the order of the queue entries for randomized playback
@@ -333,6 +338,7 @@ func (q *Queue) ShuffleQueue() {
 func (q *Queue) EmptyQueue() {
 	delete(q.UserQueue, q.NowPlayingUID)
 	q.NowPlayingUID = 0
+	q.queueAlternator()
 }
 
 // NowPlayingSync keeps the NowPlayingUID updated with the ID of the user who's song is currently playing
@@ -401,4 +407,29 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 		return prevVC, nil
 	}
 	return prevVC, nil
+}
+
+func (q *Queue) queueAlternator() {
+	uidbucket := []disgord.Snowflake{}
+	for k := range q.UserQueue {
+		uidbucket = append(uidbucket, k)
+	}
+
+	if len(uidbucket) > 1 {
+		q.LastPlayingIndex--
+	} else {
+		q.LastPlayingIndex = 0
+	}
+
+	if q.LastPlayingIndex < 0 || q.LastPlayingIndex > len(uidbucket)-1 && len(uidbucket) != 0 {
+		q.LastPlayingIndex = len(uidbucket) - 1
+	}
+	if len(uidbucket) == 0 {
+		q.LastPlayingUID = 0
+		q.NextPlayingUID = 0
+	} else {
+		q.NextPlayingUID = uidbucket[q.LastPlayingIndex]
+	}
+	fmt.Println("\nLAST PLAYED INDEX: ", q.LastPlayingIndex)
+	fmt.Println("\nNextPlayingUID: ", q.NextPlayingUID)
 }
