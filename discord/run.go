@@ -46,8 +46,7 @@ func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.Boom
 	globalQueue = queue
 	disgordGlobalClient = client
 	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(creds.YoutubeToken))
-	bleh := ytService.Videos.List([]string{"contentDetails", "snippet"})
-
+	bleh := ytService.Videos.List([]string{"contentDetails", "snippet", "statistics"})
 	filter, _ := std.NewMsgFilter(ctx, client)
 	filter.SetPrefix(cf.Prefix)
 	client.Gateway().WithMiddleware(filter.NotByBot, filter.HasPrefix, std.CopyMsgEvt, filter.StripPrefix).MessageCreate(RespondToCommand)
@@ -55,7 +54,6 @@ func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.Boom
 	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
 	client.Gateway().MessageCreate(RespondToMessage)
 	fmt.Println("BoomBot is running")
-
 	go globalQueue.ListenAndProcessQueue(client, bleh)
 	go globalQueue.ManageJukebox(client)
 	defer client.Gateway().StayConnectedUntilInterrupted()

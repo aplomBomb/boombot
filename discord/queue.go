@@ -16,22 +16,29 @@ import (
 	"github.com/jonas747/dca"
 )
 
+type PlayingDetails struct {
+	Snippet        *youtube.VideoSnippet
+	ContentDetails *youtube.VideoContentDetails
+	Statistics     *youtube.VideoStatistics
+}
+
 // Queue defines the data neccessary for the bot to track users/songs and where to play them
 type Queue struct {
-	UserQueue        map[disgord.Snowflake][]string
-	VoiceCache       map[disgord.Snowflake]disgord.Snowflake
-	GuildID          disgord.Snowflake
-	LastMessageUID   disgord.Snowflake
-	LastMessageCHID  disgord.Snowflake
-	NowPlayingUID    disgord.Snowflake
-	LastPlayingUID   disgord.Snowflake
-	NextPlayingUID   disgord.Snowflake
-	NowPlayingURL    string
-	LastPlayingIndex int
-	Next             chan bool
-	Stop             chan bool
-	Shuffle          chan bool
-	ChannelHop       chan disgord.Snowflake
+	UserQueue               map[disgord.Snowflake][]string
+	VoiceCache              map[disgord.Snowflake]disgord.Snowflake
+	GuildID                 disgord.Snowflake
+	LastMessageUID          disgord.Snowflake
+	LastMessageCHID         disgord.Snowflake
+	NowPlayingUID           disgord.Snowflake
+	LastPlayingUID          disgord.Snowflake
+	NextPlayingUID          disgord.Snowflake
+	NowPlayingURL           string
+	LastPlayingIndex        int
+	Next                    chan bool
+	Stop                    chan bool
+	Shuffle                 chan bool
+	ChannelHop              chan disgord.Snowflake
+	CurrentlyPlayingDetails PlayingDetails
 }
 
 // NewQueue returns a new Queue instance
@@ -77,8 +84,6 @@ func (q *Queue) UpdateUserQueueStateBulk(chID disgord.Snowflake, uID disgord.Sno
 		q.UserQueue[uID] = append(q.UserQueue[uID], args...)
 	}
 	q.queueAlternator()
-
-	// =====================================================================================
 }
 
 // UpdateVoiceCache updates the voicechannel cache based upon the set channel id on voice state updates
@@ -102,7 +107,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 		fmt.Printf("\nERROR: %+v\n", err)
 	}
 	for {
-		fmt.Println("\nQueues: ", q.UserQueue)
+		// fmt.Println("\nQueues: ", len(q.UserQueue))
 		time.Sleep(3 * time.Second)
 		if len(q.UserQueue) > 0 {
 			wg.Add(1)
@@ -114,22 +119,28 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
 			id := fields[1]
 			fmt.Println("\nID: ", id)
-			//=================================================================
 			call := youtubeVideosListCall.Id(id)
 			resp, err := call.Do()
 			if err != nil {
 				fmt.Println("\nERROR FETCHING VID DEETZ: ", err)
 			}
 
-			//=================================================================
+			q.CurrentlyPlayingDetails.Snippet = resp.Items[0].Snippet
+			q.CurrentlyPlayingDetails.ContentDetails = resp.Items[0].ContentDetails
+			q.CurrentlyPlayingDetails.Statistics = resp.Items[0].Statistics
+
+			fmt.Println("Song Title: ", q.CurrentlyPlayingDetails.Snippet.Title)
+			fmt.Println("Song Duration: ", q.CurrentlyPlayingDetails.ContentDetails.Duration)
+			fmt.Printf("\nUpvotes %+v | Downvotes %+v", q.CurrentlyPlayingDetails.Statistics.LikeCount, q.CurrentlyPlayingDetails.Statistics.DislikeCount)
+			fmt.Println("Song Caption: ", q.CurrentlyPlayingDetails.ContentDetails.Caption)
+			fmt.Println("Song Description: ", q.CurrentlyPlayingDetails.Snippet.Description)
+
 			if len(resp.Items) == 0 {
 				fmt.Println("\nGot nothin back")
 				q.RemoveQueueEntry()
 				wg.Done()
 				continue
 			}
-			fmt.Println("\nSONG NAME: ", resp.Items[0].Snippet.Title)
-			fmt.Println("\nSONG COPYRIGHT STRIKE?: ", resp.Items[0].ContentDetails.LicensedContent)
 			es, err := q.GetEncodeSession(requestURL)
 			if err != nil {
 				fmt.Printf("\nERROR ENCODING: %+v\n", err)

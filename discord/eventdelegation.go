@@ -41,6 +41,9 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		}()
 		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 	case "play":
+		if len(args) == 0 {
+			return
+		}
 		if strings.Contains(args[0], "list=") {
 			plis := ytService.PlaylistItems.List([]string{"snippet", "status", "contentDetails"})
 			ytc := yt.NewYoutubePlaylistClient(plis)
