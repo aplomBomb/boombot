@@ -16,6 +16,7 @@ import (
 	"github.com/jonas747/dca"
 )
 
+// PlayingDetails contains video data for fetched youtube songs/videos
 type PlayingDetails struct {
 	Snippet        *youtube.VideoSnippet
 	ContentDetails *youtube.VideoContentDetails
@@ -70,7 +71,6 @@ func (q *Queue) UpdateUserQueueState(chID disgord.Snowflake, uID disgord.Snowfla
 	} else {
 		q.UserQueue[uID] = append(q.UserQueue[uID], arg)
 	}
-	q.queueAlternator()
 }
 
 // UpdateUserQueueStateBulk updates the UserQueue and GlobalQueue cache for playlist requests
@@ -83,7 +83,6 @@ func (q *Queue) UpdateUserQueueStateBulk(chID disgord.Snowflake, uID disgord.Sno
 	} else {
 		q.UserQueue[uID] = append(q.UserQueue[uID], args...)
 	}
-	q.queueAlternator()
 }
 
 // UpdateVoiceCache updates the voicechannel cache based upon the set channel id on voice state updates
@@ -109,11 +108,12 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 	for {
 		// fmt.Println("\nQueues: ", len(q.UserQueue))
 		time.Sleep(3 * time.Second)
+		fmt.Printf("\nNowPlayingUID: %+v | NowPlayingURL: %+v\n", q.NowPlayingUID, q.NowPlayingURL)
 		if len(q.UserQueue) > 0 {
 			wg.Add(1)
+			q.queueAlternator()
 			requestURL := ""
 			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NextPlayingUID][0])
-			q.NowPlayingURL = q.UserQueue[q.NextPlayingUID][0]
 			q.NowPlayingSync()
 			fmt.Println("\nURL: ", q.NowPlayingURL)
 			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
@@ -129,14 +129,8 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			q.CurrentlyPlayingDetails.ContentDetails = resp.Items[0].ContentDetails
 			q.CurrentlyPlayingDetails.Statistics = resp.Items[0].Statistics
 
-			fmt.Println("Song Title: ", q.CurrentlyPlayingDetails.Snippet.Title)
-			fmt.Println("Song Duration: ", q.CurrentlyPlayingDetails.ContentDetails.Duration)
-			fmt.Printf("\nUpvotes %+v | Downvotes %+v", q.CurrentlyPlayingDetails.Statistics.LikeCount, q.CurrentlyPlayingDetails.Statistics.DislikeCount)
-			fmt.Println("Song Caption: ", q.CurrentlyPlayingDetails.ContentDetails.Caption)
-			fmt.Println("Song Description: ", q.CurrentlyPlayingDetails.Snippet.Description)
-
 			if len(resp.Items) == 0 {
-				fmt.Println("\nGot nothin back")
+				fmt.Println("\nNo data retrieved from Youtube|Skipping...")
 				q.RemoveQueueEntry()
 				wg.Done()
 				continue
@@ -150,7 +144,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				fmt.Println("\nError: ", err)
 			}
 			if esData == nil {
-				fmt.Println("\nNo audio data")
+				fmt.Println("\nNo audio data|Skipping...")
 				q.RemoveQueueEntry()
 				wg.Done()
 				continue
@@ -160,10 +154,13 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				fmt.Printf("\nERROR: %+v\n", err)
 			}
 
+			fmt.Printf("\nNowPlayingUID: %+v | NowPlayingURL: %+v\n", q.NowPlayingUID, q.NowPlayingURL)
+
 			// Ticker needed for smooth opus frame delivery to prevent playback stuttering
 			ticker := time.NewTicker(20 * time.Millisecond)
 			done := make(chan bool)
 			eofChannel := make(chan bool)
+
 			// Goroutine just cycles through the opusFrames produced from the encoding process
 			// The channels allow for realtime interaction/playback control from events triggered by users
 			go func(waitGroup *sync.WaitGroup) {
@@ -224,6 +221,10 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			}()
 		}
 		wg.Wait()
+		if len(q.UserQueue) == 0 {
+			q.NowPlayingUID = 0
+			q.CurrentlyPlayingDetails = PlayingDetails{}
+		}
 	}
 }
 
@@ -252,7 +253,7 @@ func (q *Queue) GetEncodeSession(url string) (*dca.EncodeSession, error) {
 
 // ManageJukebox scans the userqueue and updates the embed in the jukebox designated channel
 func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
-	referenceEntry := ""
+	referenceEntry := PlayingDetails{}
 	for {
 		time.Sleep(2 * time.Second)
 		// fmt.Println("\nNOW PLAYING: ", q.UserQueue[q.NowPlayingUID])
@@ -266,26 +267,34 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 			fmt.Printf("\nCOULD NOT GET MESSAGES FROM JUKEBOX CHANNEL: %+v", err)
 		}
 		if len(q.UserQueue) > 0 && q.NowPlayingUID != 0 {
-			if referenceEntry != q.UserQueue[q.NowPlayingUID][0] {
-
+			if referenceEntry != q.CurrentlyPlayingDetails {
+				nextRequesteeName := "**Open Queue**"
 				requesteeName, err := disgordClient.User(q.NowPlayingUID).Get()
 				if err != nil {
 					fmt.Println("\n", err)
 				}
+				if q.NextPlayingUID != 0 {
+					uName, err := disgordClient.User(q.NextPlayingUID).Get()
+					if err != nil {
+						fmt.Println("\n", err)
+					}
+					nextRequesteeName = uName.Username
+				}
+
 				avatarURL, err := requesteeName.AvatarURL(64, true)
 				if err != nil {
 					fmt.Println("\n", err)
 				}
-				disgordClient.SendMsg(
-					779836590503624734,
-					&disgord.CreateMessageParams{
-						Content: q.UserQueue[q.NowPlayingUID][0],
-					},
-				)
+				likeStr := strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.LikeCount, 10)
+				dislikeStr := strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.DislikeCount, 10)
+				timeFields := strings.Split(q.CurrentlyPlayingDetails.ContentDetails.Duration, "PT")
 				disgordClient.SendMsg(
 					779836590503624734,
 					&disgord.CreateMessageParams{
 						Embed: &disgord.Embed{
+							Title:       q.CurrentlyPlayingDetails.Snippet.Title,
+							URL:         q.UserQueue[q.NowPlayingUID][0],
+							Description: q.CurrentlyPlayingDetails.Snippet.Description,
 							Thumbnail: &disgord.EmbedThumbnail{
 								URL:    avatarURL,
 								Height: 64,
@@ -296,26 +305,45 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 									Name:  "Requested by",
 									Value: requesteeName.Username,
 								},
+								&disgord.EmbedField{
+									Name:   "Duration",
+									Value:  timeFields[1],
+									Inline: true,
+								},
+								&disgord.EmbedField{
+									Name:   "Upvotes",
+									Value:  likeStr,
+									Inline: true,
+								},
+								&disgord.EmbedField{
+									Name:   "Upvotes",
+									Value:  dislikeStr,
+									Inline: true,
+								},
+							},
+							Image: &disgord.EmbedImage{
+								URL:    q.CurrentlyPlayingDetails.Snippet.Thumbnails.High.Url,
+								Height: 128,
+								Width:  128,
 							},
 							Footer: &disgord.EmbedFooter{
-								Text: fmt.Sprintf("%+v's queue: %+v", requesteeName.Username, strconv.Itoa(len(q.UserQueue[q.NowPlayingUID]))),
+								IconURL: avatarURL,
+								Text:    fmt.Sprintf("%+v's queue: %+v | Up next: %+v", requesteeName.Username, strconv.Itoa(len(q.UserQueue[q.NowPlayingUID])), nextRequesteeName),
 							},
 						},
 					},
 				)
 				if len(q.UserQueue) > 0 {
-					referenceEntry = q.UserQueue[q.NowPlayingUID][0]
+					referenceEntry = q.CurrentlyPlayingDetails
 				}
 			}
 		}
-		if len(msgs) > 2 {
-			for k := range msgs {
-				if k > 1 {
-					go deleteMessage(msgs[k], 1*time.Second, disgordClient)
-				}
-			}
+		if len(msgs) > 1 {
+
+			go deleteMessage(msgs[1], 1*time.Second, disgordClient)
+
 		}
-		if len(q.UserQueue) == 0 && q.NowPlayingUID == 0 {
+		if q.NowPlayingUID == 0 {
 			for k := range msgs {
 				go deleteMessage(msgs[k], 1*time.Second, disgordClient)
 			}
@@ -332,9 +360,7 @@ func (q *Queue) RemoveQueueEntry() {
 	q.UserQueue[q.NowPlayingUID] = q.UserQueue[q.NowPlayingUID][:len(q.UserQueue[q.NowPlayingUID])-1]
 	if len(q.UserQueue[q.NowPlayingUID]) <= 0 {
 		delete(q.UserQueue, q.NowPlayingUID)
-		q.NowPlayingUID = 0
 	}
-	q.queueAlternator()
 }
 
 // ShuffleQueue reorganizes the order of the queue entries for randomized playback
@@ -348,11 +374,10 @@ func (q *Queue) ShuffleQueue() {
 // EmptyQueue deletes user's queue map
 func (q *Queue) EmptyQueue() {
 	delete(q.UserQueue, q.NowPlayingUID)
-	q.NowPlayingUID = 0
-	q.queueAlternator()
 }
 
 // NowPlayingSync keeps the NowPlayingUID updated with the ID of the user who's song is currently playing
+// And updates the NowPlayingURL with the currently playing song's URL
 func (q *Queue) NowPlayingSync() {
 	currentUID := disgord.Snowflake(0)
 	i := 0
@@ -365,6 +390,7 @@ func (q *Queue) NowPlayingSync() {
 		i++
 	}
 	q.NowPlayingUID = currentUID
+	q.NowPlayingURL = q.UserQueue[q.NextPlayingUID][0]
 }
 
 func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.EncodeSession) {
@@ -381,7 +407,6 @@ func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.Encod
 func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
 	if botChannelID == 0 {
 		vc, err := client.VoiceConnectOptions(q.GuildID, requesteeChannelID, true, false)
-		// queueCounter := 0
 		if err != nil {
 			return nil, err
 		}
@@ -397,7 +422,6 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 	if botChannelID != requesteeChannelID {
 		prevVC.Close()
 		newVC, err := client.VoiceConnectOptions(q.GuildID, requesteeChannelID, true, false)
-		// queueCounter := 0
 		if err != nil {
 			return nil, err
 		}

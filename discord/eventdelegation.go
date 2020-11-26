@@ -10,8 +10,9 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
-// Using this for access to the global clients FOR NOW as passing it through the handlers has proven tricky
-// TO-DO find a solution to get rid of the global variables
+// Goal is to have this file as small as possible, the purpose of this file isn't about delegation so to say
+// It's acting as an intermediary; separating global vars from the business logic
+// This means the more code/logic I can get out of this file, the more code/logic that can be unit tested via dependency injection
 
 // RespondToCommand delegates actions when commands are issued
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
@@ -42,6 +43,26 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 	case "play":
 		if len(args) == 0 {
+			resp, err := disgordGlobalClient.SendMsg(
+				data.Message.ChannelID,
+				&disgord.CreateMessageParams{
+					Embed: &disgord.Embed{
+						Title:       "**Empty Request**",
+						Description: "*You didn't request anything*",
+
+						Footer: &disgord.EmbedFooter{
+							Text: fmt.Sprintf("*%+v only provided the play command*", data.Message.Author.Username),
+						},
+						Timestamp: data.Message.Timestamp,
+						Color:     0xeec400,
+					},
+				},
+			)
+			if err != nil {
+				fmt.Printf("\nERROR ADDING TO QUEUE: %+v\n", err)
+			}
+			go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
+			go deleteMessage(resp, 7*time.Second, disgordGlobalClient)
 			return
 		}
 		if strings.Contains(args[0], "list=") {
@@ -73,7 +94,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 				}
 				globalQueue.UpdateUserQueueStateBulk(data.Message.ChannelID, data.Message.Author.ID, urls)
 				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
-				go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
+				go deleteMessage(resp, 7*time.Second, disgordGlobalClient)
 			} else {
 				resp, err := disgordGlobalClient.SendMsg(
 					data.Message.ChannelID,
@@ -94,7 +115,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 					fmt.Printf("\nERROR ADDING TO QUEUE: %+v\n", err)
 				}
 				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
-				go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
+				go deleteMessage(resp, 7*time.Second, disgordGlobalClient)
 			}
 		} else {
 			if globalQueue.VoiceCache[data.Message.Author.ID] != 0 {
@@ -118,7 +139,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 				}
 				globalQueue.UpdateUserQueueState(data.Message.ChannelID, data.Message.Author.ID, args[0])
 				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
-				go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
+				go deleteMessage(resp, 7*time.Second, disgordGlobalClient)
 			} else {
 				resp, err := disgordGlobalClient.SendMsg(
 					data.Message.ChannelID,
@@ -162,9 +183,8 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 			fmt.Printf("\nERROR CREATING PURGE MESSAGE: %+v\n", err)
 		}
 		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
-		go deleteMessage(resp, 30*time.Second, disgordGlobalClient)
+		go deleteMessage(resp, 7*time.Second, disgordGlobalClient)
 		// globalQueue.UserQueue[globalQueue.NowPlayingUID] = []string{globalQueue.UserQueue[globalQueue.NowPlayingUID][0]}
-		globalQueue.NowPlayingUID = 0
 		delete(globalQueue.UserQueue, globalQueue.NowPlayingUID)
 	default:
 		cec.Delegate()
@@ -173,7 +193,6 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 // RespondToMessage delegates actions when messages are created
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
-
 	switch data.Message.ChannelID {
 	case 779836590503624734:
 		data.Message.React(ctx, s, "\u26D4")
@@ -183,7 +202,6 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 		data.Message.React(ctx, s, "\u23E9")
 		time.Sleep(1 * time.Second)
 	}
-
 	user := data.Message.Author
 	fmt.Printf("Message %+v by user %+v | %+v\n", data.Message.Content, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	mec := NewMessageEventClient(data.Message, disgordGlobalClient)
