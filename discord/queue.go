@@ -110,7 +110,6 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			q.setNowPlaying()
 			requestURL := ""
 			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
-			// q.NowPlayingSync(requestURL)
 			fmt.Println("\nURL: ", q.NowPlayingURL)
 			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
 			id := fields[1]
@@ -270,14 +269,6 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				if err != nil {
 					fmt.Println("\n", err)
 				}
-				// if q.NextPlayingUID != 0 {
-				// 	uName, err := disgordClient.User(q.NextPlayingUID).Get()
-				// 	if err != nil {
-				// 		fmt.Println("\n", err)
-				// 	}
-				// 	nextRequesteeName = uName.Username
-				// }
-
 				avatarURL, err := requesteeName.AvatarURL(64, true)
 				if err != nil {
 					fmt.Println("\n", err)
@@ -374,23 +365,6 @@ func (q *Queue) EmptyQueue() {
 	delete(q.UserQueue, q.NowPlayingUID)
 	q.LastPlayingUID = q.NowPlayingUID
 }
-
-// NowPlayingSync keeps the NowPlayingUID updated with the ID of the user who's song is currently playing
-// And updates the NowPlayingURL with the currently playing song's URL
-// func (q *Queue) NowPlayingSync(url string) {
-// 	fields := strings.Split(url, "mp3/")
-// 	currentUID := disgord.Snowflake(0)
-// 	i := 0
-// 	for idKey, stringArr := range q.UserQueue {
-// 		for _, url := range stringArr {
-// 			if url == fields[1] {
-// 				currentUID = idKey
-// 			}
-// 		}
-// 		i++
-// 	}
-// 	q.NowPlayingUID = currentUID
-// }
 
 func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.EncodeSession) {
 	err := es.Stop()
