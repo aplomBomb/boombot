@@ -87,7 +87,13 @@ func (q *Queue) UpdateUserQueueStateBulk(chID disgord.Snowflake, uID disgord.Sno
 func (q *Queue) UpdateVoiceCache(chID disgord.Snowflake, uID disgord.Snowflake) {
 	switch chID {
 	case 0:
+
 		delete(q.VoiceCache, uID)
+		for k := range q.UserQueue {
+			if uID == k {
+				delete(q.UserQueue, k)
+			}
+		}
 	default:
 		q.VoiceCache[uID] = chID
 	}
@@ -343,12 +349,24 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 // This is insane looking/literally makes my eyes glaze over looking at it
 // Should devise a more user(reader)-friendly solution
 func (q *Queue) RemoveQueueEntry() {
-	copy(q.UserQueue[q.NowPlayingUID][0:], q.UserQueue[q.NowPlayingUID][0+1:])
-	q.UserQueue[q.NowPlayingUID][len(q.UserQueue[q.NowPlayingUID])-1] = ""
-	q.UserQueue[q.NowPlayingUID] = q.UserQueue[q.NowPlayingUID][:len(q.UserQueue[q.NowPlayingUID])-1]
-	if len(q.UserQueue[q.NowPlayingUID]) <= 0 {
-		delete(q.UserQueue, q.NowPlayingUID)
+
+	nowPlayingID := disgord.Snowflake(0)
+
+	for k := range q.UserQueue {
+		if k == q.NowPlayingUID {
+			nowPlayingID = q.NowPlayingUID
+		}
 	}
+
+	if nowPlayingID != 0 {
+		copy(q.UserQueue[q.NowPlayingUID][0:], q.UserQueue[q.NowPlayingUID][0+1:])
+		q.UserQueue[q.NowPlayingUID][len(q.UserQueue[q.NowPlayingUID])-1] = ""
+		q.UserQueue[q.NowPlayingUID] = q.UserQueue[q.NowPlayingUID][:len(q.UserQueue[q.NowPlayingUID])-1]
+		if len(q.UserQueue[q.NowPlayingUID]) <= 0 {
+			delete(q.UserQueue, q.NowPlayingUID)
+		}
+	}
+
 	q.LastPlayingUID = q.NowPlayingUID
 }
 
@@ -449,4 +467,9 @@ func (q *Queue) setNowPlaying() {
 	}
 	q.NowPlayingUID = nextUID
 	q.NowPlayingURL = q.UserQueue[q.NowPlayingUID][0]
+}
+
+// RemoveQueueByID removes a user's queue via their userID
+func (q *Queue) RemoveQueueByID(id disgord.Snowflake) {
+	delete(q.UserQueue, id)
 }
