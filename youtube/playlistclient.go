@@ -12,20 +12,20 @@ import (
 	youtubeiface "github.com/aplombomb/boombot/youtube/ifaces"
 )
 
-// Client represents the collection of data needed to fullfill boombot's youtube functionality
-type Client struct {
-	YoutubeClient youtubeiface.YoutubePlaylistItemsServiceAPI
+// PlaylistClient represents the collection of data needed to fullfill boombot's youtube functionality
+type PlaylistClient struct {
+	YoutubePlaylistClient youtubeiface.YoutubePlaylistItemsServiceAPI
 }
 
 // NewYoutubeClient returns a pointer to a new YtClient
-func NewYoutubeClient(ss youtubeiface.YoutubePlaylistItemsServiceAPI) *Client {
-	return &Client{
-		YoutubeClient: ss,
+func NewYoutubePlaylistClient(pls youtubeiface.YoutubePlaylistItemsServiceAPI) *PlaylistClient {
+	return &PlaylistClient{
+		YoutubePlaylistClient: pls,
 	}
 }
 
 // SearchAndDownload returns a string search query based off the provided play command arguments
-func (ytc *Client) SearchAndDownload(arg string) (string, error) {
+func (c *PlaylistClient) SearchAndDownload(arg string) (string, error) {
 	requestURL := fmt.Sprintf("http://localhost:8080/mp3/%+v", arg)
 	resp, err := http.Get(requestURL)
 	if err != nil {
@@ -47,9 +47,9 @@ func (ytc *Client) SearchAndDownload(arg string) (string, error) {
 	return filename, nil
 }
 
-// GetPlaylist accepts a playlist url and return a
+// GetPlaylist accepts a playlist url and returns a
 // Slice containing the url's of each video in the playlist
-func (ytc *Client) GetPlaylist(arg string) ([]string, error) {
+func (c *PlaylistClient) GetPlaylist(arg string) ([]string, error) {
 	songIndex := 0
 	playlistID := ""
 	urlFields := strings.Split(arg, "=")
@@ -68,7 +68,7 @@ func (ytc *Client) GetPlaylist(arg string) ([]string, error) {
 		playlistID = id[0]
 		songIndex, _ = strconv.Atoi(urlFields[3])
 	}
-	URLS, err := ytc.aggregateIDS(playlistID)
+	URLS, err := c.aggregateIDS(playlistID)
 	if err != nil {
 		return nil, err
 	}
@@ -85,20 +85,25 @@ func (ytc *Client) GetPlaylist(arg string) ([]string, error) {
 	return URLS, nil
 }
 
-//"https://www.youtube.com/watch?v=WTu9m2MLYLI&list=RDEMAPN-vkfalyPGuAim5-AgEA&index=6"
 // TO-DO refactor this to fetch track concurrently for fast grabbing of large playlists
-func (ytc *Client) aggregateIDS(plID string) ([]string, error) {
+func (c *PlaylistClient) aggregateIDS(plID string) ([]string, error) {
 	IDS := []string{}
 	nextPageToken := ""
 	for {
-		plic := ytc.YoutubeClient.PlaylistId(plID).MaxResults(50).PageToken(nextPageToken)
+		plic := c.YoutubePlaylistClient.PlaylistId(plID).MaxResults(50).PageToken(nextPageToken)
 		resp, err := plic.Do()
 		if err != nil {
 			return nil, err
 		}
 		for _, v := range resp.Items {
+			// Gonna handle this in the 'GetVideoDetails' method
+			if v.Status.PrivacyStatus == "private" || v.Status.PrivacyStatus == "unlisted" {
+				continue
+			}
 			url := fmt.Sprintf("https://www.youtube.com/watch?v=%+v", v.Snippet.ResourceId.VideoId)
-			IDS = append(IDS, url)
+			if url != fmt.Sprintf("https://www.youtube.com/watch?v=%+v", "") {
+				IDS = append(IDS, url)
+			}
 		}
 		nextPageToken = resp.NextPageToken
 		if nextPageToken == "" {

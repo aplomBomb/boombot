@@ -12,6 +12,7 @@ type DisgordClientAPI interface {
 	// GetMessage(channelID, messageID disgord.Snowflake) (ret *disgord.Message, err error)
 	VoiceConnectOptions(guildID, channelID disgord.Snowflake, selfDeaf, selfMute bool) (ret disgord.VoiceConnection, err error)
 	Channel(id disgord.Snowflake) disgord.ChannelQueryBuilder
+	User(id disgord.Snowflake) disgord.UserQueryBuilder
 }
 
 // DisgordMessageQueryBuilderAPI provides an interface for mocking Disgord's MessageQueryBuilder behavior
