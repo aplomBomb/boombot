@@ -32,9 +32,7 @@ type Queue struct {
 	LastMessageCHID         disgord.Snowflake
 	NowPlayingUID           disgord.Snowflake
 	LastPlayingUID          disgord.Snowflake
-	NextPlayingUID          disgord.Snowflake
 	NowPlayingURL           string
-	LastPlayingIndex        int
 	Next                    chan bool
 	Stop                    chan bool
 	Shuffle                 chan bool
@@ -45,20 +43,18 @@ type Queue struct {
 // NewQueue returns a new Queue instance
 func NewQueue(gID disgord.Snowflake) *Queue {
 	return &Queue{
-		UserQueue:        map[disgord.Snowflake][]string{},
-		VoiceCache:       map[disgord.Snowflake]disgord.Snowflake{},
-		GuildID:          gID,
-		LastMessageUID:   disgord.Snowflake(0),
-		LastMessageCHID:  disgord.Snowflake(0),
-		LastPlayingUID:   disgord.Snowflake(0),
-		NowPlayingUID:    disgord.Snowflake(0),
-		NextPlayingUID:   disgord.Snowflake(0),
-		NowPlayingURL:    "",
-		LastPlayingIndex: 0,
-		Next:             make(chan bool, 1),
-		Stop:             make(chan bool, 1),
-		Shuffle:          make(chan bool, 1),
-		ChannelHop:       make(chan disgord.Snowflake, 1),
+		UserQueue:       map[disgord.Snowflake][]string{},
+		VoiceCache:      map[disgord.Snowflake]disgord.Snowflake{},
+		GuildID:         gID,
+		LastMessageUID:  disgord.Snowflake(0),
+		LastMessageCHID: disgord.Snowflake(0),
+		LastPlayingUID:  disgord.Snowflake(0),
+		NowPlayingUID:   disgord.Snowflake(0),
+		NowPlayingURL:   "",
+		Next:            make(chan bool, 1),
+		Stop:            make(chan bool, 1),
+		Shuffle:         make(chan bool, 1),
+		ChannelHop:      make(chan disgord.Snowflake, 1),
 	}
 }
 
@@ -108,16 +104,15 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 	for {
 		time.Sleep(3 * time.Second)
 		fmt.Printf("\nNowPlayingUID: %+v | NowPlayingURL: %+v\n", q.NowPlayingUID, q.NowPlayingURL)
-		fmt.Printf("\nCurrentlyPlayingDetails Name: %+v", q.CurrentlyPlayingDetails)
 		if len(q.UserQueue) > 0 {
 			fmt.Println("\nQueues: ", len(q.UserQueue))
 			wg.Add(1)
-			q.queueAlternator()
+			q.setNowPlaying()
 			requestURL := ""
-			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NextPlayingUID][0])
-			q.NowPlayingSync(requestURL)
+			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
+			// q.NowPlayingSync(requestURL)
 			fmt.Println("\nURL: ", q.NowPlayingURL)
-			fields := strings.Split(q.UserQueue[q.NextPlayingUID][0], "=")
+			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
 			id := fields[1]
 			fmt.Println("\nID: ", id)
 			call := youtubeVideosListCall.Id(id)
@@ -318,7 +313,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 									Inline: true,
 								},
 								&disgord.EmbedField{
-									Name:   "Upvotes",
+									Name:   "Downvotes",
 									Value:  dislikeStr,
 									Inline: true,
 								},
@@ -363,6 +358,7 @@ func (q *Queue) RemoveQueueEntry() {
 	if len(q.UserQueue[q.NowPlayingUID]) <= 0 {
 		delete(q.UserQueue, q.NowPlayingUID)
 	}
+	q.LastPlayingUID = q.NowPlayingUID
 }
 
 // ShuffleQueue reorganizes the order of the queue entries for randomized playback
@@ -376,26 +372,25 @@ func (q *Queue) ShuffleQueue() {
 // EmptyQueue deletes user's queue map
 func (q *Queue) EmptyQueue() {
 	delete(q.UserQueue, q.NowPlayingUID)
+	q.LastPlayingUID = q.NowPlayingUID
 }
 
 // NowPlayingSync keeps the NowPlayingUID updated with the ID of the user who's song is currently playing
 // And updates the NowPlayingURL with the currently playing song's URL
-func (q *Queue) NowPlayingSync(url string) {
-	fields := strings.Split(url, "mp3/")
-	currentUID := disgord.Snowflake(0)
-	i := 0
-	for idKey, stringArr := range q.UserQueue {
-		for _, url := range stringArr {
-			if url == fields[1] {
-				currentUID = idKey
-			}
-		}
-		i++
-	}
-	q.NowPlayingUID = currentUID
-	q.NowPlayingURL = q.UserQueue[q.NextPlayingUID][0]
-
-}
+// func (q *Queue) NowPlayingSync(url string) {
+// 	fields := strings.Split(url, "mp3/")
+// 	currentUID := disgord.Snowflake(0)
+// 	i := 0
+// 	for idKey, stringArr := range q.UserQueue {
+// 		for _, url := range stringArr {
+// 			if url == fields[1] {
+// 				currentUID = idKey
+// 			}
+// 		}
+// 		i++
+// 	}
+// 	q.NowPlayingUID = currentUID
+// }
 
 func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.EncodeSession) {
 	err := es.Stop()
@@ -448,28 +443,36 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 	return prevVC, nil
 }
 
-func (q *Queue) queueAlternator() {
-	newIndex := q.LastPlayingIndex
+func (q *Queue) setNowPlaying() {
+	lastUID := q.LastPlayingUID
+	nextUID := disgord.Snowflake(0)
+
+	fmt.Println("\nLastPlayingUID: ", lastUID)
+
+	// When there is more than one queue, we dont want to play the same user's queue twice in a row
+	// Collect all the queue id's that aren't the last one
 	uidbucket := []disgord.Snowflake{}
-	for k := range q.UserQueue {
-		uidbucket = append(uidbucket, k)
-	}
-	if len(uidbucket) > 1 {
-		newIndex++
+	if len(q.UserQueue) > 1 {
+		for k := range q.UserQueue {
+			if k != lastUID {
+				uidbucket = append(uidbucket, k)
+			}
+		}
 	} else {
-		newIndex = 0
-	}
-	if newIndex > len(uidbucket)-1 {
-		newIndex = 0
-	}
-
-	if len(uidbucket) == 1 && len(q.UserQueue[uidbucket[newIndex]]) == 1 {
-		q.NextPlayingUID = 0
+		for k := range q.UserQueue {
+			lastUID = k
+		}
+		uidbucket = append(uidbucket, lastUID)
 	}
 
-	q.NextPlayingUID = uidbucket[newIndex]
-	q.LastPlayingIndex = newIndex
-
-	fmt.Println("\nLAST PLAYED INDEX: ", q.LastPlayingIndex)
-	fmt.Println("\nNextPlayingUID: ", q.NextPlayingUID)
+	if len(uidbucket) > 1 {
+		// And if there's more than one, pick one at random
+		s := rand.NewSource(time.Now().Unix())
+		r := rand.New(s)
+		nextUID = uidbucket[r.Intn(len(uidbucket))]
+	} else {
+		nextUID = uidbucket[0]
+	}
+	q.NowPlayingUID = nextUID
+	q.NowPlayingURL = q.UserQueue[q.NowPlayingUID][0]
 }
