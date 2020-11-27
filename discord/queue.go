@@ -106,17 +106,18 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 		fmt.Printf("\nERROR: %+v\n", err)
 	}
 	for {
-		// fmt.Println("\nQueues: ", len(q.UserQueue))
 		time.Sleep(3 * time.Second)
 		fmt.Printf("\nNowPlayingUID: %+v | NowPlayingURL: %+v\n", q.NowPlayingUID, q.NowPlayingURL)
+		fmt.Printf("\nCurrentlyPlayingDetails Name: %+v", q.CurrentlyPlayingDetails)
 		if len(q.UserQueue) > 0 {
+			fmt.Println("\nQueues: ", len(q.UserQueue))
 			wg.Add(1)
 			q.queueAlternator()
 			requestURL := ""
 			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NextPlayingUID][0])
-			q.NowPlayingSync()
+			q.NowPlayingSync(requestURL)
 			fmt.Println("\nURL: ", q.NowPlayingURL)
-			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
+			fields := strings.Split(q.UserQueue[q.NextPlayingUID][0], "=")
 			id := fields[1]
 			fmt.Println("\nID: ", id)
 			call := youtubeVideosListCall.Id(id)
@@ -224,6 +225,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 		if len(q.UserQueue) == 0 {
 			q.NowPlayingUID = 0
 			q.CurrentlyPlayingDetails = PlayingDetails{}
+			q.NowPlayingURL = ""
 		}
 	}
 }
@@ -268,18 +270,18 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 		}
 		if len(q.UserQueue) > 0 && q.NowPlayingUID != 0 {
 			if referenceEntry != q.CurrentlyPlayingDetails {
-				nextRequesteeName := "**Open Queue**"
+				// nextRequesteeName := "**Open Queue**"
 				requesteeName, err := disgordClient.User(q.NowPlayingUID).Get()
 				if err != nil {
 					fmt.Println("\n", err)
 				}
-				if q.NextPlayingUID != 0 {
-					uName, err := disgordClient.User(q.NextPlayingUID).Get()
-					if err != nil {
-						fmt.Println("\n", err)
-					}
-					nextRequesteeName = uName.Username
-				}
+				// if q.NextPlayingUID != 0 {
+				// 	uName, err := disgordClient.User(q.NextPlayingUID).Get()
+				// 	if err != nil {
+				// 		fmt.Println("\n", err)
+				// 	}
+				// 	nextRequesteeName = uName.Username
+				// }
 
 				avatarURL, err := requesteeName.AvatarURL(64, true)
 				if err != nil {
@@ -328,7 +330,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 							},
 							Footer: &disgord.EmbedFooter{
 								IconURL: avatarURL,
-								Text:    fmt.Sprintf("%+v's queue: %+v | Up next: %+v", requesteeName.Username, strconv.Itoa(len(q.UserQueue[q.NowPlayingUID])), nextRequesteeName),
+								Text:    fmt.Sprintf("%+v's queue: %+v", requesteeName.Username, strconv.Itoa(len(q.UserQueue[q.NowPlayingUID]))),
 							},
 						},
 					},
@@ -378,12 +380,13 @@ func (q *Queue) EmptyQueue() {
 
 // NowPlayingSync keeps the NowPlayingUID updated with the ID of the user who's song is currently playing
 // And updates the NowPlayingURL with the currently playing song's URL
-func (q *Queue) NowPlayingSync() {
+func (q *Queue) NowPlayingSync(url string) {
+	fields := strings.Split(url, "mp3/")
 	currentUID := disgord.Snowflake(0)
 	i := 0
 	for idKey, stringArr := range q.UserQueue {
 		for _, url := range stringArr {
-			if url == q.NowPlayingURL {
+			if url == fields[1] {
 				currentUID = idKey
 			}
 		}
@@ -391,6 +394,7 @@ func (q *Queue) NowPlayingSync() {
 	}
 	q.NowPlayingUID = currentUID
 	q.NowPlayingURL = q.UserQueue[q.NextPlayingUID][0]
+
 }
 
 func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.EncodeSession) {
@@ -445,26 +449,27 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 }
 
 func (q *Queue) queueAlternator() {
+	newIndex := q.LastPlayingIndex
 	uidbucket := []disgord.Snowflake{}
 	for k := range q.UserQueue {
 		uidbucket = append(uidbucket, k)
 	}
-
 	if len(uidbucket) > 1 {
-		q.LastPlayingIndex--
+		newIndex++
 	} else {
-		q.LastPlayingIndex = 0
+		newIndex = 0
+	}
+	if newIndex > len(uidbucket)-1 {
+		newIndex = 0
 	}
 
-	if q.LastPlayingIndex < 0 || q.LastPlayingIndex > len(uidbucket)-1 && len(uidbucket) != 0 {
-		q.LastPlayingIndex = len(uidbucket) - 1
-	}
-	if len(uidbucket) == 0 {
-		q.LastPlayingUID = 0
+	if len(uidbucket) == 1 && len(q.UserQueue[uidbucket[newIndex]]) == 1 {
 		q.NextPlayingUID = 0
-	} else {
-		q.NextPlayingUID = uidbucket[q.LastPlayingIndex]
 	}
+
+	q.NextPlayingUID = uidbucket[newIndex]
+	q.LastPlayingIndex = newIndex
+
 	fmt.Println("\nLAST PLAYED INDEX: ", q.LastPlayingIndex)
 	fmt.Println("\nNextPlayingUID: ", q.NextPlayingUID)
 }
