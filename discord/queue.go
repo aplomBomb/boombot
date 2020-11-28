@@ -109,17 +109,18 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 	}
 	for {
 		time.Sleep(3 * time.Second)
-		fmt.Printf("\nNowPlayingUID: %+v | NowPlayingURL: %+v\n", q.NowPlayingUID, q.NowPlayingURL)
 		if len(q.UserQueue) > 0 {
 			fmt.Println("\nQueues: ", len(q.UserQueue))
 			wg.Add(1)
 			q.setNowPlaying()
 			requestURL := ""
 			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
-			fmt.Println("\nURL: ", q.NowPlayingURL)
 			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
 			id := fields[1]
+
+			fmt.Println("\nURL: ", q.NowPlayingURL)
 			fmt.Println("\nID: ", id)
+
 			call := youtubeVideosListCall.Id(id)
 			resp, err := call.Do()
 			if err != nil {
@@ -154,8 +155,6 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			if err != nil {
 				fmt.Printf("\nERROR: %+v\n", err)
 			}
-
-			fmt.Printf("\nNowPlayingUID: %+v | NowPlayingURL: %+v\n", q.NowPlayingUID, q.NowPlayingURL)
 
 			// Ticker needed for smooth opus frame delivery to prevent playback stuttering
 			ticker := time.NewTicker(20 * time.Millisecond)
@@ -349,15 +348,14 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 // This is insane looking/literally makes my eyes glaze over looking at it
 // Should devise a more user(reader)-friendly solution
 func (q *Queue) RemoveQueueEntry() {
-
 	nowPlayingID := disgord.Snowflake(0)
-
 	for k := range q.UserQueue {
 		if k == q.NowPlayingUID {
 			nowPlayingID = q.NowPlayingUID
 		}
 	}
-
+	// This check is in place since the queue may not exist, due to the user leaving voice chat
+	// Because when a user leaves voice chat, their queue is deleted
 	if nowPlayingID != 0 {
 		copy(q.UserQueue[q.NowPlayingUID][0:], q.UserQueue[q.NowPlayingUID][0+1:])
 		q.UserQueue[q.NowPlayingUID][len(q.UserQueue[q.NowPlayingUID])-1] = ""
@@ -366,7 +364,6 @@ func (q *Queue) RemoveQueueEntry() {
 			delete(q.UserQueue, q.NowPlayingUID)
 		}
 	}
-
 	q.LastPlayingUID = q.NowPlayingUID
 }
 

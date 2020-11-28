@@ -29,16 +29,19 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	case "next":
 		go func() {
 			globalQueue.Next <- true
+			return
 		}()
 		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 	case "shuffle":
 		go func() {
 			globalQueue.Shuffle <- true
+			return
 		}()
 		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 	case "stop":
 		go func() {
 			globalQueue.Stop <- true
+			return
 		}()
 		go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
 	case "play":
@@ -65,6 +68,58 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 			go deleteMessage(resp, 7*time.Second, disgordGlobalClient)
 			return
 		}
+		if strings.Contains(args[0], "youtu.be") {
+			if globalQueue.VoiceCache[data.Message.Author.ID] != 0 {
+				fields := strings.Split(args[0], "youtu.be/")
+				//play https://youtu.be/=QPAHVS-e1NM
+				// https://www.youtube.com/watch?v=oCbOz4CiMgU
+				requestURL := fmt.Sprintf("https://www.youtube.com/watch?v=%+v", fields[1])
+				fmt.Println("\nRequest: ", requestURL)
+				resp, err := disgordGlobalClient.SendMsg(
+					data.Message.ChannelID,
+					&disgord.CreateMessageParams{
+						Embed: &disgord.Embed{
+							Title:       "**Song Accepted**",
+							Description: "*Song added to your queue*",
+
+							Footer: &disgord.EmbedFooter{
+								Text: fmt.Sprintf("%+v added a song to their queue", data.Message.Author.Username),
+							},
+							Timestamp: data.Message.Timestamp,
+							Color:     0xeec400,
+						},
+					},
+				)
+				if err != nil {
+					fmt.Printf("\nERROR ADDING TO QUEUE: %+v\n", err)
+				}
+				globalQueue.UpdateUserQueueState(data.Message.ChannelID, data.Message.Author.ID, requestURL)
+				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
+				go deleteMessage(resp, 7*time.Second, disgordGlobalClient)
+				return
+			} else {
+				resp, err := disgordGlobalClient.SendMsg(
+					data.Message.ChannelID,
+					&disgord.CreateMessageParams{
+						Embed: &disgord.Embed{
+							Title:       "**Song Rejected**",
+							Description: "*You need to be in a voice channel*",
+
+							Footer: &disgord.EmbedFooter{
+								Text: fmt.Sprintf("*%s's song rejected*", data.Message.Author.Username),
+							},
+							Timestamp: data.Message.Timestamp,
+							Color:     0xeec400,
+						},
+					},
+				)
+				if err != nil {
+					fmt.Printf("\nERROR ADDING TO QUEUE: %+v\n", err)
+				}
+				go deleteMessage(data.Message, 1*time.Second, disgordGlobalClient)
+				go deleteMessage(resp, 7*time.Second, disgordGlobalClient)
+			}
+		}
 		if strings.Contains(args[0], "list=") {
 			plis := ytService.PlaylistItems.List([]string{"snippet", "status", "contentDetails"})
 			ytc := yt.NewYoutubePlaylistClient(plis)
@@ -78,7 +133,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 					data.Message.ChannelID,
 					&disgord.CreateMessageParams{
 						Embed: &disgord.Embed{
-							Title:       "**PLAYLIST ACCEPTED**",
+							Title:       "**Playlist Accepted**",
 							Description: fmt.Sprintf("%+v entries have been added", len(urls)),
 
 							Footer: &disgord.EmbedFooter{
@@ -100,7 +155,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 					data.Message.ChannelID,
 					&disgord.CreateMessageParams{
 						Embed: &disgord.Embed{
-							Title:       "**PLAYLIST REJECTED**",
+							Title:       "**Playlist Rejected**",
 							Description: "*You need to be in a voice channel*",
 
 							Footer: &disgord.EmbedFooter{
@@ -123,7 +178,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 					data.Message.ChannelID,
 					&disgord.CreateMessageParams{
 						Embed: &disgord.Embed{
-							Title:       "**SONG ACCEPTED**",
+							Title:       "**Song Accepted**",
 							Description: "_Song added_",
 
 							Footer: &disgord.EmbedFooter{
@@ -145,7 +200,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 					data.Message.ChannelID,
 					&disgord.CreateMessageParams{
 						Embed: &disgord.Embed{
-							Title:       "**SONG REJECTED**",
+							Title:       "**Song Rejected**",
 							Description: "*You need to be in a voice channel*",
 
 							Footer: &disgord.EmbedFooter{
@@ -168,7 +223,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 			data.Message.ChannelID,
 			&disgord.CreateMessageParams{
 				Embed: &disgord.Embed{
-					Title:       "**QUEUE PURGED**",
+					Title:       "**Queue Purged**",
 					Description: fmt.Sprintf("%+v entries have been purged", len(globalQueue.UserQueue)-1),
 
 					Footer: &disgord.EmbedFooter{
