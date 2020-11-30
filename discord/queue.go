@@ -99,6 +99,34 @@ func (q *Queue) UpdateVoiceCache(chID disgord.Snowflake, uID disgord.Snowflake) 
 	}
 }
 
+func (q *Queue) TriggerNext() {
+	q.Next <- true
+}
+
+func (q *Queue) TriggerShuffle() {
+	q.Shuffle <- true
+}
+
+func (q *Queue) TriggerStop() {
+	q.Stop <- true
+}
+
+func (q *Queue) TriggerChannelHop(id disgord.Snowflake) {
+	q.ChannelHop <- id
+}
+
+func (q *Queue) ReturnVoiceCacheEntry(id disgord.Snowflake) disgord.Snowflake {
+	return q.VoiceCache[id]
+}
+
+func (q *Queue) ReturnUserQueue() map[disgord.Snowflake][]string {
+	return q.UserQueue
+}
+
+func (q *Queue) ReturnNowPlayingID() disgord.Snowflake {
+	return q.NowPlayingUID
+}
+
 // ListenAndProcessQueue takes a message content string to fetch\encode\play
 // audio in the voice channel the author currently resides in
 func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, ytvlc *youtube.VideosListCall) {
@@ -127,15 +155,17 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				fmt.Println("\nERROR FETCHING VID DEETZ: ", err)
 			}
 
-			if resp.Items[0].Snippet != nil {
+			fmt.Println("\nItems: ", resp)
+
+			if resp.Items != nil {
 				q.CurrentlyPlayingDetails.Snippet = resp.Items[0].Snippet
 			}
 
-			if resp.Items[0].ContentDetails != nil {
+			if resp.Items != nil {
 				q.CurrentlyPlayingDetails.ContentDetails = resp.Items[0].ContentDetails
 			}
 
-			if resp.Items[0].Statistics != nil {
+			if resp.Items != nil {
 				q.CurrentlyPlayingDetails.Statistics = resp.Items[0].Statistics
 			}
 

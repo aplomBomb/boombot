@@ -29,3 +29,16 @@ type DisgordChannelQueryBuilderAPI interface {
 type DisgordUserAPI interface {
 	SendMsg(ctx context.Context, session disgord.Session, message *disgord.Message) (channel *disgord.Channel, msg *disgord.Message, err error)
 }
+
+// QueueClientAPI provides an interface for mocking boombot queue behavior
+type QueueClientAPI interface {
+	TriggerNext()
+	TriggerShuffle()
+	TriggerStop()
+	UpdateUserQueueStateBulk(chID disgord.Snowflake, uID disgord.Snowflake, args []string)
+	UpdateUserQueueState(chID disgord.Snowflake, uID disgord.Snowflake, arg string)
+	TriggerChannelHop(id disgord.Snowflake)
+	ReturnUserQueue() map[disgord.Snowflake][]string
+	ReturnNowPlayingID() disgord.Snowflake
+	ReturnVoiceCacheEntry(id disgord.Snowflake) disgord.Snowflake
+}

@@ -5,14 +5,14 @@ import (
 )
 
 type VideoClient struct {
-	YoutubeVideoClient youtubeiface.YoutubeSearchServiceAPI
+	YoutubeVideoClient youtubeiface.YoutubeVideoDetailsAPI
 }
 
 type VideoClientTest struct {
 	YoutubeVideoDetails youtubeiface.YoutubeVideoDetailsAPI
 }
 
-func NewVideoClient(vc youtubeiface.YoutubeSearchServiceAPI) *VideoClient {
+func NewVideoClient(vc youtubeiface.YoutubeVideoDetailsAPI) *VideoClient {
 	return &VideoClient{
 		YoutubeVideoClient: vc,
 	}
