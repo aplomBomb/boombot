@@ -101,7 +101,7 @@ func (q *Queue) UpdateVoiceCache(chID disgord.Snowflake, uID disgord.Snowflake) 
 
 // ListenAndProcessQueue takes a message content string to fetch\encode\play
 // audio in the voice channel the author currently resides in
-func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, youtubeVideosListCall *youtube.VideosListCall) {
+func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, ytvlc *youtube.VideosListCall) {
 	wg := sync.WaitGroup{}
 	vc, err := disgordClientAPI.VoiceConnectOptions(q.GuildID, 640284178755092505, true, false)
 	if err != nil {
@@ -121,7 +121,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			fmt.Println("\nURL: ", q.NowPlayingURL)
 			fmt.Println("\nID: ", id)
 
-			call := youtubeVideosListCall.Id(id)
+			call := ytvlc.Id(id)
 			resp, err := call.Do()
 			if err != nil {
 				fmt.Println("\nERROR FETCHING VID DEETZ: ", err)
@@ -237,8 +237,8 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			q.CurrentlyPlayingDetails = PlayingDetails{}
 			q.NowPlayingURL = ""
 		}
+		// Leave if the bot is the only member in a voice channel
 		if len(q.VoiceCache) == 1 && q.VoiceCache[739154323015204935] != 0 {
-			fmt.Println("\nOK!!")
 			vc.Close()
 		}
 	}
