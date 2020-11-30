@@ -127,9 +127,17 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				fmt.Println("\nERROR FETCHING VID DEETZ: ", err)
 			}
 
-			q.CurrentlyPlayingDetails.Snippet = resp.Items[0].Snippet
-			q.CurrentlyPlayingDetails.ContentDetails = resp.Items[0].ContentDetails
-			q.CurrentlyPlayingDetails.Statistics = resp.Items[0].Statistics
+			if resp.Items[0].Snippet != nil {
+				q.CurrentlyPlayingDetails.Snippet = resp.Items[0].Snippet
+			}
+
+			if resp.Items[0].ContentDetails != nil {
+				q.CurrentlyPlayingDetails.ContentDetails = resp.Items[0].ContentDetails
+			}
+
+			if resp.Items[0].Statistics != nil {
+				q.CurrentlyPlayingDetails.Statistics = resp.Items[0].Statistics
+			}
 
 			if len(resp.Items) == 0 {
 				fmt.Println("\nNo data retrieved from Youtube|Skipping...")
@@ -196,7 +204,10 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						if err != nil {
 							fmt.Printf("\nERROR: %+v\n", err)
 						}
-						vc.StartSpeaking()
+						err = vc.StartSpeaking()
+						if err != nil {
+							fmt.Println("\nError starting speaking: ", err)
+						}
 					case <-ticker.C:
 						nextFrame, err := es.OpusFrame()
 						if err != nil && err != io.EOF {
@@ -226,6 +237,10 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			q.CurrentlyPlayingDetails = PlayingDetails{}
 			q.NowPlayingURL = ""
 		}
+		if len(q.VoiceCache) == 1 && q.VoiceCache[739154323015204935] != 0 {
+			fmt.Println("\nOK!!")
+			vc.Close()
+		}
 	}
 }
 
@@ -240,7 +255,7 @@ func (q *Queue) GetEncodeSession(url string) (*dca.EncodeSession, error) {
 		Application:      "audio",
 		CompressionLevel: 5,
 		PacketLoss:       1,
-		BufferedFrames:   200, // At 20ms frames that's 2s
+		BufferedFrames:   200, // At 20ms frames that's 4s
 		VBR:              true,
 		StartTime:        0,
 		RawOutput:        true,
@@ -278,9 +293,16 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				if err != nil {
 					fmt.Println("\n", err)
 				}
-				likeStr := strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.LikeCount, 10)
-				dislikeStr := strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.DislikeCount, 10)
-				timeFields := strings.Split(q.CurrentlyPlayingDetails.ContentDetails.Duration, "PT")
+				likeStr := "?"
+				dislikeStr := "?"
+				timeFields := []string{"PT", "?M?S"}
+
+				if q.CurrentlyPlayingDetails.Statistics != nil && q.CurrentlyPlayingDetails.ContentDetails != nil {
+					likeStr = strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.LikeCount, 10)
+					dislikeStr = strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.DislikeCount, 10)
+					timeFields = strings.Split(q.CurrentlyPlayingDetails.ContentDetails.Duration, "PT")
+				}
+
 				disgordClient.SendMsg(
 					779836590503624734,
 					&disgord.CreateMessageParams{
