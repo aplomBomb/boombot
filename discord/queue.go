@@ -99,30 +99,38 @@ func (q *Queue) UpdateVoiceCache(chID disgord.Snowflake, uID disgord.Snowflake) 
 	}
 }
 
+// TriggerNext sends a true boolean value to the queue next channel, skipping whatever queue entry is currently playing
 func (q *Queue) TriggerNext() {
 	q.Next <- true
 }
 
+// TriggerShuffle sends a true boolean value to the queue shuffle channel, shuffling whatever user queue is currently active
 func (q *Queue) TriggerShuffle() {
 	q.Shuffle <- true
 }
 
+// TriggerStop sends a true boolean value to the queue stop channel, stopping whatever is currently playing
 func (q *Queue) TriggerStop() {
 	q.Stop <- true
 }
 
+// TriggerChannelHop sends a channelID to the queue channelhop channel
+// For cases when the bot needs to follow a user who's song is currently playing
 func (q *Queue) TriggerChannelHop(id disgord.Snowflake) {
 	q.ChannelHop <- id
 }
 
+// ReturnVoiceCacheEntry returns a voice queue voicecache channel id via a user's id
 func (q *Queue) ReturnVoiceCacheEntry(id disgord.Snowflake) disgord.Snowflake {
 	return q.VoiceCache[id]
 }
 
+// ReturnUserQueue returns the current userqueue from the global queue cache
 func (q *Queue) ReturnUserQueue() map[disgord.Snowflake][]string {
 	return q.UserQueue
 }
 
+// ReturnNowPlayingID returns the nowplayingid from the queue
 func (q *Queue) ReturnNowPlayingID() disgord.Snowflake {
 	return q.NowPlayingUID
 }
@@ -155,7 +163,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				fmt.Println("\nERROR FETCHING VID DEETZ: ", err)
 			}
 
-			fmt.Println("\nItems: ", resp)
+			// fmt.Println("\nItems: ", resp)
 
 			if resp.Items != nil {
 				q.CurrentlyPlayingDetails.Snippet = resp.Items[0].Snippet
