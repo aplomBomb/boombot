@@ -33,6 +33,7 @@ func NewCommandEventClient(data *disgord.Message, disgordClient disgordiface.Dis
 
 // Delegate evaluates commands and sends them to be processed
 func (cec *CommandEventClient) Delegate() {
+	mec := NewMessageEventClient(cec.data, cec.disgordClient)
 	cmd, args := cec.DisectCommand()
 	switch cmd {
 	case "help", "h", "?", "wtf":
@@ -48,7 +49,23 @@ func (cec *CommandEventClient) Delegate() {
 		cec.queue.TriggerStop()
 		go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
 	case "play":
-		mec := NewMessageEventClient(cec.data, cec.disgordClient)
+		if cec.queue.ReturnVoiceCacheEntry(cec.data.Author.ID) == 0 {
+			_, err := mec.SendEmbedMsgReply(disgord.Embed{
+				Title:       "**Request Rejected**",
+				Description: "You need to be in a voice channel to make a request",
+				Timestamp:   cec.data.Timestamp,
+				Footer: &disgord.EmbedFooter{
+					Text: fmt.Sprintf("%+v is not in a voice channel", cec.data.Author.Username),
+				},
+				Color: 0xeec400,
+			},
+			)
+			if err != nil {
+				fmt.Printf("\nError sending request rejected message: %+v\n", err)
+			}
+			go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
+			return
+		}
 		if len(args) == 0 {
 			_, err := mec.SendEmbedMsgReply(disgord.Embed{
 				Title:       "**Empty Request**",
@@ -95,21 +112,6 @@ func (cec *CommandEventClient) Delegate() {
 					go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
 					return
 				}
-				// If user isn't in a voice channel
-				_, err := mec.SendEmbedMsgReply(disgord.Embed{
-					Title:       "**Request Rejected**",
-					Description: "You need to be in a voice channel to make a request",
-					Timestamp:   cec.data.Timestamp,
-					Footer: &disgord.EmbedFooter{
-						Text: fmt.Sprintf("%+v is not in a voice channel", cec.data.Author.Username),
-					},
-					Color: 0xeec400,
-				},
-				)
-				if err != nil {
-					fmt.Printf("\nError sending request rejected message: %+v\n", err)
-				}
-				go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
 			}
 			// Check if URL is a playlist
 			if strings.Contains(parsedArgs[0], "list=") {
@@ -136,22 +138,6 @@ func (cec *CommandEventClient) Delegate() {
 					go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
 					return
 				}
-				// If user is not in a voice channel
-				_, err = mec.SendEmbedMsgReply(disgord.Embed{
-					Title:       "**Playlist Rejected**",
-					Description: "*You need to be in a voice channel*",
-					Footer: &disgord.EmbedFooter{
-						Text: fmt.Sprintf("*%s's playlist rejected*", cec.data.Author.Username),
-					},
-					Timestamp: cec.data.Timestamp,
-					Color:     0xeec400,
-				},
-				)
-				if err != nil {
-					fmt.Printf("\nError sending playlist rejected message: %+v\n", err)
-				}
-				go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
-
 			} else {
 				if cec.queue.ReturnVoiceCacheEntry(cec.data.Author.ID) != 0 {
 					_, err := mec.SendEmbedMsgReply(disgord.Embed{
@@ -169,25 +155,10 @@ func (cec *CommandEventClient) Delegate() {
 					}
 					cec.queue.UpdateUserQueueState(cec.data.ChannelID, cec.data.Author.ID, parsedArgs[0])
 					go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
-				} else {
-					_, err := mec.SendEmbedMsgReply(disgord.Embed{
-						Title:       "**Request Rejected**",
-						Description: "*You need to be in a voice channel*",
-
-						Footer: &disgord.EmbedFooter{
-							Text: fmt.Sprintf("*%s's requestrejected*", cec.data.Author.Username),
-						},
-						Timestamp: cec.data.Timestamp,
-						Color:     0xeec400,
-					},
-					)
-					if err != nil {
-						fmt.Printf("\nError sending song rejected message: %+v\n", err)
-					}
-					go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
+					return
 				}
 			}
-		default:
+		case false:
 			fmt.Println("\nUser searching for song...")
 			argString := strings.Join(parsedArgs, " ")
 			slc := cec.ytss.Q(argString)
@@ -196,23 +167,36 @@ func (cec *CommandEventClient) Delegate() {
 				fmt.Println("\nError searching, ", err)
 			}
 			fmt.Println("\n1st Search result title: ", resp.Items[0].Snippet.Title)
-
 			vidID := resp.Items[0].Id.VideoId
-
 			url := fmt.Sprintf("https://www.youtube.com/watch?v=%+v", vidID)
-
 			cec.queue.UpdateUserQueueState(cec.data.ChannelID, cec.data.Author.ID, url)
-
 			fmt.Println("\nURL from search: ", resp.Items[0].Snippet.Title)
 
+			_, err = mec.SendEmbedMsgReply(disgord.Embed{
+				Title:       "**Added to Queue**",
+				Description: fmt.Sprintf("%+v added %+v", cec.data.Author.Username, resp.Items[0].Snippet.Title),
+				Thumbnail: &disgord.EmbedThumbnail{
+					URL: resp.Items[0].Snippet.Thumbnails.Default.Url,
+				},
+				Footer: &disgord.EmbedFooter{
+					Text: fmt.Sprintf("Added by %s", cec.data.Author.Username),
+				},
+				Timestamp: cec.data.Timestamp,
+				Color:     0xeec400,
+			},
+			)
+			if err != nil {
+				fmt.Printf("\nError sending purge message: %+v\n", err)
+			}
+
+			go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
 		}
 
 	case "purge":
-		mec := NewMessageEventClient(cec.data, cec.disgordClient)
 		uq := cec.queue.ReturnUserQueue()
 		_, err := mec.SendEmbedMsgReply(disgord.Embed{
 			Title:       "**Queue Purged**",
-			Description: fmt.Sprintf("%+v entries have been purged", len(uq)-1),
+			Description: fmt.Sprintf("%+v entries have been purged", len(uq)),
 
 			Footer: &disgord.EmbedFooter{
 				Text: fmt.Sprintf("Purged by %s", cec.data.Author.Username),

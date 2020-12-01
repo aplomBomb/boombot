@@ -289,7 +289,7 @@ func (q *Queue) GetEncodeSession(url string) (*dca.EncodeSession, error) {
 		Channels:         2,
 		FrameRate:        48000,
 		FrameDuration:    20,
-		Bitrate:          64,
+		Bitrate:          128,
 		Application:      "audio",
 		CompressionLevel: 5,
 		PacketLoss:       1,
