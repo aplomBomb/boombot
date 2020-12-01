@@ -43,3 +43,16 @@ func deleteMessage(resp *disgord.Message, sleep time.Duration, client disgordifa
 	msgQueryBuilder := channel.Message(resp.ID)
 	msgQueryBuilder.Delete()
 }
+
+// SendEmbedMsgReply sends an embeded message
+func (mec *MessageEventClient) SendEmbedMsgReply(embed disgord.Embed) (*disgord.Message, error) {
+	resp, err := mec.disgordClient.SendMsg(
+		mec.data.ChannelID,
+		embed,
+	)
+	go deleteMessage(resp, 10*time.Second, mec.disgordClient)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}

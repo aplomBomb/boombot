@@ -11,6 +11,11 @@ import (
 // 	YoutubePlaylistItemsServiceAPI
 // }
 
+// YoutubeSearchAPI provides an interface for youtube search behavior
+type YoutubeSearchAPI interface {
+	Q(q string) *youtube.SearchListCall
+}
+
 // YoutubeVideoDetailsAPI provides an interface for mocking
 type YoutubeVideoDetailsAPI interface {
 	Q(q string) *youtube.VideosListCall

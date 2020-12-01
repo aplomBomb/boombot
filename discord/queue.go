@@ -276,7 +276,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			q.NowPlayingURL = ""
 		}
 		// Leave if the bot is the only member in a voice channel
-		if len(q.VoiceCache) == 1 && q.VoiceCache[739154323015204935] != 0 {
+		if len(q.VoiceCache) == 1 && q.VoiceCache[739154323015204935] != 0 && vc != nil {
 			vc.Close()
 		}
 	}
