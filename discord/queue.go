@@ -163,18 +163,14 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				fmt.Println("\nERROR FETCHING VID DEETZ: ", err)
 			}
 
-			// fmt.Println("\nItems: ", resp)
-
-			if resp.Items != nil {
+			if len(resp.Items) != 0 {
 				q.CurrentlyPlayingDetails.Snippet = resp.Items[0].Snippet
-			}
-
-			if resp.Items != nil {
 				q.CurrentlyPlayingDetails.ContentDetails = resp.Items[0].ContentDetails
-			}
-
-			if resp.Items != nil {
 				q.CurrentlyPlayingDetails.Statistics = resp.Items[0].Statistics
+			} else {
+				q.CurrentlyPlayingDetails.Snippet = &youtube.VideoSnippet{}
+				q.CurrentlyPlayingDetails.ContentDetails = &youtube.VideoContentDetails{}
+				q.CurrentlyPlayingDetails.Statistics = &youtube.VideoStatistics{}
 			}
 
 			if len(resp.Items) == 0 {

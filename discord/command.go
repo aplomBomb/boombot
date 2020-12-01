@@ -166,30 +166,46 @@ func (cec *CommandEventClient) Delegate() {
 			if err != nil {
 				fmt.Println("\nError searching, ", err)
 			}
-			fmt.Println("\n1st Search result title: ", resp.Items[0].Snippet.Title)
-			vidID := resp.Items[0].Id.VideoId
-			url := fmt.Sprintf("https://www.youtube.com/watch?v=%+v", vidID)
-			cec.queue.UpdateUserQueueState(cec.data.ChannelID, cec.data.Author.ID, url)
-			fmt.Println("\nURL from search: ", resp.Items[0].Snippet.Title)
-
-			_, err = mec.SendEmbedMsgReply(disgord.Embed{
-				Title:       "**Added to Queue**",
-				Description: fmt.Sprintf("%+v added %+v", cec.data.Author.Username, resp.Items[0].Snippet.Title),
-				Thumbnail: &disgord.EmbedThumbnail{
-					URL: resp.Items[0].Snippet.Thumbnails.Default.Url,
+			if len(resp.Items) != 0 {
+				fmt.Println("\nITEMS: ", resp.Items)
+				vidID := resp.Items[0].Id.VideoId
+				url := fmt.Sprintf("https://www.youtube.com/watch?v=%+v", vidID)
+				cec.queue.UpdateUserQueueState(cec.data.ChannelID, cec.data.Author.ID, url)
+				fmt.Println("\nURL from search: ", resp.Items[0].Snippet.Title)
+				_, err = mec.SendEmbedMsgReply(disgord.Embed{
+					Title:       "**Added to Queue**",
+					Description: fmt.Sprintf("%+v added %+v", cec.data.Author.Username, resp.Items[0].Snippet.Title),
+					Thumbnail: &disgord.EmbedThumbnail{
+						URL: resp.Items[0].Snippet.Thumbnails.Default.Url,
+					},
+					Footer: &disgord.EmbedFooter{
+						Text: fmt.Sprintf("Added by %s", cec.data.Author.Username),
+					},
+					Timestamp: cec.data.Timestamp,
+					Color:     0xeec400,
 				},
+				)
+				if err != nil {
+					fmt.Printf("\nError sending searched song message: %+v\n", err)
+				}
+				go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
+				return
+			}
+			_, err = mec.SendEmbedMsgReply(disgord.Embed{
+				Title:       "**No Results**",
+				Description: "No results found",
 				Footer: &disgord.EmbedFooter{
-					Text: fmt.Sprintf("Added by %s", cec.data.Author.Username),
+					Text: fmt.Sprintf("%s taste in music is too exotic", cec.data.Author.Username),
 				},
 				Timestamp: cec.data.Timestamp,
 				Color:     0xeec400,
 			},
 			)
 			if err != nil {
-				fmt.Printf("\nError sending purge message: %+v\n", err)
+				fmt.Printf("\nError sending no search results found messageg: %+v\n", err)
 			}
-
 			go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
+			return
 		}
 
 	case "purge":
