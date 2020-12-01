@@ -154,9 +154,6 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
 			id := fields[1]
 
-			fmt.Println("\nURL: ", q.NowPlayingURL)
-			fmt.Println("\nID: ", id)
-
 			call := ytvlc.Id(id)
 			resp, err := call.Do()
 			if err != nil {
@@ -181,7 +178,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			}
 			es, err := q.GetEncodeSession(requestURL)
 			if err != nil {
-				fmt.Printf("\nERROR ENCODING: %+v\n", err)
+				fmt.Printf("\nError encoding: %+v\n", err)
 			}
 			esData, err := es.ReadFrame()
 			if err != nil {
@@ -195,7 +192,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			}
 			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, q.VoiceCache[739154323015204935], q.VoiceCache[q.NowPlayingUID])
 			if err != nil {
-				fmt.Printf("\nERROR: %+v\n", err)
+				fmt.Printf("\nError establishing voice connection: %+v\n", err)
 			}
 
 			// Ticker needed for smooth opus frame delivery to prevent playback stuttering
@@ -230,13 +227,12 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
 						time.Sleep(1 * time.Second)
-
 						return
 					case channelID := <-q.ChannelHop:
 						vc.StopSpeaking()
 						vc, err = q.establishVoiceConnection(vc, disgordClientAPI, 0, channelID)
 						if err != nil {
-							fmt.Printf("\nERROR: %+v\n", err)
+							fmt.Printf("\nError establishing voice connection: %+v\n", err)
 						}
 						err = vc.StartSpeaking()
 						if err != nil {
@@ -245,7 +241,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 					case <-ticker.C:
 						nextFrame, err := es.OpusFrame()
 						if err != nil && err != io.EOF {
-							fmt.Printf("\nERROR PLAYING DCA: %+v\n", err)
+							fmt.Printf("\nError sending next opus frame: %+v\n", err)
 						}
 						if err == io.EOF {
 							eofChannel <- true
@@ -314,7 +310,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 			Limit: 10,
 		})
 		if err != nil {
-			fmt.Printf("\nCOULD NOT GET MESSAGES FROM JUKEBOX CHANNEL: %+v", err)
+			fmt.Printf("\nCould not get messages from jukebox channel: %+v", err)
 		}
 		if len(q.UserQueue) > 0 && q.NowPlayingUID != 0 {
 			if referenceEntry != q.CurrentlyPlayingDetails {
@@ -440,11 +436,11 @@ func (q *Queue) EmptyQueue() {
 func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.EncodeSession) {
 	err := es.Stop()
 	if err != nil {
-		fmt.Printf("\nERROR STOPPING ENCODING: %+v", err)
+		fmt.Printf("\nError stopping encoding: %+v", err)
 	}
 	err = vc.StopSpeaking()
 	if err != nil && err != io.EOF {
-		fmt.Printf("\nERROR STOPPING TALKING: %+v\n", err)
+		fmt.Printf("\nError stopping speaking: %+v\n", err)
 	}
 }
 
