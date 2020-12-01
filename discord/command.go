@@ -172,11 +172,21 @@ func (cec *CommandEventClient) Delegate() {
 				url := fmt.Sprintf("https://www.youtube.com/watch?v=%+v", vidID)
 				cec.queue.UpdateUserQueueState(cec.data.ChannelID, cec.data.Author.ID, url)
 				fmt.Println("\nURL from search: ", resp.Items[0].Snippet.Title)
+				avatarURL, err := cec.data.Author.AvatarURL(64, true)
+				if err != nil {
+					fmt.Println("\n", err)
+				}
 				_, err = mec.SendEmbedMsgReply(disgord.Embed{
-					Title:       "**Added to Queue**",
-					Description: fmt.Sprintf("%+v added %+v", cec.data.Author.Username, resp.Items[0].Snippet.Title),
+					Title: resp.Items[0].Snippet.Title,
 					Thumbnail: &disgord.EmbedThumbnail{
-						URL: resp.Items[0].Snippet.Thumbnails.Default.Url,
+						URL:    avatarURL,
+						Height: 64,
+						Width:  64,
+					},
+					Image: &disgord.EmbedImage{
+						URL:    resp.Items[0].Snippet.Thumbnails.Default.Url,
+						Height: 128,
+						Width:  128,
 					},
 					Footer: &disgord.EmbedFooter{
 						Text: fmt.Sprintf("Added by %s", cec.data.Author.Username),
@@ -195,7 +205,7 @@ func (cec *CommandEventClient) Delegate() {
 				Title:       "**No Results**",
 				Description: "No results found",
 				Footer: &disgord.EmbedFooter{
-					Text: fmt.Sprintf("%s taste in music is too exotic", cec.data.Author.Username),
+					Text: fmt.Sprintf("%s's taste in music is too exotic", cec.data.Author.Username),
 				},
 				Timestamp: cec.data.Timestamp,
 				Color:     0xeec400,

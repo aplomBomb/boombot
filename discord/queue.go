@@ -312,7 +312,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 		if err != nil {
 			fmt.Printf("\nCould not get messages from jukebox channel: %+v", err)
 		}
-		if len(q.UserQueue) > 0 && q.NowPlayingUID != 0 {
+		if len(q.UserQueue) > 0 && q.NowPlayingUID != 0 && q.CurrentlyPlayingDetails.Snippet != nil {
 			if referenceEntry != q.CurrentlyPlayingDetails {
 				// nextRequesteeName := "**Open Queue**"
 				requesteeName, err := disgordClient.User(q.NowPlayingUID).Get()
