@@ -14,11 +14,11 @@ import (
 
 // PlaylistClient represents the collection of data needed to fullfill boombot's youtube functionality
 type PlaylistClient struct {
-	YoutubePlaylistClient youtubeiface.YoutubePlaylistItemsServiceAPI
+	YoutubePlaylistClient youtubeiface.YoutubePlaylistServiceAPI
 }
 
-// NewYoutubeClient returns a pointer to a new YtClient
-func NewYoutubePlaylistClient(pls youtubeiface.YoutubePlaylistItemsServiceAPI) *PlaylistClient {
+// NewYoutubePlaylistClient returns a pointer to a new YtClient
+func NewYoutubePlaylistClient(pls youtubeiface.YoutubePlaylistServiceAPI) *PlaylistClient {
 	return &PlaylistClient{
 		YoutubePlaylistClient: pls,
 	}

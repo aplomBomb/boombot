@@ -1,7 +1,6 @@
 package discord
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -39,8 +38,21 @@ func (mec *MessageEventClient) FilterNonModLinks() error {
 
 func deleteMessage(resp *disgord.Message, sleep time.Duration, client disgordiface.DisgordClientAPI) {
 	time.Sleep(sleep)
-	fmt.Printf("\nDeleting message '%+v' by user %+v", resp.Content, resp.Author.Username)
+	// fmt.Printf("\nDeleting message '%+v' by user %+v", resp.Content, resp.Author.Username)
 	channel := client.Channel(resp.ChannelID)
 	msgQueryBuilder := channel.Message(resp.ID)
 	msgQueryBuilder.Delete()
+}
+
+// SendEmbedMsgReply sends an embeded message
+func (mec *MessageEventClient) SendEmbedMsgReply(embed disgord.Embed) (*disgord.Message, error) {
+	resp, err := mec.disgordClient.SendMsg(
+		mec.data.ChannelID,
+		embed,
+	)
+	go deleteMessage(resp, 10*time.Second, mec.disgordClient)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }

@@ -4,22 +4,23 @@ import (
 	"google.golang.org/api/youtube/v3"
 )
 
-// YoutubeSearchServiceAPI provides an interface for mocking youtube search service service behavior
-type YoutubeSearchServiceAPI interface {
+// YoutubeSearchAPI provides an interface for youtube search behavior
+type YoutubeSearchAPI interface {
 	Q(q string) *youtube.SearchListCall
 }
 
+// YoutubeVideoDetailsAPI provides an interface for mocking
 type YoutubeVideoDetailsAPI interface {
 	Q(q string) *youtube.VideosListCall
 }
 
-// YoutubePlaylistItemsServiceAPI provides and interface for mocking youtube playlistitems service behavior
-type YoutubePlaylistItemsServiceAPI interface {
+// YoutubePlaylistServiceAPI provides an interface for mocking youtube playlistitemscall behavior
+type YoutubePlaylistServiceAPI interface {
 	PlaylistId(playlistID string) *youtube.PlaylistItemsListCall
-	// Do(opts ...googleapi.CallOption) (*youtube.PlaylistItemListResponse, error)
 }
 
-type YoutubeVideoItemServiceAPI interface {
+// YoutubeVideoServiceAPI provides an interface for mocking youtube videoslistcall behavior
+type YoutubeVideoServiceAPI interface {
 	List(part []string) *youtube.VideosListCall
-	// Do(opts ...googleapi.CallOption) (*youtube.VideoListResponse, error)
+	Q(q string) *youtube.VideosListCall
 }
