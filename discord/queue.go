@@ -150,7 +150,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			wg.Add(1)
 			q.setNowPlaying()
 			requestURL := ""
-			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
+			requestURL = fmt.Sprintf("http://yt-api:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
 			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
 			id := fields[1]
 
@@ -310,7 +310,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 			Limit: 10,
 		})
 		if err != nil {
-			fmt.Printf("\nCould not get messages from jukebox channel: %+v", err)
+			fmt.Printf("\nCould not get messages from jukebox channel: %+v", err.Error())
 		}
 		if len(q.UserQueue) > 0 && q.NowPlayingUID != 0 && q.CurrentlyPlayingDetails.Snippet != nil {
 			if referenceEntry != q.CurrentlyPlayingDetails {

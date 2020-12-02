@@ -1,4 +1,5 @@
 .env
+boombot.env
 boombot
 .DS_Store
 config.json
