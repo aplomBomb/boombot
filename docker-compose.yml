@@ -1,8 +1,22 @@
 version: "3.8"
 services:
-  app:
-    image: boombot-local
-    environment: 
-      - AWS_PROFILE="personal"
-    volumes:
-    - $HOME/.aws/credentials:/home/app/.aws/credentials:ro
+  boombot:
+    env_file: 
+        - boombot.env
+    # image: boombot-local-dev:${TAG:-latest} here for simply launching the image
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: boombot
+    restart: on-failure
+    links:
+      - yt-api
+    depends_on:
+      - yt-api
+  
+  yt-api:
+    container_name: yt-api
+    image: mwader/ydls
+    restart: on-failure
+    ports: 
+      - "8080:8080"
