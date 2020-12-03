@@ -40,15 +40,14 @@ func init() {
 }
 
 // BotRun | Start the bot and handle events
-func BotRun(client *disgord.Client, cf config.ConfJSONStruct, creds *config.BoombotCreds) {
-	conf = cf
+func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	queue := NewQueue(disgord.ParseSnowflakeString(conf.GuildID))
 	globalQueue = queue
 	disgordGlobalClient = client
-	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(creds.YoutubeToken))
+	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(yk))
 	bleh := ytService.Videos.List([]string{"contentDetails", "snippet", "statistics"})
 	filter, _ := std.NewMsgFilter(ctx, client)
-	filter.SetPrefix(cf.Prefix)
+	filter.SetPrefix(prefix)
 	client.Gateway().WithMiddleware(filter.NotByBot, filter.HasPrefix, std.CopyMsgEvt, filter.StripPrefix).MessageCreate(RespondToCommand)
 	client.Gateway().MessageReactionAdd(RespondToReaction)
 	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)

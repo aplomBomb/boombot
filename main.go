@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/andersfylling/disgord"
@@ -20,8 +19,7 @@ var log = &logrus.Logger{
 func main() {
 
 	// Get the config from config.json
-	conf := config.Retrieve("./config/config.json")
-	fmt.Printf("\naccess key id: %+v\n", os.Getenv("AWS_ACCESS_KEY_ID"))
+	// conf := config.Retrieve("./config/config.json")
 	// Fetch auth tokens from SecretsManager
 	creds, err := config.GetSecrets()
 	if err != nil {
@@ -56,5 +54,5 @@ func main() {
 		Cache: &disgord.CacheNop{},
 	})
 
-	discord.BotRun(client, conf, creds)
+	discord.BotRun(client, os.Getenv("PREFIX"), os.Getenv("GUILD_ID"), creds.YoutubeToken)
 }
