@@ -3,10 +3,7 @@ services:
   boombot:
     env_file: 
         - boombot.env
-    # image: boombot-local-dev:${TAG:-latest} here for simply launching the image
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+    image: aplombomb/boombot
     container_name: boombot
     restart: on-failure
     links:

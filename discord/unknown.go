@@ -31,7 +31,7 @@ func (uc *UnknownCommandClient) RespondToChannel() error {
 		&disgord.CreateMessageParams{
 			Embed: &disgord.Embed{
 				Title:       "Unknown command",
-				Description: fmt.Sprintf("Type %shelp to see the commands available", conf.Prefix),
+				Description: fmt.Sprintf("Type `&help` to see the commands available"),
 				Timestamp:   uc.data.Timestamp,
 				Color:       0xcc0000,
 			},

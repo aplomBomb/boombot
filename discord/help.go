@@ -35,7 +35,7 @@ func (hcc *HelpCommandClient) SendHelpMsg() error {
 						"Use `%shelp functionName` to find out more about each function\n"+
 						"Current available functions : ```\nhelp \n```"+
 						"You can also read the source code here : https://github.com/aplombomb/boombot",
-					conf.Prefix,
+					"&",
 				),
 				Footer: &disgord.EmbedFooter{
 					Text: fmt.Sprintf("Help requested by %s", hcc.data.Author.Username),
