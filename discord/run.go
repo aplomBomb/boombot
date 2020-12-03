@@ -9,7 +9,6 @@ import (
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
-	"github.com/aplombomb/boombot/config"
 	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
@@ -23,7 +22,6 @@ var disgordGlobalAPI disgordiface.DisgordClientAPI
 var disgordGlobalClient *disgord.Client
 var ytService *youtube.Service
 var session disgord.Session
-var conf config.ConfJSONStruct
 var globalQueue *Queue
 
 // Version of BoomBot
@@ -41,11 +39,11 @@ func init() {
 
 // BotRun | Start the bot and handle events
 func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
-	queue := NewQueue(disgord.ParseSnowflakeString(conf.GuildID))
+	queue := NewQueue(disgord.ParseSnowflakeString(gID))
 	globalQueue = queue
 	disgordGlobalClient = client
 	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(yk))
-	bleh := ytService.Videos.List([]string{"contentDetails", "snippet", "statistics"})
+	vlc := ytService.Videos.List([]string{"contentDetails", "snippet", "statistics"})
 	filter, _ := std.NewMsgFilter(ctx, client)
 	filter.SetPrefix(prefix)
 	client.Gateway().WithMiddleware(filter.NotByBot, filter.HasPrefix, std.CopyMsgEvt, filter.StripPrefix).MessageCreate(RespondToCommand)
@@ -53,7 +51,7 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
 	client.Gateway().MessageCreate(RespondToMessage)
 	fmt.Println("BoomBot is running")
-	go globalQueue.ListenAndProcessQueue(client, bleh)
+	go globalQueue.ListenAndProcessQueue(client, vlc)
 	go globalQueue.ManageJukebox(client)
 	defer client.Gateway().StayConnectedUntilInterrupted()
 }
