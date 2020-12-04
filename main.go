@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/andersfylling/disgord"
@@ -42,6 +41,5 @@ func main() {
 		Cache: &disgord.CacheNop{},
 	})
 
-	fmt.Println("\nGuildID: ", os.Getenv("GUILD_ID"))
 	discord.BotRun(client, os.Getenv("BOT_PREFIX"), os.Getenv("GUILD_ID"), creds.YoutubeToken)
 }

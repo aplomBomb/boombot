@@ -2,6 +2,7 @@ package discord
 
 import (
 	"context"
+	"io"
 
 	"github.com/andersfylling/disgord"
 )
@@ -10,9 +11,23 @@ import (
 type DisgordClientAPI interface {
 	SendMsg(channelID disgord.Snowflake, data ...interface{}) (msg *disgord.Message, err error)
 	// GetMessage(channelID, messageID disgord.Snowflake) (ret *disgord.Message, err error)
-	VoiceConnectOptions(guildID, channelID disgord.Snowflake, selfDeaf, selfMute bool) (ret disgord.VoiceConnection, err error)
 	Channel(id disgord.Snowflake) disgord.ChannelQueryBuilder
 	User(id disgord.Snowflake) disgord.UserQueryBuilder
+}
+
+type GuildQueryBuilderAPI interface {
+	VoiceChannel(channelID disgord.Snowflake) disgord.VoiceChannelQueryBuilder
+	GetChannels(flags ...disgord.Flag) ([]*disgord.Channel, error)
+}
+
+type DiscordVoiceConnectionAPI interface {
+	Connect(mute, deaf bool) (disgord.VoiceConnection, error)
+	StartSpeaking() error
+	StopSpeaking() error
+	SendOpusFrame(data []byte) error
+	SendDCA(r io.Reader) error
+	MoveTo(channelID disgord.Snowflake) error
+	Close() error
 }
 
 // DisgordMessageQueryBuilderAPI provides an interface for mocking Disgord's MessageQueryBuilder behavior
