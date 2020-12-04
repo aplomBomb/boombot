@@ -155,11 +155,11 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 
 			// Localhost address for local testing/development
 			// use this address when running the containers independently on the same machine
-			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
+			// requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
 
 			// yt-api is the name of the intermediary container that fetches youtube audio data for encoding
 			// use this address when running the containers together via docker-compose
-			// requestURL = fmt.Sprintf("http://yt-api:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
+			requestURL = fmt.Sprintf("http://yt-api:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
 
 			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
 			id := fields[1]
