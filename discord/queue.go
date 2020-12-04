@@ -137,9 +137,11 @@ func (q *Queue) ReturnNowPlayingID() disgord.Snowflake {
 
 // ListenAndProcessQueue takes a message content string to fetch\encode\play
 // audio in the voice channel the author currently resides in
-func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, ytvlc *youtube.VideosListCall) {
+func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilderAPI, ytvlc *youtube.VideosListCall) {
 	wg := sync.WaitGroup{}
-	vc, err := disgordClientAPI.VoiceConnectOptions(q.GuildID, 640284178755092505, true, false)
+	vcBuilder := guild.VoiceChannel(640284178755092505)
+
+	vc, err := vcBuilder.Connect(true, false)
 	if err != nil {
 		fmt.Printf("\nERROR: %+v\n", err)
 	}
@@ -150,7 +152,15 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			wg.Add(1)
 			q.setNowPlaying()
 			requestURL := ""
-			requestURL = fmt.Sprintf("http://yt-api:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
+
+			// Localhost address for local testing/development
+			// use this address when running the containers independently on the same machine
+			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
+
+			// yt-api is the name of the intermediary container that fetches youtube audio data for encoding
+			// use this address when running the containers together via docker-compose
+			// requestURL = fmt.Sprintf("http://yt-api:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
+
 			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
 			id := fields[1]
 
@@ -190,7 +200,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				wg.Done()
 				continue
 			}
-			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, q.VoiceCache[739154323015204935], q.VoiceCache[q.NowPlayingUID])
+			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, guild, q.VoiceCache[739154323015204935], q.VoiceCache[q.NowPlayingUID])
 			if err != nil {
 				fmt.Printf("\nError establishing voice connection: %+v\n", err)
 			}
@@ -230,7 +240,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						return
 					case channelID := <-q.ChannelHop:
 						vc.StopSpeaking()
-						vc, err = q.establishVoiceConnection(vc, disgordClientAPI, 0, channelID)
+						vc, err = q.establishVoiceConnection(vc, disgordClientAPI, guild, 0, channelID)
 						if err != nil {
 							fmt.Printf("\nError establishing voice connection: %+v\n", err)
 						}
@@ -285,7 +295,7 @@ func (q *Queue) GetEncodeSession(url string) (*dca.EncodeSession, error) {
 		Application:      "audio",
 		CompressionLevel: 5,
 		PacketLoss:       1,
-		BufferedFrames:   200, // At 20ms frames that's 4s
+		BufferedFrames:   400,
 		VBR:              true,
 		StartTime:        0,
 		RawOutput:        true,
@@ -444,9 +454,9 @@ func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.Encod
 	}
 }
 
-func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
+func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilderAPI, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
 	if botChannelID == 0 {
-		vc, err := client.VoiceConnectOptions(q.GuildID, requesteeChannelID, true, false)
+		vc, err := guild.VoiceChannel(requesteeChannelID).Connect(true, false)
 		if err != nil {
 			return nil, err
 		}
@@ -461,7 +471,7 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 	}
 	if botChannelID != requesteeChannelID {
 		prevVC.Close()
-		newVC, err := client.VoiceConnectOptions(q.GuildID, requesteeChannelID, true, false)
+		newVC, err := guild.VoiceChannel(requesteeChannelID).Connect(true, false)
 		if err != nil {
 			return nil, err
 		}

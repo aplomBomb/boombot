@@ -141,7 +141,7 @@ func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) 
 	rejectedReactions := createReactions(rejectedEmojis)
 
 	//Loop through valid seen reactions and check for a match
-	//TODO-These loops need to be consolidated into a single function
+	// TODO: These loops need to be consolidated into a single function
 	for _, currentSeenReaction := range seenReactions {
 		if reflect.DeepEqual(currentSeenReaction, reactionEvent) {
 			url := ""

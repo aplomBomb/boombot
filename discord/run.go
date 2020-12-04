@@ -20,6 +20,7 @@ type msgEvent disgord.Message
 var ctx = context.Background()
 var disgordGlobalAPI disgordiface.DisgordClientAPI
 var disgordGlobalClient *disgord.Client
+var globalGuild disgord.GuildQueryBuilder
 var ytService *youtube.Service
 var session disgord.Session
 var globalQueue *Queue
@@ -42,6 +43,8 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	queue := NewQueue(disgord.ParseSnowflakeString(gID))
 	globalQueue = queue
 	disgordGlobalClient = client
+	gb := disgordGlobalClient.Guild(disgord.ParseSnowflakeString(gID))
+	globalGuild = gb
 	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(yk))
 	vlc := ytService.Videos.List([]string{"contentDetails", "snippet", "statistics"})
 	filter, _ := std.NewMsgFilter(ctx, client)
@@ -51,7 +54,7 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
 	client.Gateway().MessageCreate(RespondToMessage)
 	fmt.Println("BoomBot is running")
-	go globalQueue.ListenAndProcessQueue(client, vlc)
+	go globalQueue.ListenAndProcessQueue(client, gb, vlc)
 	go globalQueue.ManageJukebox(client)
 	defer client.Gateway().StayConnectedUntilInterrupted()
 }

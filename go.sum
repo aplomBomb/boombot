@@ -55,6 +55,8 @@ github.com/andersfylling/disgord v0.21.0 h1:1nYXZHtbIUICh/mPtOFCvrXHi6ybnsGjqEZn
 github.com/andersfylling/disgord v0.21.0/go.mod h1:ewajFZm40/tKA5py8FyokCW7eT8ITnQGVBakA6BJOL8=
 github.com/andersfylling/disgord v0.21.1-0.20201118211648-e7e8dc53dcd6 h1:S3UPpsnnfoyK6kzmfZ5130RbUxd+JEqbVryC4rearbg=
 github.com/andersfylling/disgord v0.21.1-0.20201118211648-e7e8dc53dcd6/go.mod h1:ewajFZm40/tKA5py8FyokCW7eT8ITnQGVBakA6BJOL8=
+github.com/andersfylling/disgord v0.22.0 h1:HFYxvCkM201DS/gu1pT59n7sCZA0trx+Cxkim5snzNI=
+github.com/andersfylling/disgord v0.22.0/go.mod h1:HIiBE81VDuZJgJU1eFWOFxTwx0oJjDPH9taKQPBeKFc=
 github.com/andersfylling/snowflake/v4 v4.0.2 h1:7po1HHxq8Pz7F+vsMFMoGiHOlpzBzqXoop4O8b24wqI=
 github.com/andersfylling/snowflake/v4 v4.0.2/go.mod h1:4lIbDTtWCTaYBCZVVIDjIH8xbzHSYz+RvxK2KZND840=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
