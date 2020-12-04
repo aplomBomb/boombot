@@ -293,13 +293,13 @@ func (q *Queue) GetEncodeSession(url string) (*dca.EncodeSession, error) {
 		FrameDuration:    20,
 		Bitrate:          128,
 		Application:      "audio",
-		CompressionLevel: 5,
+		CompressionLevel: 10,
 		PacketLoss:       1,
 		BufferedFrames:   400,
 		VBR:              true,
 		StartTime:        0,
 		RawOutput:        true,
-		Threads:          0,
+		Threads:          8,
 	})
 	if err != nil {
 		return nil, err
