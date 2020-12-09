@@ -11,17 +11,45 @@ services:
     depends_on:
       - yt-api
       - db
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+        reservations:
+          cpus: '0.25'
   
   yt-api:
     container_name: yt-api
     image: mwader/ydls
     restart: on-failure
-    ports: 
-      - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+        reservations:
+          cpus: '3'
 
   db:
     env_file: 
       - db.env
     container_name: pgDB
     image: postgres
-    restart: on-failure      
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+        reservations:
+          cpus: '0.25'
+
+  dbUI:
+    image: adminer
+    restart: always
+    ports: 
+      - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+        reservations:
+          cpus: '0.25'
