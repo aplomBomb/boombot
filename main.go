@@ -6,6 +6,7 @@ import (
 	"github.com/andersfylling/disgord"
 	"github.com/aplombomb/boombot/config"
 	"github.com/aplombomb/boombot/discord"
+	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 )
 

@@ -3,7 +3,9 @@ services:
   boombot:
     env_file: 
         - boombot.env
-    image: aplombomb/boombot
+        - db.env
+    # image: aplombomb/boombot
+    image: boombot-local-dev
     container_name: boombot
     restart: on-failure
     links:
@@ -14,8 +16,6 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.50'
-        reservations:
           cpus: '0.25'
   
   yt-api:
@@ -25,9 +25,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '4'
-        reservations:
-          cpus: '3'
+          cpus: '0.70'
 
   db:
     env_file: 
@@ -38,18 +36,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.10'
-        reservations:
-          cpus: '0.25'
+          cpus: '0.05'
 
   dbUI:
     image: adminer
     restart: always
+    depends_on:
+      - db
     ports: 
       - "8080:8080"
     deploy:
       resources:
         limits:
-          cpus: '0.10'
-        reservations:
-          cpus: '0.25'
+          cpus: '0.05'
