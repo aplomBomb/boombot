@@ -3,17 +3,49 @@ services:
   boombot:
     env_file: 
         - boombot.env
-    image: aplombomb/boombot
+        - db.env
+    # image: aplombomb/boombot
+    image: boombot-local-dev
     container_name: boombot
     restart: on-failure
     links:
       - yt-api
     depends_on:
       - yt-api
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
   
   yt-api:
     container_name: yt-api
     image: mwader/ydls
     restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.70'
+
+  db:
+    env_file: 
+      - db.env
+    container_name: pgDB
+    image: postgres
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.05'
+
+  dbUI:
+    image: adminer
+    restart: always
+    depends_on:
+      - db
     ports: 
       - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.05'

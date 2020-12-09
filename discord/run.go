@@ -2,7 +2,10 @@ package discord
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"log"
+	"os"
 
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
@@ -16,7 +19,7 @@ import (
 type CmdArguments []string
 type msgEvent disgord.Message
 
-// TO-DO Get rid of these global variables
+// TODO: Get rid of these global variables
 var ctx = context.Background()
 var disgordGlobalAPI disgordiface.DisgordClientAPI
 var disgordGlobalClient *disgord.Client
@@ -28,6 +31,12 @@ var globalQueue *Queue
 // Version of BoomBot
 const Version = "v1.0.0-alpha"
 
+const (
+	host   = "pgDB"
+	port   = 5432
+	dbname = "bomb"
+)
+
 func init() {
 
 	fmt.Printf(`
@@ -38,8 +47,21 @@ func init() {
 	·▀▀▀▀  ▀█▄▀▪ ▀█▄▀▪▀▀  █▪▀▀▀·▀▀▀▀  ▀█▄▀▪ ▀▀▀ %-16s\/`+"\n\n", Version)
 }
 
-// BotRun | Start the bot and handle events
+// BotRun | Start the bot and react to events
 func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPass := os.Getenv("POSTGRES_PASSWORD")
+	pgCreds := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, dbUser, dbPass, dbname)
+	db, err := sql.Open("postgres", pgCreds)
+	if err != nil {
+		log.Fatal("\nError connecting to DB: ", err)
+	}
+	err = db.Ping()
+	if err != nil {
+		panic(err)
+	}
 	queue := NewQueue(disgord.ParseSnowflakeString(gID))
 	globalQueue = queue
 	disgordGlobalClient = client
@@ -53,8 +75,8 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	client.Gateway().MessageReactionAdd(RespondToReaction)
 	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
 	client.Gateway().MessageCreate(RespondToMessage)
-	fmt.Println("BoomBot is running")
 	go globalQueue.ListenAndProcessQueue(client, gb, vlc)
 	go globalQueue.ManageJukebox(client)
 	defer client.Gateway().StayConnectedUntilInterrupted()
+	fmt.Println("BoomBot is running")
 }
