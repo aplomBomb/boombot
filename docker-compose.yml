@@ -10,6 +10,7 @@ services:
       - yt-api
     depends_on:
       - yt-api
+      - db
   
   yt-api:
     container_name: yt-api
@@ -17,3 +18,10 @@ services:
     restart: on-failure
     ports: 
       - "8080:8080"
+
+  db:
+    env_file: 
+      - db.env
+    container_name: pgDB
+    image: postgres
+    restart: on-failure      
