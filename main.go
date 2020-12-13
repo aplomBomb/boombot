@@ -29,7 +29,7 @@ func main() {
 		Logger:      log,
 		RejectEvents: []string{
 			disgord.EvtTypingStart,
-			disgord.EvtPresenceUpdate,
+			// disgord.EvtPresenceUpdate,
 			disgord.EvtGuildMemberAdd,
 			disgord.EvtGuildMemberUpdate,
 			disgord.EvtGuildMemberRemove,

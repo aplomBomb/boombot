@@ -73,3 +73,17 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 		}()
 	}
 }
+
+// RespondToPresenceUpdate fires when a server member's presence state changes
+func RespondToPresenceUpdate(s disgord.Session, data *disgord.PresenceUpdate) {
+	if len(data.Activities) == 0 {
+		return
+	}
+
+	userID := data.User.ID
+	activityName := data.Activities[0].Name
+
+	for k := range data.Activities {
+		fmt.Println("activity: ", data.Activities[k])
+	}
+}
