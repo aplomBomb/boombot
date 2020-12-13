@@ -76,14 +76,46 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 
 // RespondToPresenceUpdate fires when a server member's presence state changes
 func RespondToPresenceUpdate(s disgord.Session, data *disgord.PresenceUpdate) {
+	// This is temporary for testing\will be moved to a "roles" client
+	// after i decide how i want to handle these events
+
+	// Roles drg, twerkov, crafter respectively
+	// Will map game name as string key/snowflake of role as value
+	// Will make it really easy to remove/add role ids on events
+	roleCache := map[string]disgord.Snowflake 
+
+	managedRoles := []disgord.Snowflake{787758251574820864, 737467990647373827, 735890320348282880}
+	gameEvent, _ := data.Game()
+	fmt.Println("GameEvent: ", gameEvent)
+	if gameEvent == nil {
+		fmt.Println("This must have been an online/offline event")
+		return
+	}
+	fmt.Println("Game Name: ", gameEvent.Name)
 	if len(data.Activities) == 0 {
+		memberQueryBuilder := globalGuild.Member(data.User.ID)
+		member, err := globalGuild.Member(data.User.ID).Get()
+		if err != nil {
+			fmt.Println("Error fetching member for role adjustment: ", err)
+		}
+		roles := member.Roles
+		fmt.Printf("\n%+v's roles before: %+v", data.User.Username, roles)
+		for _, rv := range roles {
+			for _, mrv := range managedRoles {
+				if mrv == rv {
+					memberQueryBuilder.RemoveRole(mrv)
+				}
+			}
+		}
+		fmt.Printf("\n%+v's roles after: %+v", data.User.Username, roles)
 		return
 	}
 
-	userID := data.User.ID
-	activityName := data.Activities[0].Name
+	// userID := data.User.ID
+	// activityName := data.Activities[0].Name
+	// drgRoleID := 787758251574820864
 
-	for k := range data.Activities {
-		fmt.Println("activity: ", data.Activities[k])
-	}
+	// for k := range data.Activities {
+	// 	fmt.Println("activity: ", data.Activities[k])
+	// }
 }
