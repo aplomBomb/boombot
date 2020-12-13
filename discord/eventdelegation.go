@@ -23,11 +23,13 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	switch data.Message.ChannelID {
 	case 779836590503624734:
-		data.Message.React(ctx, s, "\u26D4")
+		data.Message.React(ctx, s, "\u26D4") // Purge emoji
 		time.Sleep(1 * time.Second)
-		data.Message.React(ctx, s, "\u267B")
+		data.Message.React(ctx, s, "\u267B") // Shuffle Emoji
 		time.Sleep(1 * time.Second)
-		data.Message.React(ctx, s, "\u23E9")
+		data.Message.React(ctx, s, "\u23F8") // Pause Emoji
+		time.Sleep(1 * time.Second)
+		data.Message.React(ctx, s, "\u23E9") // Next emoji
 		time.Sleep(1 * time.Second)
 	}
 	user := data.Message.Author

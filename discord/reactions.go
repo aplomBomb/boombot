@@ -115,6 +115,11 @@ func (rec *ReactionEventClient) HandleJukeboxReact(queue *Queue) {
 				queue.Shuffle <- true
 				return
 			}()
+		case "\u23F8":
+			go func() {
+				queue.Pause <- true
+				return
+			}()
 		case "\u23E9":
 			go func() {
 				queue.Next <- true
