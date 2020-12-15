@@ -37,6 +37,7 @@ type Queue struct {
 	Stop                    chan bool
 	Shuffle                 chan bool
 	Pause                   chan bool
+	Play                    chan bool
 	ChannelHop              chan disgord.Snowflake
 	CurrentlyPlayingDetails PlayingDetails
 }
@@ -56,6 +57,7 @@ func NewQueue(gID disgord.Snowflake) *Queue {
 		Stop:            make(chan bool, 1),
 		Shuffle:         make(chan bool, 1),
 		Pause:           make(chan bool, 1),
+		Play:            make(chan bool, 1),
 		ChannelHop:      make(chan disgord.Snowflake, 1),
 	}
 }
@@ -157,11 +159,11 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 
 			// Localhost address for local testing/development
 			// use this address when running the containers independently on the same machine
-			// requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
+			requestURL = fmt.Sprintf("http://localhost:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
 
 			// yt-api is the name of the intermediary container that fetches youtube audio data for encoding
 			// use this address when running the containers together via docker-compose
-			requestURL = fmt.Sprintf("http://yt-api:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
+			// requestURL = fmt.Sprintf("http://yt-api:8080/mp3/%+v", q.UserQueue[q.NowPlayingUID][0])
 
 			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
 			id := fields[1]
@@ -218,8 +220,6 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				defer es.Cleanup()
 				defer ticker.Stop()
 				defer waitGroup.Done()
-				defer fmt.Println("I left the goRoutine!")
-			Outer:
 				for {
 					fmt.Printf("r")
 					select {
@@ -254,17 +254,12 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Println("\nError starting speaking: ", err)
 						}
 					case <-q.Pause:
-						q.Pause <- false
-						time.Sleep(1 * time.Second)
+						// q.Pause <- false
+						ticker.Stop()
 						fmt.Println("Paused...")
-						for {
-							select {
-							case <-q.Pause:
-								q.Pause <- false
-								continue Outer
-							}
-						}
-
+					case <-q.Play:
+						ticker.Reset(20 * time.Microsecond)
+						fmt.Println("Resuming...")
 					case <-ticker.C:
 						nextFrame, err := es.OpusFrame()
 						if err != nil && err != io.EOF {

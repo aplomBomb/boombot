@@ -29,6 +29,8 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 		time.Sleep(1 * time.Second)
 		data.Message.React(ctx, s, "\u23F8") // Pause Emoji
 		time.Sleep(1 * time.Second)
+		data.Message.React(ctx, s, "\u25B6") // Play Emoji
+		time.Sleep(1 * time.Second)
 		data.Message.React(ctx, s, "\u23E9") // Next emoji
 		time.Sleep(1 * time.Second)
 	}
@@ -82,7 +84,7 @@ func RespondToPresenceUpdate(s disgord.Session, data *disgord.PresenceUpdate) {
 	// Roles drg, twerkov, crafter respectively
 	// Will map game name as string key/snowflake of role as value
 	// Will make it really easy to remove/add role ids on events
-	roleCache := map[string]disgord.Snowflake 
+	// roleCache := map[string]disgord.Snowflake
 
 	managedRoles := []disgord.Snowflake{787758251574820864, 737467990647373827, 735890320348282880}
 	gameEvent, _ := data.Game()
