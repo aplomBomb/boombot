@@ -255,7 +255,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 					case <-q.Pause:
 						ticker.Stop()
 					case <-q.Play:
-						ticker.Reset(20 * time.Microsecond)
+						ticker.Reset(20 * time.Millisecond)
 						fmt.Println("Resuming...")
 					case <-ticker.C:
 						nextFrame, err := es.OpusFrame()
