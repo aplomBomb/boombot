@@ -89,6 +89,7 @@ func RespondToPresenceUpdate(s disgord.Session, data *disgord.PresenceUpdate) {
 	managedRoles := []disgord.Snowflake{787758251574820864, 737467990647373827, 735890320348282880}
 	gameEvent, _ := data.Game()
 	fmt.Println("GameEvent: ", gameEvent)
+	fmt.Println("User: ", data.User.Username)
 	if gameEvent == nil {
 		fmt.Println("This must have been an online/offline event")
 		return
