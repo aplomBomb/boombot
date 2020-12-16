@@ -36,6 +36,8 @@ type Queue struct {
 	Next                    chan bool
 	Stop                    chan bool
 	Shuffle                 chan bool
+	Pause                   chan bool
+	Play                    chan bool
 	ChannelHop              chan disgord.Snowflake
 	CurrentlyPlayingDetails PlayingDetails
 }
@@ -54,6 +56,8 @@ func NewQueue(gID disgord.Snowflake) *Queue {
 		Next:            make(chan bool, 1),
 		Stop:            make(chan bool, 1),
 		Shuffle:         make(chan bool, 1),
+		Pause:           make(chan bool, 1),
+		Play:            make(chan bool, 1),
 		ChannelHop:      make(chan disgord.Snowflake, 1),
 	}
 }
@@ -248,6 +252,11 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						if err != nil {
 							fmt.Println("\nError starting speaking: ", err)
 						}
+					case <-q.Pause:
+						ticker.Stop()
+					case <-q.Play:
+						ticker.Reset(20 * time.Millisecond)
+						fmt.Println("Resuming...")
 					case <-ticker.C:
 						nextFrame, err := es.OpusFrame()
 						if err != nil && err != io.EOF {

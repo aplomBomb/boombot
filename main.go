@@ -29,8 +29,8 @@ func main() {
 		Logger:      log,
 		RejectEvents: []string{
 			disgord.EvtTypingStart,
-			disgord.EvtPresenceUpdate,
 			disgord.EvtGuildMemberAdd,
+			disgord.EvtPresenceUpdate,
 			disgord.EvtGuildMemberUpdate,
 			disgord.EvtGuildMemberRemove,
 		},

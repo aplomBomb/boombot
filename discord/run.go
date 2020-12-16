@@ -75,6 +75,7 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	client.Gateway().MessageReactionAdd(RespondToReaction)
 	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
 	client.Gateway().MessageCreate(RespondToMessage)
+	client.Gateway().PresenceUpdate(RespondToPresenceUpdate)
 	go globalQueue.ListenAndProcessQueue(client, gb, vlc)
 	go globalQueue.ManageJukebox(client)
 	defer client.Gateway().StayConnectedUntilInterrupted()
