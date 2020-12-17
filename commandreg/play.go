@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -13,14 +11,14 @@ import (
 
 type CommandInfo struct {
 	Name        string          `json:"name"`
-	Description string          `json:"Description"`
-	Options     []CommandOption `json:"Options"`
+	Description string          `json:"description"`
+	Options     []CommandOption `json:"options"`
 }
 
 type CommandOption struct {
-	Name        string          `json:"Name"`
-	Description string          `json:"Description"`
-	Type        int             `json:"Type"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Type        int             `json:"type"`
 	Required    bool            `json:"required"`
 	Choices     []CommandChoice `json:"choices"`
 }
@@ -33,30 +31,12 @@ type CommandChoice struct {
 
 func main() {
 	botToken := os.Getenv("BOOMBOT_TOKEN")
+	guildID := os.Getenv("GUILD_ID")
 	// fmt.Println("Token: ", botToken)
 	testCommand := CommandInfo{
 		Name:        "Test",
-		Description: "A test command for BoomBot's slash command functionality",
-		Options: []CommandOption{
-			CommandOption{
-				Name:        "Option1",
-				Description: "First option",
-				Type:        2,
-				Required:    true,
-				Choices: []CommandChoice{
-					CommandChoice{
-						Name:  "First Choice",
-						Value: "first_choice",
-						Type:  3,
-					},
-					CommandChoice{
-						Name:  "Second Choice",
-						Value: "second_choice",
-						Type:  1,
-					},
-				},
-			},
-		},
+		Description: "A test command for BoomBot slash command functionality",
+		Options:     []CommandOption{},
 	}
 
 	timeout := time.Duration(5 * time.Second)
@@ -71,7 +51,9 @@ func main() {
 
 	fmt.Println("Req body: ", string(requestBody))
 
-	request, err := http.NewRequest("POST", "https://discord.com/api/v8/applications/739154323015204935/commands", bytes.NewBuffer(requestBody))
+	reqURL := fmt.Sprintf("https://discord.com/api/v8/applications/739154323015204935/guilds/%+v/commands", guildID)
+
+	request, err := http.NewRequest("POST", reqURL, bytes.NewBuffer(requestBody))
 	request.Header.Set("Authorization", fmt.Sprintf("Bot %+v", botToken))
 	request.Header.Set("Content-Type", "application/json")
 	if err != nil {
@@ -87,9 +69,9 @@ func main() {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		panic(err)
-	}
-	log.Panicln(string(body))
+	// body, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// log.Panicln(string(body))
 }
