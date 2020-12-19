@@ -4,8 +4,8 @@ services:
     env_file: 
         - boombot.env
         - db.env
-    # image: aplombomb/boombot
-    image: boombot-local-dev:latest
+    image: aplombomb/boombot:latest
+    # image: boombot-local-dev:latest
     container_name: boombot
     restart: on-failure
     links:
