@@ -32,7 +32,7 @@ var globalQueue *Queue
 const Version = "v1.0.0-alpha"
 
 const (
-	host   = "pgDB"
+	host   = "localhost"
 	port   = 5432
 	dbname = "postgres"
 )
