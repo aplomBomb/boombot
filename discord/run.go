@@ -2,7 +2,10 @@ package discord
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"log"
+	"os"
 
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
@@ -28,11 +31,11 @@ var globalQueue *Queue
 // Version of BoomBot
 const Version = "v1.0.0-alpha"
 
-// const (
-// 	host   = "pgDB"
-// 	port   = 5432
-// 	dbname = "bomb"
-// )
+const (
+	host   = "pgDB"
+	port   = 5432
+	dbname = "postgres"
+)
 
 func init() {
 
@@ -46,24 +49,24 @@ func init() {
 
 // BotRun | Start the bot and react to events
 func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
-	// dbUser := os.Getenv("POSTGRES_USER")
-	// dbPass := os.Getenv("POSTGRES_PASSWORD")
-	// pgCreds := fmt.Sprintf("host=%s port=%d user=%s "+
-	// 	"password=%s dbname=%s sslmode=disable",
-	// 	host, port, dbUser, dbPass, dbname)
-	// db, err := sql.Open("postgres", pgCreds)
-	// if err != nil {
-	// 	log.Fatal("\nError connecting to DB: ", err)
-	// }
-	// err = db.Ping()
-	// if err != nil {
-	// 	panic(err)
-	// }
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPass := os.Getenv("POSTGRES_PASSWORD")
+	pgCreds := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, dbUser, dbPass, dbname)
+	db, err := sql.Open("postgres", pgCreds)
+	if err != nil {
+		log.Fatal("\nError connecting to DB: ", err)
+	}
+	err = db.Ping()
+	if err != nil {
+		panic(err)
+	}
 	queue := NewQueue(disgord.ParseSnowflakeString(gID))
 	globalQueue = queue
 	disgordGlobalClient = client
-	gb := disgordGlobalClient.Guild(disgord.ParseSnowflakeString(gID))
-	globalGuild = gb
+	gg := disgordGlobalClient.Guild(disgord.ParseSnowflakeString(gID))
+	globalGuild = gg
 	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(yk))
 	vlc := ytService.Videos.List([]string{"contentDetails", "snippet", "statistics"})
 	filter, _ := std.NewMsgFilter(ctx, client)
@@ -73,7 +76,7 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
 	client.Gateway().MessageCreate(RespondToMessage)
 	client.Gateway().PresenceUpdate(RespondToPresenceUpdate)
-	go globalQueue.ListenAndProcessQueue(client, gb, vlc)
+	go globalQueue.ListenAndProcessQueue(client, gg, vlc)
 	go globalQueue.ManageJukebox(client)
 	defer client.Gateway().StayConnectedUntilInterrupted()
 	fmt.Println("BoomBot is running")

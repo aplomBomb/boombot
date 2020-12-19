@@ -220,27 +220,29 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				defer es.Cleanup()
 				defer ticker.Stop()
 				defer waitGroup.Done()
+				defer fmt.Println("Leaving goroutine")
 				for {
 					select {
 					case <-q.Shuffle:
 						q.stopPlaybackAndTalking(vc, es)
 						q.ShuffleQueue()
-						time.Sleep(1 * time.Second)
+						// time.Sleep(1 * time.Second)
 						return
 					case <-q.Stop:
 						q.stopPlaybackAndTalking(vc, es)
 						q.EmptyQueue()
-						time.Sleep(1 * time.Second)
+						// time.Sleep(1 * time.Second)
 						return
 					case <-q.Next:
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
-						time.Sleep(1 * time.Second)
+						fmt.Println("Entry removed, returning....")
+						// time.Sleep(1 * time.Second)
 						return
 					case <-done:
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
-						time.Sleep(1 * time.Second)
+						// time.Sleep(1 * time.Second)
 						return
 					case channelID := <-q.ChannelHop:
 						vc.StopSpeaking()
@@ -263,6 +265,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Printf("\nError sending next opus frame: %+v\n", err)
 						}
 						if err == io.EOF {
+							fmt.Println("EOF, sending true to eofChannel...")
 							eofChannel <- true
 						}
 						vc.SendOpusFrame(nextFrame)
@@ -465,7 +468,7 @@ func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.Encod
 
 func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilderAPI, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
 	if botChannelID == 0 {
-		vc, err := guild.VoiceChannel(requesteeChannelID).Connect(true, false)
+		vc, err := guild.VoiceChannel(requesteeChannelID).Connect(false, true)
 		if err != nil {
 			return nil, err
 		}

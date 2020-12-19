@@ -30,7 +30,7 @@ func main() {
 		RejectEvents: []string{
 			disgord.EvtTypingStart,
 			disgord.EvtGuildMemberAdd,
-			// disgord.EvtPresenceUpdate,
+			disgord.EvtPresenceUpdate,
 			disgord.EvtGuildMemberUpdate,
 			disgord.EvtGuildMemberRemove,
 		},

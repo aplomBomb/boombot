@@ -5,11 +5,12 @@ services:
         - boombot.env
         - db.env
     # image: aplombomb/boombot
-    image: boombot-local-dev
+    image: boombot-local-dev:latest
     container_name: boombot
     restart: on-failure
     links:
       - yt-api
+      - db
     depends_on:
       - yt-api
       - db
@@ -45,6 +46,8 @@ services:
       - db
     ports: 
       - "8080:8080"
+    links:
+      - db
     deploy:
       resources:
         limits:
