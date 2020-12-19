@@ -32,9 +32,9 @@ var globalQueue *Queue
 const Version = "v1.0.0-alpha"
 
 const (
-	host   = "localhost"
+	host   = "db"
 	port   = 5432
-	dbname = "postgres"
+	dbname = "bomb"
 )
 
 func init() {
