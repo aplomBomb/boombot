@@ -14,7 +14,7 @@ import (
 // RespondToCommand delegates actions when commands are issued
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	plis := ytService.PlaylistItems.List([]string{"snippet", "status", "contentDetails"})
-	ytv := ytService.Search.List([]string{"snippet"}).MaxResults(3).Order("viewCount").SafeSearch("none").Type("video")
+	ytv := ytService.Search.List([]string{"snippet"}).MaxResults(3).Order("relevance").SafeSearch("none").Type("video")
 	cec := NewCommandEventClient(data.Message, disgordGlobalClient, plis, ytv, globalQueue)
 	cec.Delegate()
 }
