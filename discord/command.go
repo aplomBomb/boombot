@@ -120,7 +120,7 @@ func (cec *CommandEventClient) Delegate() {
 				if err != nil {
 					fmt.Printf("\nError getting playlist URLs: %+v\n", err)
 				}
-				if cec.queue.ReturnVoiceCacheEntry(cec.data.Author.ID) != 0 {
+				if len(urls) != 0 {
 					_, err := mec.SendEmbedMsgReply(disgord.Embed{
 						Title:       "**Playlist Accepted**",
 						Description: fmt.Sprintf("%+v entries have been added", len(urls)),
@@ -138,6 +138,7 @@ func (cec *CommandEventClient) Delegate() {
 					go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
 					return
 				}
+
 			} else {
 				if cec.queue.ReturnVoiceCacheEntry(cec.data.Author.ID) != 0 {
 					_, err := mec.SendEmbedMsgReply(disgord.Embed{

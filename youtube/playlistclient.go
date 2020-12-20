@@ -64,9 +64,16 @@ func (c *PlaylistClient) GetPlaylist(arg string) ([]string, error) {
 		fmt.Printf("\nPLAYLISTID: %+v\n", urlFields[2])
 		playlistID = urlFields[2]
 	case 4:
-		id := strings.Split(urlFields[2], "&index")
-		playlistID = id[0]
-		songIndex, _ = strconv.Atoi(urlFields[3])
+		if strings.Contains(urlFields[2], "&index") {
+			id := strings.Split(urlFields[2], "&index")
+			playlistID = id[0]
+			songIndex, _ = strconv.Atoi(urlFields[3])
+		}
+		if strings.Contains(urlFields[2], "&start_radio") {
+			id := strings.Split(urlFields[2], "&start_radio")
+			playlistID = id[0]
+			songIndex, _ = strconv.Atoi(urlFields[3])
+		}
 	}
 	URLS, err := c.aggregateIDS(playlistID)
 	if err != nil {

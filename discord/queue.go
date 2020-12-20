@@ -179,9 +179,23 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				q.CurrentlyPlayingDetails.ContentDetails = resp.Items[0].ContentDetails
 				q.CurrentlyPlayingDetails.Statistics = resp.Items[0].Statistics
 			} else {
-				q.CurrentlyPlayingDetails.Snippet = &youtube.VideoSnippet{}
-				q.CurrentlyPlayingDetails.ContentDetails = &youtube.VideoContentDetails{}
-				q.CurrentlyPlayingDetails.Statistics = &youtube.VideoStatistics{}
+				q.CurrentlyPlayingDetails.Snippet = &youtube.VideoSnippet{
+					CategoryId:  "Unknown",
+					Title:       "Unknown",
+					Description: "Failed to fetch data",
+					Thumbnails: &youtube.ThumbnailDetails{
+						High: &youtube.Thumbnail{
+							Url: "https://i.imgur.com/s36ueeb.jpg",
+						},
+					},
+				}
+				q.CurrentlyPlayingDetails.ContentDetails = &youtube.VideoContentDetails{
+					Duration: "PT0M0S",
+				}
+				q.CurrentlyPlayingDetails.Statistics = &youtube.VideoStatistics{
+					LikeCount:    uint64(0),
+					DislikeCount: uint64(0),
+				}
 			}
 
 			if len(resp.Items) == 0 {
@@ -211,39 +225,41 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 
 			// Ticker needed for smooth opus frame delivery to prevent playback stuttering
 			ticker := time.NewTicker(20 * time.Millisecond)
-			done := make(chan bool)
+			eofDone := make(chan bool)
+			forceDone := make(chan bool)
 			eofChannel := make(chan bool)
+			stopChannel := make(chan bool)
 
 			// Goroutine just cycles through the opusFrames produced from the encoding process
 			// The channels allow for realtime interaction/playback control from events triggered by users
 			go func(waitGroup *sync.WaitGroup) {
-				fmt.Println("Main goroutine started")
+				fmt.Println("Starting main goRoutine")
 				defer es.Cleanup()
 				defer ticker.Stop()
 				defer waitGroup.Done()
-				defer fmt.Println("Leaving goroutine")
+				defer fmt.Println("Leaving main goRoutine")
 				for {
 					select {
 					case <-q.Shuffle:
+						ticker.Stop()
 						q.stopPlaybackAndTalking(vc, es)
 						q.ShuffleQueue()
-						// time.Sleep(1 * time.Second)
-						return
+						stopChannel <- true
 					case <-q.Stop:
+						ticker.Stop()
 						q.stopPlaybackAndTalking(vc, es)
 						q.EmptyQueue()
-						// time.Sleep(1 * time.Second)
-						return
+						stopChannel <- true
 					case <-q.Next:
+						ticker.Stop()
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
-						fmt.Println("Entry removed, returning....")
-						// time.Sleep(1 * time.Second)
+						stopChannel <- true
+					case <-eofDone:
+						q.stopPlaybackAndTalking(vc, es)
+						q.RemoveQueueEntry()
 						return
-					case <-done:
-						q.stopPlaybackAndTalking(vc, es)
-						q.RemoveQueueEntry()
-						// time.Sleep(1 * time.Second)
+					case <-forceDone:
 						return
 					case channelID := <-q.ChannelHop:
 						vc.StopSpeaking()
@@ -266,23 +282,26 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Printf("\nError sending next opus frame: %+v\n", err)
 						}
 						if err == io.EOF {
-							fmt.Println("EOF, sending true to eofChannel...")
 							eofChannel <- true
+							ticker.Stop()
 						}
 						vc.SendOpusFrame(nextFrame)
 					}
 				}
 			}(&wg)
 			go func(waitGroup *sync.WaitGroup) {
+				fmt.Println("Starting secondary goRoutine")
 				waitGroup.Add(1)
 				defer waitGroup.Done()
-				fmt.Println("Secondary goroutine started")
-				defer fmt.Println("Leaving secondary goroutine")
+				defer fmt.Println("Leaving secondary goRoutine")
 				for {
 					time.Sleep(1 * time.Second)
 					select {
 					case <-eofChannel:
-						done <- true
+						eofDone <- true
+						return
+					case <-stopChannel:
+						forceDone <- true
 						return
 					}
 				}
@@ -350,15 +369,10 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				if err != nil {
 					fmt.Println("\n", err)
 				}
-				likeStr := "?"
-				dislikeStr := "?"
-				timeFields := []string{"PT", "?M?S"}
 
-				if q.CurrentlyPlayingDetails.Statistics != nil && q.CurrentlyPlayingDetails.ContentDetails != nil {
-					likeStr = strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.LikeCount, 10)
-					dislikeStr = strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.DislikeCount, 10)
-					timeFields = strings.Split(q.CurrentlyPlayingDetails.ContentDetails.Duration, "PT")
-				}
+				likeStr := strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.LikeCount, 10)
+				dislikeStr := strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.DislikeCount, 10)
+				timeFields := strings.Split(q.CurrentlyPlayingDetails.ContentDetails.Duration, "PT")
 
 				disgordClient.SendMsg(
 					779836590503624734,
