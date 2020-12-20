@@ -221,23 +221,26 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				defer es.Cleanup()
 				defer ticker.Stop()
 				defer waitGroup.Done()
-				defer fmt.Println("Leaving goroutine")
+				defer fmt.Println("Leaving main goroutine")
 				for {
 					select {
 					case <-q.Shuffle:
 						q.stopPlaybackAndTalking(vc, es)
 						q.ShuffleQueue()
+						eofChannel <- true
 						// time.Sleep(1 * time.Second)
 						return
 					case <-q.Stop:
 						q.stopPlaybackAndTalking(vc, es)
 						q.EmptyQueue()
+						eofChannel <- true
 						// time.Sleep(1 * time.Second)
 						return
 					case <-q.Next:
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
 						fmt.Println("Entry removed, returning....")
+						eofChannel <- true
 						// time.Sleep(1 * time.Second)
 						return
 					case <-done:
