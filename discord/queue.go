@@ -179,9 +179,23 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				q.CurrentlyPlayingDetails.ContentDetails = resp.Items[0].ContentDetails
 				q.CurrentlyPlayingDetails.Statistics = resp.Items[0].Statistics
 			} else {
-				q.CurrentlyPlayingDetails.Snippet = &youtube.VideoSnippet{}
-				q.CurrentlyPlayingDetails.ContentDetails = &youtube.VideoContentDetails{}
-				q.CurrentlyPlayingDetails.Statistics = &youtube.VideoStatistics{}
+				q.CurrentlyPlayingDetails.Snippet = &youtube.VideoSnippet{
+					CategoryId:  "Unknown",
+					Title:       "Unknown",
+					Description: "Failed to fetch data",
+					Thumbnails: &youtube.ThumbnailDetails{
+						High: &youtube.Thumbnail{
+							Url: "https://i.ytimg.com/an_webp/fMzkfPCyXZ4/mqdefault_6s.webp?du=3000&sqp=COzf-v4F&rs=AOn4CLC_8Nnds9AgbHc-op9w_u2KzaxeYA",
+						},
+					},
+				}
+				q.CurrentlyPlayingDetails.ContentDetails = &youtube.VideoContentDetails{
+					Duration: "PT0M0S",
+				}
+				q.CurrentlyPlayingDetails.Statistics = &youtube.VideoStatistics{
+					LikeCount:    uint64(0),
+					DislikeCount: uint64(0),
+				}
 			}
 
 			if len(resp.Items) == 0 {
@@ -211,8 +225,10 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 
 			// Ticker needed for smooth opus frame delivery to prevent playback stuttering
 			ticker := time.NewTicker(20 * time.Millisecond)
-			done := make(chan bool)
+			eofDone := make(chan bool)
+			forceDone := make(chan bool)
 			eofChannel := make(chan bool)
+			stopChannel := make(chan bool)
 
 			// Goroutine just cycles through the opusFrames produced from the encoding process
 			// The channels allow for realtime interaction/playback control from events triggered by users
@@ -227,26 +243,28 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 					case <-q.Shuffle:
 						q.stopPlaybackAndTalking(vc, es)
 						q.ShuffleQueue()
-						eofChannel <- true
+						stopChannel <- true
 						// time.Sleep(1 * time.Second)
-						return
+						// return
 					case <-q.Stop:
 						q.stopPlaybackAndTalking(vc, es)
 						q.EmptyQueue()
-						eofChannel <- true
+						stopChannel <- true
 						// time.Sleep(1 * time.Second)
-						return
+						// return
 					case <-q.Next:
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
 						fmt.Println("Entry removed, returning....")
-						eofChannel <- true
+						stopChannel <- true
 						// time.Sleep(1 * time.Second)
-						return
-					case <-done:
+						// return
+					case <-eofDone:
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
 						// time.Sleep(1 * time.Second)
+						return
+					case <-forceDone:
 						return
 					case channelID := <-q.ChannelHop:
 						vc.StopSpeaking()
@@ -285,7 +303,10 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 					time.Sleep(1 * time.Second)
 					select {
 					case <-eofChannel:
-						done <- true
+						eofDone <- true
+						return
+					case <-stopChannel:
+						forceDone <- true
 						return
 					}
 				}
@@ -353,15 +374,10 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				if err != nil {
 					fmt.Println("\n", err)
 				}
-				likeStr := "?"
-				dislikeStr := "?"
-				timeFields := []string{"PT", "?M?S"}
 
-				if q.CurrentlyPlayingDetails.Statistics != nil && q.CurrentlyPlayingDetails.ContentDetails != nil {
-					likeStr = strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.LikeCount, 10)
-					dislikeStr = strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.DislikeCount, 10)
-					timeFields = strings.Split(q.CurrentlyPlayingDetails.ContentDetails.Duration, "PT")
-				}
+				likeStr := strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.LikeCount, 10)
+				dislikeStr := strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.DislikeCount, 10)
+				timeFields := strings.Split(q.CurrentlyPlayingDetails.ContentDetails.Duration, "PT")
 
 				disgordClient.SendMsg(
 					779836590503624734,
