@@ -138,6 +138,7 @@ func (cec *CommandEventClient) Delegate() {
 					go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
 					return
 				}
+
 			} else {
 				if cec.queue.ReturnVoiceCacheEntry(cec.data.Author.ID) != 0 {
 					_, err := mec.SendEmbedMsgReply(disgord.Embed{
