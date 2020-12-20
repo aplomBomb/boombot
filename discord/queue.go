@@ -233,36 +233,31 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			// Goroutine just cycles through the opusFrames produced from the encoding process
 			// The channels allow for realtime interaction/playback control from events triggered by users
 			go func(waitGroup *sync.WaitGroup) {
-				fmt.Println("Main goroutine started")
+				fmt.Println("Starting main goRoutine")
 				defer es.Cleanup()
 				defer ticker.Stop()
 				defer waitGroup.Done()
-				defer fmt.Println("Leaving main goroutine")
+				defer fmt.Println("Leaving main goRoutine")
 				for {
 					select {
 					case <-q.Shuffle:
+						ticker.Stop()
 						q.stopPlaybackAndTalking(vc, es)
 						q.ShuffleQueue()
 						stopChannel <- true
-						// time.Sleep(1 * time.Second)
-						// return
 					case <-q.Stop:
+						ticker.Stop()
 						q.stopPlaybackAndTalking(vc, es)
 						q.EmptyQueue()
 						stopChannel <- true
-						// time.Sleep(1 * time.Second)
-						// return
 					case <-q.Next:
+						ticker.Stop()
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
-						fmt.Println("Entry removed, returning....")
 						stopChannel <- true
-						// time.Sleep(1 * time.Second)
-						// return
 					case <-eofDone:
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
-						// time.Sleep(1 * time.Second)
 						return
 					case <-forceDone:
 						return
@@ -287,18 +282,18 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Printf("\nError sending next opus frame: %+v\n", err)
 						}
 						if err == io.EOF {
-							fmt.Println("EOF, sending true to eofChannel...")
 							eofChannel <- true
+							ticker.Stop()
 						}
 						vc.SendOpusFrame(nextFrame)
 					}
 				}
 			}(&wg)
 			go func(waitGroup *sync.WaitGroup) {
+				fmt.Println("Starting secondary goRoutine")
 				waitGroup.Add(1)
 				defer waitGroup.Done()
-				fmt.Println("Secondary goroutine started")
-				defer fmt.Println("Leaving secondary goroutine")
+				defer fmt.Println("Leaving secondary goRoutine")
 				for {
 					time.Sleep(1 * time.Second)
 					select {
