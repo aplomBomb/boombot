@@ -16,7 +16,7 @@
 
 ## Description
 
-Boombot is a music streaming bot for group listening and sharing in Discord voice channels. The idea behind Boombot is to make music streaming simple, accessible and interactive enough for every Discord user, not just the hip ones. This is Boombot currently supports Youtube videos/playlist links and custom searching from any text channel.
+Boombot is a music streaming bot for group listening and sharing in Discord voice channels. The idea behind Boombot is to make music streaming simple, accessible and interactive enough for every Discord user, not just the hip ones. Boombot currently supports Youtube videos/playlist links and custom searching from any text channel.
 
 ## Getting Started
 
@@ -35,7 +35,7 @@ Boombot is a music streaming bot for group listening and sharing in Discord voic
   - `db.env`
     - `POSTGRES_PASSWORD=yourpgpasswordhere`
     - `POSTGRES_USER=yourpguserhere`
-- In order to be able to fetch the bot's client and youtube tokens, you'll need to register your own applications and store the tokens under the secret name: `boombot_creds` with the keys `BOT_TOKEN` and `YOUTUBE_TOKEN`
+- In order to be able to fetch the bot's client and youtube tokens, you'll need to register your own applications and store the tokens under the secret name in AWS Secrets Manager: `boombot_creds` with the keys `BOT_TOKEN` and `YOUTUBE_TOKEN`
 
 ### Building\Launching
 
