@@ -217,6 +217,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			// Goroutine just cycles through the opusFrames produced from the encoding process
 			// The channels allow for realtime interaction/playback control from events triggered by users
 			go func(waitGroup *sync.WaitGroup) {
+				fmt.Println("Main goroutine started")
 				defer es.Cleanup()
 				defer ticker.Stop()
 				defer waitGroup.Done()
@@ -252,7 +253,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						}
 						err = vc.StartSpeaking()
 						if err != nil {
-							fmt.Println("\nError starting speaking: ", err)
+							fmt.Println("Error starting speaking: \n", err)
 						}
 					case <-q.Pause:
 						ticker.Stop()
@@ -272,7 +273,11 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 					}
 				}
 			}(&wg)
-			go func() {
+			go func(waitGroup *sync.WaitGroup) {
+				waitGroup.Add(1)
+				defer waitGroup.Done()
+				fmt.Println("Secondary goroutine started")
+				defer fmt.Println("Leaving secondary goroutine")
 				for {
 					time.Sleep(1 * time.Second)
 					select {
@@ -281,7 +286,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						return
 					}
 				}
-			}()
+			}(&wg)
 		}
 		wg.Wait()
 		if len(q.UserQueue) == 0 {
