@@ -32,7 +32,7 @@ var globalQueue *Queue
 const Version = "v1.0.0-alpha"
 
 const (
-	host   = "pgDB"
+	host   = "db"
 	port   = 5432
 	dbname = "bomb"
 )
@@ -65,8 +65,8 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	queue := NewQueue(disgord.ParseSnowflakeString(gID))
 	globalQueue = queue
 	disgordGlobalClient = client
-	gb := disgordGlobalClient.Guild(disgord.ParseSnowflakeString(gID))
-	globalGuild = gb
+	gg := disgordGlobalClient.Guild(disgord.ParseSnowflakeString(gID))
+	globalGuild = gg
 	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(yk))
 	vlc := ytService.Videos.List([]string{"contentDetails", "snippet", "statistics"})
 	filter, _ := std.NewMsgFilter(ctx, client)
@@ -76,7 +76,7 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
 	client.Gateway().MessageCreate(RespondToMessage)
 	client.Gateway().PresenceUpdate(RespondToPresenceUpdate)
-	go globalQueue.ListenAndProcessQueue(client, gb, vlc)
+	go globalQueue.ListenAndProcessQueue(client, gg, vlc)
 	go globalQueue.ManageJukebox(client)
 	defer client.Gateway().StayConnectedUntilInterrupted()
 	fmt.Println("BoomBot is running")

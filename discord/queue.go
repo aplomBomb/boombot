@@ -217,30 +217,33 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			// Goroutine just cycles through the opusFrames produced from the encoding process
 			// The channels allow for realtime interaction/playback control from events triggered by users
 			go func(waitGroup *sync.WaitGroup) {
+				fmt.Println("Main goroutine started")
 				defer es.Cleanup()
 				defer ticker.Stop()
 				defer waitGroup.Done()
+				defer fmt.Println("Leaving goroutine")
 				for {
 					select {
 					case <-q.Shuffle:
 						q.stopPlaybackAndTalking(vc, es)
 						q.ShuffleQueue()
-						time.Sleep(1 * time.Second)
+						// time.Sleep(1 * time.Second)
 						return
 					case <-q.Stop:
 						q.stopPlaybackAndTalking(vc, es)
 						q.EmptyQueue()
-						time.Sleep(1 * time.Second)
+						// time.Sleep(1 * time.Second)
 						return
 					case <-q.Next:
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
-						time.Sleep(1 * time.Second)
+						fmt.Println("Entry removed, returning....")
+						// time.Sleep(1 * time.Second)
 						return
 					case <-done:
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
-						time.Sleep(1 * time.Second)
+						// time.Sleep(1 * time.Second)
 						return
 					case channelID := <-q.ChannelHop:
 						vc.StopSpeaking()
@@ -250,7 +253,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						}
 						err = vc.StartSpeaking()
 						if err != nil {
-							fmt.Println("\nError starting speaking: ", err)
+							fmt.Println("Error starting speaking: \n", err)
 						}
 					case <-q.Pause:
 						ticker.Stop()
@@ -263,13 +266,18 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Printf("\nError sending next opus frame: %+v\n", err)
 						}
 						if err == io.EOF {
+							fmt.Println("EOF, sending true to eofChannel...")
 							eofChannel <- true
 						}
 						vc.SendOpusFrame(nextFrame)
 					}
 				}
 			}(&wg)
-			go func() {
+			go func(waitGroup *sync.WaitGroup) {
+				waitGroup.Add(1)
+				defer waitGroup.Done()
+				fmt.Println("Secondary goroutine started")
+				defer fmt.Println("Leaving secondary goroutine")
 				for {
 					time.Sleep(1 * time.Second)
 					select {
@@ -278,7 +286,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						return
 					}
 				}
-			}()
+			}(&wg)
 		}
 		wg.Wait()
 		if len(q.UserQueue) == 0 {
@@ -465,7 +473,7 @@ func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.Encod
 
 func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilderAPI, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
 	if botChannelID == 0 {
-		vc, err := guild.VoiceChannel(requesteeChannelID).Connect(true, false)
+		vc, err := guild.VoiceChannel(requesteeChannelID).Connect(false, true)
 		if err != nil {
 			return nil, err
 		}
