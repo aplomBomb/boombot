@@ -185,7 +185,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 					Description: "Failed to fetch data",
 					Thumbnails: &youtube.ThumbnailDetails{
 						High: &youtube.Thumbnail{
-							Url: "https://i.ytimg.com/an_webp/fMzkfPCyXZ4/mqdefault_6s.webp?du=3000&sqp=COzf-v4F&rs=AOn4CLC_8Nnds9AgbHc-op9w_u2KzaxeYA",
+							Url: "https://i.imgur.com/s36ueeb.jpg",
 						},
 					},
 				}
