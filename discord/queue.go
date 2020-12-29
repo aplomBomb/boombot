@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -38,6 +40,7 @@ type Queue struct {
 	Shuffle                 chan bool
 	Pause                   chan bool
 	Play                    chan bool
+	DL                      chan disgord.Snowflake
 	ChannelHop              chan disgord.Snowflake
 	CurrentlyPlayingDetails PlayingDetails
 }
@@ -58,6 +61,7 @@ func NewQueue(gID disgord.Snowflake) *Queue {
 		Shuffle:         make(chan bool, 1),
 		Pause:           make(chan bool, 1),
 		Play:            make(chan bool, 1),
+		DL:              make(chan disgord.Snowflake, 1),
 		ChannelHop:      make(chan disgord.Snowflake, 1),
 	}
 }
@@ -271,6 +275,8 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						if err != nil {
 							fmt.Println("Error starting speaking: \n", err)
 						}
+					case uid := <-q.DL:
+						go downloadAndSend(waitGroup, requestURL, uid)
 					case <-q.Pause:
 						ticker.Stop()
 					case <-q.Play:
@@ -358,7 +364,11 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 		if err != nil {
 			fmt.Printf("\nCould not get messages from jukebox channel: %+v", err.Error())
 		}
+		fmt.Printf("\nUser queue larger than 0? User queue length=%+v", len(q.UserQueue))
+		fmt.Printf("\nNowPlayingUID not 0? NowPlayingUID=%+v", q.NowPlayingUID)
+		fmt.Printf("\nCurrentlyPlayingDetails.Snippet not nil? CurrentlyPlayingDetails.Snippit=%+v", q.CurrentlyPlayingDetails.Snippet)
 		if len(q.UserQueue) > 0 && q.NowPlayingUID != 0 && q.CurrentlyPlayingDetails.Snippet != nil {
+			fmt.Printf("\nReferenceEntry=%+v", referenceEntry)
 			if referenceEntry != q.CurrentlyPlayingDetails {
 				// nextRequesteeName := "**Open Queue**"
 				requesteeName, err := disgordClient.User(q.NowPlayingUID).Get()
@@ -523,6 +533,23 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 		return prevVC, nil
 	}
 	return prevVC, nil
+}
+
+func downloadAndSend(wg *sync.WaitGroup, url string, UID disgord.Snowflake) error {
+	wg.Add(1)
+	payload, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer payload.Body.Close()
+
+	out, err := os.Create("UID.mp3")
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	io.Copy(out, payload.Body)
+	return nil
 }
 
 func (q *Queue) setNowPlaying() {

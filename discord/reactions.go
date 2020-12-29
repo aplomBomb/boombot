@@ -130,6 +130,11 @@ func (rec *ReactionEventClient) HandleJukeboxReact(queue *Queue) {
 				queue.Next <- true
 				return
 			}()
+		case "\u2935":
+			go func() {
+				queue.DL <- rec.uID
+				return
+			}()
 		}
 	}
 }
