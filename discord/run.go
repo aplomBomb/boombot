@@ -25,7 +25,6 @@ var disgordGlobalAPI disgordiface.DisgordClientAPI
 var disgordGlobalClient *disgord.Client
 var globalGuild disgord.GuildQueryBuilder
 var ytService *youtube.Service
-var session disgord.Session
 var globalQueue *Queue
 
 // Version of BoomBot
@@ -67,6 +66,10 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	disgordGlobalClient = client
 	gg := disgordGlobalClient.Guild(disgord.ParseSnowflakeString(gID))
 	globalGuild = gg
+	client.UpdateStatus(&disgord.UpdateStatusPayload{
+		Game:   "Jukebox",
+		Status: "Test",
+	})
 	ytService, _ = youtube.NewService(ctx, option.WithAPIKey(yk))
 	vlc := ytService.Videos.List([]string{"contentDetails", "snippet", "statistics"})
 	filter, _ := std.NewMsgFilter(ctx, client)

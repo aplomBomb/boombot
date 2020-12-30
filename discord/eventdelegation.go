@@ -33,6 +33,10 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 		time.Sleep(1 * time.Second)
 		data.Message.React(ctx, s, "\u23E9") // Next emoji
 		time.Sleep(1 * time.Second)
+		data.Message.React(ctx, s, "\u2935") // Download emoji
+		time.Sleep(1 * time.Second)
+		data.Message.React(ctx, s, "\u2B50") // Star/Save to playlist emoji
+		time.Sleep(1 * time.Second)
 	}
 	user := data.Message.Author
 	fmt.Printf("Message %+v by user %+v | %+v\n", data.Message.Content, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
