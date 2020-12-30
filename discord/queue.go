@@ -276,7 +276,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Println("Error starting speaking: \n", err)
 						}
 					case uid := <-q.DL:
-						go downloadAndSend(waitGroup, requestURL, uid)
+						go q.DownloadAndSend(waitGroup, disgordClientAPI, requestURL, uid)
 					case <-q.Pause:
 						ticker.Stop()
 					case <-q.Play:
@@ -364,11 +364,11 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 		if err != nil {
 			fmt.Printf("\nCould not get messages from jukebox channel: %+v", err.Error())
 		}
-		fmt.Printf("\nUser queue larger than 0? User queue length=%+v", len(q.UserQueue))
-		fmt.Printf("\nNowPlayingUID not 0? NowPlayingUID=%+v", q.NowPlayingUID)
-		fmt.Printf("\nCurrentlyPlayingDetails.Snippet not nil? CurrentlyPlayingDetails.Snippit=%+v", q.CurrentlyPlayingDetails.Snippet)
+		// fmt.Printf("\nUser queue larger than 0? User queue length=%+v", len(q.UserQueue))
+		// fmt.Printf("\nNowPlayingUID not 0? NowPlayingUID=%+v", q.NowPlayingUID)
+		// fmt.Printf("\nCurrentlyPlayingDetails.Snippet not nil? CurrentlyPlayingDetails.Snippit=%+v", q.CurrentlyPlayingDetails.Snippet)
 		if len(q.UserQueue) > 0 && q.NowPlayingUID != 0 && q.CurrentlyPlayingDetails.Snippet != nil {
-			fmt.Printf("\nReferenceEntry=%+v", referenceEntry)
+			// fmt.Printf("\nReferenceEntry=%+v", referenceEntry)
 			if referenceEntry != q.CurrentlyPlayingDetails {
 				// nextRequesteeName := "**Open Queue**"
 				requesteeName, err := disgordClient.User(q.NowPlayingUID).Get()
@@ -435,9 +435,12 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 			}
 		}
 		if len(msgs) > 1 {
-
-			go deleteMessage(msgs[1], 1*time.Second, disgordClient)
-
+			for i, msg := range msgs {
+				if i == 0 {
+					continue
+				}
+				go deleteMessage(msg, 1*time.Second, disgordClient)
+			}
 		}
 		if q.NowPlayingUID == 0 {
 			for k := range msgs {
@@ -535,7 +538,9 @@ func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client 
 	return prevVC, nil
 }
 
-func downloadAndSend(wg *sync.WaitGroup, url string, UID disgord.Snowflake) error {
+// DownloadAndSend downloads the currently playing song and uploads the mp3 file to the specified channel
+func (q *Queue) DownloadAndSend(wg *sync.WaitGroup, dAPI disgordiface.DisgordClientAPI, url string, UID disgord.Snowflake) error {
+
 	wg.Add(1)
 	payload, err := http.Get(url)
 	if err != nil {
@@ -543,7 +548,7 @@ func downloadAndSend(wg *sync.WaitGroup, url string, UID disgord.Snowflake) erro
 	}
 	defer payload.Body.Close()
 
-	filename := fmt.Sprintf("%+v.mp3", UID)
+	filename := fmt.Sprintf("%+v.mp3", q.CurrentlyPlayingDetails.Snippet.Title)
 
 	out, err := os.Create(filename)
 	if err != nil {
@@ -551,6 +556,38 @@ func downloadAndSend(wg *sync.WaitGroup, url string, UID disgord.Snowflake) erro
 	}
 	defer out.Close()
 	io.Copy(out, payload.Body)
+
+	u, err := dAPI.User(UID).Get()
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Open(filename)
+	if err != nil {
+		fmt.Println("Error opening file!: ", err)
+	}
+
+	defer file.Close()
+
+	_, errUpload := disgordGlobalClient.Channel(793664075791466496).CreateMessage(&disgord.CreateMessageParams{
+		Files: []disgord.CreateMessageFileParams{
+			{file, filename, false},
+		},
+		Embed: &disgord.Embed{
+			Image: &disgord.EmbedImage{
+				URL: q.CurrentlyPlayingDetails.Snippet.Thumbnails.High.Url,
+			},
+		},
+	})
+	if errUpload != nil {
+		fmt.Println("error!: ", err)
+	}
+
+	dmContent := fmt.Sprintf("%+v is ready to download!", q.CurrentlyPlayingDetails.Snippet.Title)
+	u.SendMsg(ctx, disgordGlobalClient, &disgord.Message{
+		Content: dmContent,
+	})
+	wg.Done()
 	return nil
 
 }

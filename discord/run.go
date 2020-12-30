@@ -25,7 +25,6 @@ var disgordGlobalAPI disgordiface.DisgordClientAPI
 var disgordGlobalClient *disgord.Client
 var globalGuild disgord.GuildQueryBuilder
 var ytService *youtube.Service
-var session disgord.Session
 var globalQueue *Queue
 
 // Version of BoomBot
