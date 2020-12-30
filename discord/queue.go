@@ -543,13 +543,16 @@ func downloadAndSend(wg *sync.WaitGroup, url string, UID disgord.Snowflake) erro
 	}
 	defer payload.Body.Close()
 
-	out, err := os.Create("UID.mp3")
+	filename := fmt.Sprintf("%+v.mp3", UID)
+
+	out, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer out.Close()
 	io.Copy(out, payload.Body)
 	return nil
+
 }
 
 func (q *Queue) setNowPlaying() {
