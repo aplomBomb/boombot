@@ -13,62 +13,62 @@ import (
 
 var (
 	seenEmojis = []*disgord.Emoji{
-		&disgord.Emoji{
+		{
 			Name: "👀",
 		},
-		&disgord.Emoji{
+		{
 			Name: "eyes",
 		},
-		&disgord.Emoji{
+		{
 			Name: "monkaEyesZoom",
 		},
-		&disgord.Emoji{
+		{
 			Name: "eyesFlipped",
 		},
-		&disgord.Emoji{
+		{
 			Name: "freakouteyes",
 		},
-		&disgord.Emoji{
+		{
 			Name: "monkaUltraEyes",
 		},
-		&disgord.Emoji{
+		{
 			Name: "PepeHmm",
 		},
 	}
 	acceptedEmojis = []*disgord.Emoji{
-		&disgord.Emoji{
+		{
 			Name: "✅",
 		},
-		&disgord.Emoji{
+		{
 			Name: "check",
 		},
-		&disgord.Emoji{
+		{
 			Name: "👍",
 		},
-		&disgord.Emoji{
+		{
 			Name: "ablobyes",
 		},
-		&disgord.Emoji{
+		{
 			Name: "Check",
 		},
-		&disgord.Emoji{
+		{
 			Name: "seemsgood",
 		},
 	}
 	rejectedEmojis = []*disgord.Emoji{
-		&disgord.Emoji{
+		{
 			Name: "🚫",
 		},
-		&disgord.Emoji{
+		{
 			Name: "no",
 		},
-		&disgord.Emoji{
+		{
 			Name: "steve_nope",
 		},
-		&disgord.Emoji{
+		{
 			Name: "❌",
 		},
-		&disgord.Emoji{
+		{
 			Name: "xmark",
 		},
 	}
@@ -103,7 +103,7 @@ func NewReactionEventClient(emoji *disgord.Emoji, uID disgord.Snowflake, chID di
 
 // HandleJukeboxReact triggers the playback channels of the queue in response to user reaction
 func (rec *ReactionEventClient) HandleJukeboxReact(queue *Queue) {
-	if rec.uID != 739154323015204935 && rec.uID == queue.NowPlayingUID {
+	if rec.uID != 860286976296878080 && rec.uID == queue.NowPlayingUID {
 		switch rec.emoji.Name {
 		case "\u26D4":
 			go func() {
@@ -173,7 +173,7 @@ func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) 
 			}
 			dm = disgord.Message{
 				Embeds: []*disgord.Embed{
-					&disgord.Embed{
+					{
 						Title:       fmt.Sprintf("**Your request to add %s is being reviewed**", modName),
 						URL:         url,
 						Description: fmt.Sprintf("*Bomb is reviewing your request to add %s*", modName),
@@ -210,7 +210,7 @@ func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) 
 			}
 			dm = disgord.Message{
 				Embeds: []*disgord.Embed{
-					&disgord.Embed{
+					{
 						Title:       fmt.Sprintf("**%s ACCEPTED!!**", modName),
 						URL:         url,
 						Description: fmt.Sprintf("*Bomb has added %s to the modpack! If the server breaks now, it's all your fault!*", modName),
@@ -250,7 +250,7 @@ func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) 
 
 			dm = disgord.Message{
 				Embeds: []*disgord.Embed{
-					&disgord.Embed{
+					{
 						Title:       fmt.Sprintf("**%s Rejected**", modName),
 						URL:         url,
 						Description: fmt.Sprintf("*Bomb has rejected your request to add %s*", modName),
@@ -274,7 +274,7 @@ func createReactions(emojis []*disgord.Emoji) []*AdminReaction {
 	reactions := []*AdminReaction{}
 	for _, emoji := range emojis {
 		reactions = append(reactions, &AdminReaction{
-			userID:    321044596476084235,
+			userID:    801961246429544469,
 			channelID: 734986357583380510,
 			emoji:     emoji,
 		})

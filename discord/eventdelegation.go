@@ -22,7 +22,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 // RespondToMessage delegates actions when messages are created
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	switch data.Message.ChannelID {
-	case 779836590503624734:
+	case 852321734820102155:
 		data.Message.React(ctx, s, "\u26D4") // Purge emoji
 		time.Sleep(1 * time.Second)
 		data.Message.React(ctx, s, "\u267B") // Shuffle Emoji
@@ -68,8 +68,8 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 // RespondToVoiceChannelUpdate updates the server's voice channel cache every time an update is emitted
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 	globalQueue.UpdateVoiceCache(data.ChannelID, data.UserID)
-	if data.ChannelID != 0 && data.ChannelID != globalQueue.VoiceCache[739154323015204935] && data.UserID == globalQueue.NowPlayingUID && globalQueue.VoiceCache[data.UserID] != 0 {
-		go func() {
+	if data.ChannelID != 0 && data.ChannelID != globalQueue.VoiceCache[860286976296878080] && data.UserID == globalQueue.NowPlayingUID && globalQueue.VoiceCache[data.UserID] != 0 {
+		go func() { //used to be this: 851268581094457357
 			globalQueue.ChannelHop <- data.ChannelID
 			return
 		}()
@@ -77,48 +77,48 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 }
 
 // RespondToPresenceUpdate fires when a server member's presence state changes
-func RespondToPresenceUpdate(s disgord.Session, data *disgord.PresenceUpdate) {
-	// This is temporary for testing\will be moved to a "roles" client
-	// after i decide how i want to handle these events
+// func RespondToPresenceUpdate(s disgord.Session, data *disgord.PresenceUpdate) {
+// This is temporary for testing\will be moved to a "roles" client
+// after i decide how i want to handle these events
 
-	// Roles drg, twerkov, crafter respectively
-	// Will map game name as string key/snowflake of role as value
-	// Will make it really easy to remove/add role ids on events
-	// roleCache := map[string]disgord.Snowflake
+// Roles drg, twerkov, crafter respectively
+// Will map game name as string key/snowflake of role as value
+// Will make it really easy to remove/add role ids on events
+// roleCache := map[string]disgord.Snowflake
 
-	managedRoles := []disgord.Snowflake{787758251574820864, 737467990647373827, 735890320348282880}
-	gameEvent, _ := data.Game()
-	fmt.Println("GameEvent: ", gameEvent)
-	fmt.Println("User: ", data.User.Username)
-	if gameEvent == nil {
-		fmt.Println("This must have been an online/offline event")
-		return
-	}
-	fmt.Println("Game Name: ", gameEvent.Name)
-	if len(data.Activities) == 0 {
-		memberQueryBuilder := globalGuild.Member(data.User.ID)
-		member, err := globalGuild.Member(data.User.ID).Get()
-		if err != nil {
-			fmt.Println("Error fetching member for role adjustment: ", err)
-		}
-		roles := member.Roles
-		fmt.Printf("\n%+v's roles before: %+v", data.User.Username, roles)
-		for _, rv := range roles {
-			for _, mrv := range managedRoles {
-				if mrv == rv {
-					memberQueryBuilder.RemoveRole(mrv)
-				}
-			}
-		}
-		fmt.Printf("\n%+v's roles after: %+v", data.User.Username, roles)
-		return
-	}
+// managedRoles := []disgord.Snowflake{787758251574820864, 737467990647373827, 735890320348282880}
+// gameEvent, _ := data.Game()
+// fmt.Println("GameEvent: ", gameEvent)
+// fmt.Println("User: ", data.User.Username)
+// if gameEvent == nil {
+// 	fmt.Println("This must have been an online/offline event")
+// 	return
+// }
+// fmt.Println("Game Name: ", gameEvent.Name)
+// if len(data.Activities) == 0 {
+// 	memberQueryBuilder := globalGuild.Member(data.User.ID)
+// 	member, err := globalGuild.Member(data.User.ID).Get()
+// 	if err != nil {
+// 		fmt.Println("Error fetching member for role adjustment: ", err)
+// 	}
+// 	roles := member.Roles
+// 	fmt.Printf("\n%+v's roles before: %+v", data.User.Username, roles)
+// 	for _, rv := range roles {
+// 		for _, mrv := range managedRoles {
+// 			if mrv == rv {
+// 				memberQueryBuilder.RemoveRole(mrv)
+// 			}
+// 		}
+// 	}
+// 	fmt.Printf("\n%+v's roles after: %+v", data.User.Username, roles)
+// 	return
+// }
 
-	// userID := data.User.ID
-	// activityName := data.Activities[0].Name
-	// drgRoleID := 787758251574820864
+// userID := data.User.ID
+// activityName := data.Activities[0].Name
+// drgRoleID := 787758251574820864
 
-	// for k := range data.Activities {
-	// 	fmt.Println("activity: ", data.Activities[k])
-	// }
-}
+// for k := range data.Activities {
+// 	fmt.Println("activity: ", data.Activities[k])
+// }
+// }
