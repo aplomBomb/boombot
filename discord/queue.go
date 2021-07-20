@@ -80,8 +80,11 @@ func (q *Queue) UpdateUserQueueStateBulk(chID disgord.Snowflake, uID disgord.Sno
 	q.LastMessageCHID = chID
 	if q.UserQueue[uID] == nil {
 		q.UserQueue[uID] = args
+		q.ShuffleQueueByID(uID)
 	} else {
 		q.UserQueue[uID] = append(q.UserQueue[uID], args...)
+		q.ShuffleNowPlayingQueue()
+		q.ShuffleQueueByID(uID)
 	}
 }
 
@@ -143,7 +146,7 @@ func (q *Queue) ReturnNowPlayingID() disgord.Snowflake {
 // audio in the voice channel the author currently resides in
 func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilderAPI, ytvlc *youtube.VideosListCall) {
 	wg := sync.WaitGroup{}
-	vcBuilder := guild.VoiceChannel(640284178755092505)
+	vcBuilder := guild.VoiceChannel(851268581094457357)
 
 	vc, err := vcBuilder.Connect(true, false)
 	if err != nil {
@@ -218,7 +221,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				wg.Done()
 				continue
 			}
-			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, guild, q.VoiceCache[739154323015204935], q.VoiceCache[q.NowPlayingUID])
+			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, guild, q.VoiceCache[860286976296878080], q.VoiceCache[q.NowPlayingUID])
 			if err != nil {
 				fmt.Printf("\nError establishing voice connection: %+v\n", err)
 			}
@@ -243,8 +246,9 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 					case <-q.Shuffle:
 						ticker.Stop()
 						q.stopPlaybackAndTalking(vc, es)
-						q.ShuffleQueue()
-						stopChannel <- true
+						q.ShuffleNowPlayingQueue()
+						// time.Sleep(1 * time.Second)
+						return
 					case <-q.Stop:
 						ticker.Stop()
 						q.stopPlaybackAndTalking(vc, es)
@@ -282,8 +286,12 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Printf("\nError sending next opus frame: %+v\n", err)
 						}
 						if err == io.EOF {
-							eofChannel <- true
-							ticker.Stop()
+							fmt.Println("EOF, sending true to eofChannel...")
+							q.stopPlaybackAndTalking(vc, es)
+							q.RemoveQueueEntry()
+							fmt.Println("Shit ended, moving on....")
+							// time.Sleep(1 * time.Second)
+							return
 						}
 						vc.SendOpusFrame(nextFrame)
 					}
@@ -314,7 +322,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			q.NowPlayingURL = ""
 		}
 		// Leave if the bot is the only member in a voice channel
-		if len(q.VoiceCache) == 1 && q.VoiceCache[739154323015204935] != 0 && vc != nil {
+		if len(q.VoiceCache) == 1 && q.VoiceCache[860286976296878080] != 0 && vc != nil {
 			vc.Close()
 		}
 	}
@@ -352,7 +360,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 		// TO-DO===============================================================
 		// I need to respond to a message create event rather than pinging discord's api every two seconds
 		//(2 seconds is the tightest interval before being rate-limited)
-		msgs, err := disgordClient.Channel(779836590503624734).GetMessages(&disgord.GetMessagesParams{
+		msgs, err := disgordClient.Channel(852321734820102155).GetMessages(&disgord.GetMessagesParams{
 			Limit: 10,
 		})
 		if err != nil {
@@ -375,7 +383,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				timeFields := strings.Split(q.CurrentlyPlayingDetails.ContentDetails.Duration, "PT")
 
 				disgordClient.SendMsg(
-					779836590503624734,
+					852321734820102155,
 					&disgord.CreateMessageParams{
 						Embed: &disgord.Embed{
 							Title:       q.CurrentlyPlayingDetails.Snippet.Title,
@@ -387,21 +395,21 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 								Width:  64,
 							},
 							Fields: []*disgord.EmbedField{
-								&disgord.EmbedField{
+								{
 									Name:  "Requested by",
 									Value: requesteeName.Username,
 								},
-								&disgord.EmbedField{
+								{
 									Name:   "Duration",
 									Value:  timeFields[1],
 									Inline: true,
 								},
-								&disgord.EmbedField{
+								{
 									Name:   "Upvotes",
 									Value:  likeStr,
 									Inline: true,
 								},
-								&disgord.EmbedField{
+								{
 									Name:   "Downvotes",
 									Value:  dislikeStr,
 									Inline: true,
@@ -460,11 +468,18 @@ func (q *Queue) RemoveQueueEntry() {
 	q.LastPlayingUID = q.NowPlayingUID
 }
 
-// ShuffleQueue reorganizes the order of the queue entries for randomized playback
-func (q *Queue) ShuffleQueue() {
+// ShuffleNowPlayingQueue reorganizes the order of the queue entries for randomized playback
+func (q *Queue) ShuffleNowPlayingQueue() {
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(q.UserQueue[q.NowPlayingUID]), func(i, j int) {
 		q.UserQueue[q.NowPlayingUID][i], q.UserQueue[q.NowPlayingUID][j] = q.UserQueue[q.NowPlayingUID][j], q.UserQueue[q.NowPlayingUID][i]
+	})
+}
+
+func (q *Queue) ShuffleQueueByID(id disgord.Snowflake) {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(q.UserQueue[id]), func(i, j int) {
+		q.UserQueue[id][i], q.UserQueue[id][j] = q.UserQueue[id][j], q.UserQueue[id][i]
 	})
 }
 
