@@ -309,10 +309,10 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				}
 			}(&wg)
 			go func(waitGroup *sync.WaitGroup) {
-				fmt.Println("Starting secondary goRoutine")
+				fmt.Println("\nStarting secondary goRoutine\n")
 				waitGroup.Add(1)
 				defer waitGroup.Done()
-				defer fmt.Println("Leaving secondary goRoutine")
+				defer fmt.Println("\nLeaving secondary goRoutine\n")
 				for {
 					time.Sleep(1 * time.Second)
 					select {
