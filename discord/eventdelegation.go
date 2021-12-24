@@ -9,7 +9,7 @@ import (
 
 // Goal is to have this file as small as possible, the purpose of this file isn't about delegation so to say
 // It's acting as an intermediary; separating global vars from the business logic
-// This means the more code/logic I can get out of this file, the more code/logic that can be unit tested via dependency injection
+// This means the more code/logic I can get out of this file, the more code/logic that can be tested
 
 // RespondToCommand delegates actions when commands are issued
 func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
