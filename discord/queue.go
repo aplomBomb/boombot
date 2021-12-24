@@ -157,7 +157,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 		if len(q.UserQueue) > 0 {
 			fmt.Println("\nQueues: ", len(q.UserQueue))
 			wg.Add(1)
-			fmt.Printf("\nUpcoming Song/URL: %+v", q.UserQueue[q.NowPlayingUID][0])
+			// fmt.Printf("\nUpcoming Song/URL: %+v", q.UserQueue[q.NowPlayingUID][0])
 			q.setNowPlaying()
 			requestURL := ""
 
@@ -284,7 +284,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						}
 						err = vc.StartSpeaking()
 						if err != nil {
-							fmt.Println("Error starting speaking: \n", err)
+							fmt.Println("\nError starting speaking: \n", err)
 						}
 					case <-q.Pause:
 						ticker.Stop()
@@ -297,11 +297,10 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Printf("\nError sending next opus frame: %+v\n", err)
 						}
 						if err == io.EOF {
-							fmt.Println("EOF, sending true to eofChannel...")
-							eofChannel <- true
+							fmt.Println("\nEOF, sending true to eofChannel...\n")
 							q.stopPlaybackAndTalking(vc, es)
 							q.RemoveQueueEntry()
-							fmt.Println("Song ended, moving on....")
+							fmt.Println("\nSong ended, moving on....\n")
 							return
 						}
 						vc.SendOpusFrame(nextFrame)
@@ -317,8 +316,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 					time.Sleep(1 * time.Second)
 					select {
 					case <-eofChannel:
-						fmt.Print("\neofChannel received true, sending true to eofDone channel\n")
-						eofDone <- true
+						fmt.Print("\neofChannel received true, shutting down secondary goRoutine\n")
 						return
 					case <-stopChannel:
 						forceDone <- true

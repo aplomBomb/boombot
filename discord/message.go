@@ -27,8 +27,12 @@ func (mec *MessageEventClient) FilterNonModLinks() error {
 	//Per channel message event switch handler
 	switch mec.data.ChannelID {
 	case 734986357583380510:
-		if strings.Contains(mec.data.Content, "https://www.curseforge.com/minecraft/mc-mods/") == false {
+		if !strings.Contains(mec.data.Content, "https://www.curseforge.com/minecraft/mc-mods/") {
 			go deleteMessage(mec.data, 2*time.Second, mec.disgordClient)
+		}
+	case 851485354589814805:
+		if strings.Contains(mec.data.Content, "https://external-preview.redd.it") {
+			go deleteMessage(mec.data, 1*time.Second, mec.disgordClient)
 		}
 	default:
 		break
