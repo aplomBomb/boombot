@@ -298,6 +298,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						}
 						if err == io.EOF {
 							fmt.Println("\nEOF, sending true to eofChannel...\n")
+							eofChannel <- true
 							q.stopPlaybackAndTalking(vc, es)
 							q.RemoveQueueEntry()
 							fmt.Println("\nSong ended, moving on....\n")
@@ -316,7 +317,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 					time.Sleep(1 * time.Second)
 					select {
 					case <-eofChannel:
-						fmt.Print("\neofChannel received true, shutting down secondary goRoutine\n")
+						fmt.Print("\neofChannel received true\n")
 						return
 					case <-stopChannel:
 						forceDone <- true
