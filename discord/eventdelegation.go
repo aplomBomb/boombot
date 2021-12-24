@@ -71,7 +71,6 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 	if data.ChannelID != 0 && data.ChannelID != globalQueue.VoiceCache[860286976296878080] && data.UserID == globalQueue.NowPlayingUID && globalQueue.VoiceCache[data.UserID] != 0 {
 		go func() { //used to be this: 851268581094457357
 			globalQueue.ChannelHop <- data.ChannelID
-			return
 		}()
 	}
 }

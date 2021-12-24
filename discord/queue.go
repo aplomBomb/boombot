@@ -297,11 +297,11 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Printf("\nError sending next opus frame: %+v\n", err)
 						}
 						if err == io.EOF {
-							fmt.Println("\nEOF, sending true to eofChannel...\n")
+							fmt.Println("\nEOF, sending true to eofChannel...")
 							eofChannel <- true
 							q.stopPlaybackAndTalking(vc, es)
 							q.RemoveQueueEntry()
-							fmt.Println("\nSong ended, moving on....\n")
+							fmt.Println("\nSong ended, moving on....")
 							return
 						}
 						vc.SendOpusFrame(nextFrame)
@@ -309,10 +309,10 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 				}
 			}(&wg)
 			go func(waitGroup *sync.WaitGroup) {
-				fmt.Println("\nStarting secondary goRoutine\n")
+				fmt.Println("\nStarting secondary goRoutine")
 				waitGroup.Add(1)
 				defer waitGroup.Done()
-				defer fmt.Println("\nLeaving secondary goRoutine\n")
+				defer fmt.Println("\nLeaving secondary goRoutine")
 				for {
 					time.Sleep(1 * time.Second)
 					select {
