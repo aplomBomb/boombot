@@ -89,6 +89,9 @@ func (c *PlaylistClient) GetPlaylist(arg string) ([]string, error) {
 			URLS = URLS[:len(URLS)-1]
 		}
 	}
+	for i, v := range URLS {
+		fmt.Printf("\n%+v: %+v", i, v)
+	}
 	return URLS, nil
 }
 

@@ -157,6 +157,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 		if len(q.UserQueue) > 0 {
 			fmt.Println("\nQueues: ", len(q.UserQueue))
 			wg.Add(1)
+			fmt.Printf("\nUpcoming Song/URL: %+v", q.UserQueue[q.NowPlayingUID][0])
 			q.setNowPlaying()
 			requestURL := ""
 
@@ -170,6 +171,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 
 			fields := strings.Split(q.UserQueue[q.NowPlayingUID][0], "=")
 			id := fields[1]
+			fmt.Printf("SONG_ID: %+v", id)
 
 			call := ytvlc.Id(id)
 			resp, err := call.Do()
@@ -210,10 +212,16 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			es, err := q.GetEncodeSession(requestURL)
 			if err != nil {
 				fmt.Printf("\nError encoding: %+v\n", err)
+				q.RemoveQueueEntry()
+				wg.Done()
+				continue
 			}
 			esData, err := es.ReadFrame()
 			if err != nil {
 				fmt.Println("\nError: ", err)
+				q.RemoveQueueEntry()
+				wg.Done()
+				continue
 			}
 			if esData == nil {
 				fmt.Println("\nNo audio data|Skipping...")
@@ -224,6 +232,9 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, guild, q.VoiceCache[860286976296878080], q.VoiceCache[q.NowPlayingUID])
 			if err != nil {
 				fmt.Printf("\nError establishing voice connection: %+v\n", err)
+				q.RemoveQueueEntry()
+				wg.Done()
+				continue
 			}
 
 			// Ticker needed for smooth opus frame delivery to prevent playback stuttering
@@ -247,7 +258,6 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						ticker.Stop()
 						q.stopPlaybackAndTalking(vc, es)
 						q.ShuffleNowPlayingQueue()
-						// time.Sleep(1 * time.Second)
 						return
 					case <-q.Stop:
 						ticker.Stop()
@@ -260,6 +270,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						q.RemoveQueueEntry()
 						stopChannel <- true
 					case <-eofDone:
+						fmt.Print("\neofDone received true, stopping and returning from goRoutine\n")
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
 						return
@@ -287,10 +298,10 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						}
 						if err == io.EOF {
 							fmt.Println("EOF, sending true to eofChannel...")
+							eofChannel <- true
 							q.stopPlaybackAndTalking(vc, es)
 							q.RemoveQueueEntry()
-							fmt.Println("Shit ended, moving on....")
-							// time.Sleep(1 * time.Second)
+							fmt.Println("Song ended, moving on....")
 							return
 						}
 						vc.SendOpusFrame(nextFrame)
@@ -306,6 +317,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 					time.Sleep(1 * time.Second)
 					select {
 					case <-eofChannel:
+						fmt.Print("\neofChannel received true, sending true to eofDone channel\n")
 						eofDone <- true
 						return
 					case <-stopChannel:
