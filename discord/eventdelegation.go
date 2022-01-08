@@ -2,10 +2,30 @@ package discord
 
 import (
 	"fmt"
+	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/andersfylling/disgord"
 )
+
+func randomDiogoWarning() string {
+	var diogoWarnings = []string{
+		"\n**Hey Doogie, have you googled this yet?**",
+		"\n**Are you sure this isn't a dumb question, dongo?**",
+		"\n**Hey diaygo, have you considered asking someone else?**",
+		"\n**Is this a question worth asking?**",
+		"\n**Bomb is currently busy, try again never.**",
+		"\n**Think long and hard about this, deego.**",
+		"\n**Do you honestly expect a serious answer?**",
+		"\n**Maybe.....no?**",
+		"\n**Fuck your face dingo**",
+		"\n**I'm pretty sure bomb would rather shove shards of glass up his own ass.**",
+		"\n**If bomb had a dollar for every silly question you've asked, he'd have at least seven hundred bucks.**",
+	}
+
+	return diogoWarnings[rand.Intn(len(diogoWarnings))]
+}
 
 // Goal is to have this file as small as possible, the purpose of this file isn't about delegation so to say
 // It's acting as an intermediary; separating global vars from the business logic
@@ -21,6 +41,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 
 // RespondToMessage delegates actions when messages are created
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
+	// Responses to specific channels
 	switch data.Message.ChannelID {
 	case 852321734820102155:
 		data.Message.React(ctx, s, "\u26D4") // Purge emoji
@@ -34,8 +55,16 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 		data.Message.React(ctx, s, "\u23E9") // Next emoji
 		time.Sleep(1 * time.Second)
 	}
+	// When diogo has another dumb question for me
+	if (strings.Contains(strings.ToLower(data.Message.Content), "bomb") || strings.Contains(strings.ToLower(data.Message.Content), "hey bomb") || strings.Contains(strings.ToLower(data.Message.Content), "so bomb") || strings.Contains(strings.ToLower(data.Message.Content), "christian") || strings.Contains(strings.ToLower(data.Message.Content), "so bomb")) && data.Message.Author.ID.String() == "88482210440544256" {
+		data.Message.Reply(ctx, s, "<@"+data.Message.Author.ID.String()+">"+randomDiogoWarning())
+	}
+	if data.Message.Content == "listen here you little shit" {
+		data.Message.Reply(ctx, s, "<@"+data.Message.Author.ID.String()+">"+"Here's a big shit https://th.bing.com/th/id/R.a0f1072833b3c8eabee91647b65d227d?rik=k%2boQXoUpVEx0%2fQ&riu=http%3a%2f%2f38.media.tumblr.com%2ftumblr_ll0jboeGDa1qas26so1_500.jpg&ehk=lH80J0kbe7MFLORwwNJ4wquah5gxdkOQfJ%2fGTsjjmOk%3d&risl=&pid=ImgRaw&r=0")
+	}
+
 	user := data.Message.Author
-	fmt.Printf("Message %+v by user %+v | %+v\n", data.Message.Content, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
+	fmt.Printf("Message %+v by %+v | %+v\n", data.Message.Content, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	mec := NewMessageEventClient(data.Message, disgordGlobalClient)
 	err := mec.FilterNonModLinks()
 	if err != nil {

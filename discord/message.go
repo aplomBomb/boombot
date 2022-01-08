@@ -22,7 +22,7 @@ func NewMessageEventClient(data *disgord.Message, disgordClient disgordiface.Dis
 	}
 }
 
-//FilterNonModLinks removes all messages from mod requests channel that are not acceptable links
+//FilterNonModLinks removes all messages from mod requests channel that are not acceptable links for the minecraft mod suggestions channel
 func (mec *MessageEventClient) FilterNonModLinks() error {
 	//Per channel message event switch handler
 	switch mec.data.ChannelID {

@@ -1,9 +1,11 @@
 package discord
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -38,6 +40,7 @@ type Queue struct {
 	Shuffle                 chan bool
 	Pause                   chan bool
 	Play                    chan bool
+	Download                chan disgord.Snowflake
 	ChannelHop              chan disgord.Snowflake
 	CurrentlyPlayingDetails PlayingDetails
 }
@@ -144,7 +147,7 @@ func (q *Queue) ReturnNowPlayingID() disgord.Snowflake {
 
 // ListenAndProcessQueue takes a message content string to fetch\encode\play
 // audio in the voice channel the author currently resides in
-func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilderAPI, ytvlc *youtube.VideosListCall) {
+func (q *Queue) ListenAndProcessQueue(ctx context.Context, session disgord.Session, disgordClientAPI disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilderAPI, ytvlc *youtube.VideosListCall) {
 	wg := sync.WaitGroup{}
 	vcBuilder := guild.VoiceChannel(851268581094457357)
 
@@ -269,6 +272,9 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
 						stopChannel <- true
+					case <-q.Download:
+						uID := <-q.Download
+						go q.DownloadFile(ctx, session, disgordClientAPI, requestURL, uID)
 					case <-eofDone:
 						fmt.Print("\neofDone received true, stopping and returning from goRoutine\n")
 						q.stopPlaybackAndTalking(vc, es)
@@ -337,6 +343,24 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			vc.Close()
 		}
 	}
+}
+
+// DownloadFile does what it says on the tin, then sends it to the initiator
+func (q *Queue) DownloadFile(ctx context.Context, session disgord.Session, disgordClient disgordiface.DisgordClientAPI, url string, uID disgord.Snowflake) {
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println("\nThere was a problem downloading the file\n")
+	}
+	defer resp.Body.Close()
+
+	chanObj, err := disgordClient.User(uID).CreateDM()
+	if err != nil {
+		fmt.Println("\nThere was a problem setting up DM with user")
+	}
+	chanObj.SendMsg(ctx, session, &disgord.Message{
+		Content: "THIS IS A TEST",
+	})
+
 }
 
 // GetEncodeSession returns a dca encoded session

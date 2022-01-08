@@ -73,7 +73,7 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
 	client.Gateway().MessageCreate(RespondToMessage)
 	// client.Gateway().PresenceUpdate(RespondToPresenceUpdate)
-	go globalQueue.ListenAndProcessQueue(client, gg, vlc)
+	go globalQueue.ListenAndProcessQueue(ctx, session, client, gg, vlc)
 	go globalQueue.ManageJukebox(client)
 	defer client.Gateway().StayConnectedUntilInterrupted()
 	fmt.Println("BoomBot is running")
