@@ -351,7 +351,7 @@ func (q *Queue) ListenAndProcessQueue(ctx context.Context, session disgord.Sessi
 func (q *Queue) DownloadFile(ctx context.Context, session disgord.Session, disgordClient disgordiface.DisgordClientAPI, url string, uID disgord.Snowflake) {
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Println("\nThere was a problem downloading the file\n")
+		fmt.Println("\nThere was a problem downloading the file")
 	}
 	defer resp.Body.Close()
 
