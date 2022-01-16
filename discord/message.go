@@ -1,6 +1,7 @@
 package discord
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -22,16 +23,17 @@ func NewMessageEventClient(data *disgord.Message, disgordClient disgordiface.Dis
 	}
 }
 
-//FilterNonModLinks removes all messages from mod requests channel that are not acceptable links for the minecraft mod suggestions channel
-func (mec *MessageEventClient) FilterNonModLinks() error {
+//FilterMessages is used for deleting unwanted messages from the channel of origin
+func (mec *MessageEventClient) FilterMessages() error {
 	//Per channel message event switch handler
 	switch mec.data.ChannelID {
-	case 734986357583380510:
+	case ServerIDs.McModChID:
 		if !strings.Contains(mec.data.Content, "https://www.curseforge.com/minecraft/mc-mods/") {
 			go deleteMessage(mec.data, 2*time.Second, mec.disgordClient)
 		}
-	case 851485354589814805:
+	case ServerIDs.TihiID:
 		if strings.Contains(mec.data.Content, "https://external-preview.redd.it") {
+			fmt.Println("\nBINGO!")
 			go deleteMessage(mec.data, 1*time.Second, mec.disgordClient)
 		}
 	default:
@@ -42,7 +44,6 @@ func (mec *MessageEventClient) FilterNonModLinks() error {
 
 func deleteMessage(resp *disgord.Message, sleep time.Duration, client disgordiface.DisgordClientAPI) {
 	time.Sleep(sleep)
-	// fmt.Printf("\nDeleting message '%+v' by user %+v", resp.Content, resp.Author.Username)
 	channel := client.Channel(resp.ChannelID)
 	msgQueryBuilder := channel.Message(resp.ID)
 	msgQueryBuilder.Delete()

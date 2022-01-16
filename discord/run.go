@@ -70,7 +70,7 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	vlc := ytService.Videos.List([]string{"contentDetails", "snippet", "statistics"})
 	filter, _ := std.NewMsgFilter(ctx, client)
 	filter.SetPrefix(prefix)
-	client.Gateway().WithMiddleware(filter.NotByBot, filter.HasPrefix, std.CopyMsgEvt, filter.StripPrefix).MessageCreate(RespondToCommand)
+	client.Gateway().WithMiddleware(filter.HasPrefix, std.CopyMsgEvt, filter.StripPrefix).MessageCreate(RespondToCommand)
 	client.Gateway().MessageReactionAdd(RespondToReaction)
 	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
 	client.Gateway().MessageCreate(RespondToMessage)

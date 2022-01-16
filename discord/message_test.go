@@ -69,7 +69,7 @@ func TestMessageEventClient_FilterNonModLinks(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mec := discord.NewMessageEventClient(tt.fields.data, tt.fields.disgordClient)
-			if err := mec.FilterNonModLinks(); (err != nil) != tt.wantErr {
+			if err := mec.FilterMessages(); (err != nil) != tt.wantErr {
 				t.Errorf("MessageEventClient.FilterNonModLinks() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

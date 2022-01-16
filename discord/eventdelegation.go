@@ -68,7 +68,7 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	user := data.Message.Author
 	fmt.Printf("Message %+v by %+v | %+v\n", data.Message.Content, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	mec := NewMessageEventClient(data.Message, disgordGlobalClient)
-	err := mec.FilterNonModLinks()
+	err := mec.FilterMessages()
 	if err != nil {
 		fmt.Printf("\nError filtering non-mod link: %+v\n", err)
 	}
