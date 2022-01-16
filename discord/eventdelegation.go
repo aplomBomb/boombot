@@ -32,7 +32,7 @@ func randomDiogoWarning() string {
 // This means the more code/logic I can get out of this file, the more code/logic that can be tested
 
 // RespondToCommand delegates actions when commands are issued
-func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
+func respondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 	plis := ytService.PlaylistItems.List([]string{"snippet", "status", "contentDetails"})
 	ytv := ytService.Search.List([]string{"snippet"}).MaxResults(3).Order("relevance").SafeSearch("none").Type("video")
 	cec := NewCommandEventClient(data.Message, disgordGlobalClient, plis, ytv, globalQueue)
@@ -40,7 +40,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 }
 
 // RespondToMessage delegates actions when messages are created
-func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
+func respondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	// Responses to specific channels
 	switch data.Message.ChannelID {
 	case ServerIDs.JukeboxID:
@@ -75,7 +75,7 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 }
 
 // RespondToReaction delegates actions when reactions are added to messages
-func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
+func respondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	userQueryBuilder := disgordGlobalClient.User(data.UserID)
 	user, err := userQueryBuilder.Get()
 	if err != nil {
@@ -97,7 +97,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 }
 
 // RespondToVoiceChannelUpdate updates the server's voice channel cache every time an update is emitted
-func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
+func respondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 	globalQueue.UpdateVoiceCache(data.ChannelID, data.UserID)
 	if data.ChannelID != 0 && data.ChannelID != globalQueue.VoiceCache[ServerIDs.BoombotID] && data.UserID == globalQueue.NowPlayingUID && globalQueue.VoiceCache[data.UserID] != 0 {
 		go func() {
@@ -107,12 +107,12 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 }
 
 // RespondToPresenceUpdate fires when a server member's presence state changes
-func RespondToPresenceUpdate(s disgord.Session, data *disgord.PresenceUpdate) {
+func respondToPresenceUpdate(s disgord.Session, data *disgord.PresenceUpdate) {
 
 	activity, err := data.Game()
 
 	if err != nil {
-		fmt.Printf("\nError when feting presence update for %+v | %+v\n", data.User.Username, err)
+		fmt.Printf("\nError when feting presence update for %+v | \nError: %+v\n", data.User.Username, err.Error())
 	}
 
 	fmt.Printf("\n%+v\n", data.User.Username)

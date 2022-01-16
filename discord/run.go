@@ -27,14 +27,11 @@ var session disgord.Session
 var globalQueue *Queue
 var ServerIDs = config.GetServerIDs()
 
-// Version of BoomBot
-const Version = "v1.0.0-alpha"
-
-const (
-	host   = "db"
-	port   = 5432
-	dbname = "bomb"
-)
+// const (
+// 	host   = "db"
+// 	port   = 5432
+// 	dbname = "bomb"
+// )
 
 func init() {
 
@@ -43,7 +40,7 @@ func init() {
 	▐█ ▀█▪ ▄█▀▄  ▄█▀▄ ·██ ▐███▪▐█ ▀█▪ ▄█▀▄ •██
 	▐█▀▀█▄▐█▌.▐▌▐█▌.▐▌▐█ ▌▐▌▐█·▐█▀▀█▄▐█▌.▐▌ ▐█.▪
 	██▄▪▐█▐█▌.▐▌▐█▌.▐▌██ ██▌▐█▌██▄▪▐█▐█▌.▐▌ ▐█▌·
-	·▀▀▀▀  ▀█▄▀▪ ▀█▄▀▪▀▀  █▪▀▀▀·▀▀▀▀  ▀█▄▀▪ ▀▀▀ %-16s\/`+"\n\n", Version)
+	·▀▀▀▀  ▀█▄▀▪ ▀█▄▀▪▀▀  █▪▀▀▀·▀▀▀▀  ▀█▄▀▪ ▀▀▀ %-16s\/`+"\n\n", config.Version)
 }
 
 // BotRun | Start the bot and react to events
@@ -70,13 +67,13 @@ func BotRun(client *disgord.Client, prefix string, gID string, yk string) {
 	vlc := ytService.Videos.List([]string{"contentDetails", "snippet", "statistics"})
 	filter, _ := std.NewMsgFilter(ctx, client)
 	filter.SetPrefix(prefix)
-	client.Gateway().WithMiddleware(filter.HasPrefix, std.CopyMsgEvt, filter.StripPrefix).MessageCreate(RespondToCommand)
-	client.Gateway().MessageReactionAdd(RespondToReaction)
-	client.Gateway().VoiceStateUpdate(RespondToVoiceChannelUpdate)
-	client.Gateway().MessageCreate(RespondToMessage)
-	client.Gateway().PresenceUpdate(RespondToPresenceUpdate)
+	client.Gateway().WithMiddleware(filter.HasPrefix, std.CopyMsgEvt, filter.StripPrefix).MessageCreate(respondToCommand)
+	client.Gateway().MessageReactionAdd(respondToReaction)
+	client.Gateway().VoiceStateUpdate(respondToVoiceChannelUpdate)
+	client.Gateway().MessageCreate(respondToMessage)
+	client.Gateway().PresenceUpdate(respondToPresenceUpdate)
 	go globalQueue.ListenAndProcessQueue(ctx, session, client, gg, vlc)
 	go globalQueue.ManageJukebox(client)
 	defer client.Gateway().StayConnectedUntilInterrupted()
-	fmt.Println("BoomBot is running")
+	fmt.Printf("\nBoomBot is running | Version: %+v\n", config.Version)
 }
