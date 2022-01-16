@@ -9,6 +9,7 @@ import (
 
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
+	"github.com/aplombomb/boombot/config"
 	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
@@ -24,6 +25,7 @@ var globalGuild disgord.GuildQueryBuilder
 var ytService *youtube.Service
 var session disgord.Session
 var globalQueue *Queue
+var ServerIDs = config.GetServerIDs()
 
 // Version of BoomBot
 const Version = "v1.0.0-alpha"

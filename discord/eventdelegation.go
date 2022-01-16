@@ -21,7 +21,7 @@ func randomDiogoWarning() string {
 		"\n**Maybe.....no?**",
 		"\n**Fuck your face dingo**",
 		"\n**I'm pretty sure bomb would rather shove shards of glass up his own ass.**",
-		"\n**If bomb had a dollar for every silly question you've asked, he'd have at least seven hundred bucks.**",
+		"\n**If bomb had a dollar for every silly question you've asked, he'd have at least $420.**",
 	}
 
 	return diogoWarnings[rand.Intn(len(diogoWarnings))]
@@ -54,6 +54,8 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 		time.Sleep(1 * time.Second)
 		data.Message.React(ctx, s, "\u23E9") // Next emoji
 		time.Sleep(1 * time.Second)
+		// data.Message.React(ctx, s, "\u23EC") // Download emoji
+		// time.Sleep(1 * time.Second)
 	}
 	// When diogo has another dumb question for me
 	if (strings.Contains(strings.ToLower(data.Message.Content), "bomb") || strings.Contains(strings.ToLower(data.Message.Content), "hey bomb") || strings.Contains(strings.ToLower(data.Message.Content), "so bomb") || strings.Contains(strings.ToLower(data.Message.Content), "christian") || strings.Contains(strings.ToLower(data.Message.Content), "so bomb")) && data.Message.Author.ID.String() == "88482210440544256" {
@@ -97,8 +99,8 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 // RespondToVoiceChannelUpdate updates the server's voice channel cache every time an update is emitted
 func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpdate) {
 	globalQueue.UpdateVoiceCache(data.ChannelID, data.UserID)
-	if data.ChannelID != 0 && data.ChannelID != globalQueue.VoiceCache[860286976296878080] && data.UserID == globalQueue.NowPlayingUID && globalQueue.VoiceCache[data.UserID] != 0 {
-		go func() { //used to be this: 851268581094457357
+	if data.ChannelID != 0 && data.ChannelID != globalQueue.VoiceCache[ServerIDs.BoombotID] && data.UserID == globalQueue.NowPlayingUID && globalQueue.VoiceCache[data.UserID] != 0 {
+		go func() {
 			globalQueue.ChannelHop <- data.ChannelID
 		}()
 	}

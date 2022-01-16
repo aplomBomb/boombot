@@ -27,20 +27,20 @@ type PlayingDetails struct {
 
 // Queue defines the data neccessary for the bot to track users/songs and where to play them
 type Queue struct {
-	UserQueue               map[disgord.Snowflake][]string
-	VoiceCache              map[disgord.Snowflake]disgord.Snowflake
-	GuildID                 disgord.Snowflake
-	LastMessageUID          disgord.Snowflake
-	LastMessageCHID         disgord.Snowflake
-	NowPlayingUID           disgord.Snowflake
-	LastPlayingUID          disgord.Snowflake
-	NowPlayingURL           string
-	Next                    chan bool
-	Stop                    chan bool
-	Shuffle                 chan bool
-	Pause                   chan bool
-	Play                    chan bool
-	Download                chan disgord.Snowflake
+	UserQueue       map[disgord.Snowflake][]string
+	VoiceCache      map[disgord.Snowflake]disgord.Snowflake
+	GuildID         disgord.Snowflake
+	LastMessageUID  disgord.Snowflake
+	LastMessageCHID disgord.Snowflake
+	NowPlayingUID   disgord.Snowflake
+	LastPlayingUID  disgord.Snowflake
+	NowPlayingURL   string
+	Next            chan bool
+	Stop            chan bool
+	Shuffle         chan bool
+	Pause           chan bool
+	Play            chan bool
+	// Download                chan disgord.Snowflake
 	ChannelHop              chan disgord.Snowflake
 	CurrentlyPlayingDetails PlayingDetails
 }
@@ -61,7 +61,8 @@ func NewQueue(gID disgord.Snowflake) *Queue {
 		Shuffle:         make(chan bool, 1),
 		Pause:           make(chan bool, 1),
 		Play:            make(chan bool, 1),
-		ChannelHop:      make(chan disgord.Snowflake, 1),
+		// Download:        make(chan disgord.Snowflake, 1),
+		ChannelHop: make(chan disgord.Snowflake, 1),
 	}
 }
 
@@ -149,7 +150,7 @@ func (q *Queue) ReturnNowPlayingID() disgord.Snowflake {
 // audio in the voice channel the author currently resides in
 func (q *Queue) ListenAndProcessQueue(ctx context.Context, session disgord.Session, disgordClientAPI disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilderAPI, ytvlc *youtube.VideosListCall) {
 	wg := sync.WaitGroup{}
-	vcBuilder := guild.VoiceChannel(851268581094457357)
+	vcBuilder := guild.VoiceChannel(ServerIDs.VcInitializerID)
 
 	vc, err := vcBuilder.Connect(true, false)
 	if err != nil {
@@ -232,7 +233,7 @@ func (q *Queue) ListenAndProcessQueue(ctx context.Context, session disgord.Sessi
 				wg.Done()
 				continue
 			}
-			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, guild, q.VoiceCache[860286976296878080], q.VoiceCache[q.NowPlayingUID])
+			vc, err = q.establishVoiceConnection(vc, disgordClientAPI, guild, q.VoiceCache[ServerIDs.BoombotID], q.VoiceCache[q.NowPlayingUID])
 			if err != nil {
 				fmt.Printf("\nError establishing voice connection: %+v\n", err)
 				q.RemoveQueueEntry()
@@ -272,9 +273,10 @@ func (q *Queue) ListenAndProcessQueue(ctx context.Context, session disgord.Sessi
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
 						stopChannel <- true
-					case <-q.Download:
-						uID := <-q.Download
-						go q.DownloadFile(ctx, session, disgordClientAPI, requestURL, uID)
+					// case <-q.Download:
+					// 	uID := <-q.Download
+					// 	fmt.Printf("\nUserID: %+v\n", uID)
+					// 	go q.DownloadFile(ctx, session, disgordClientAPI, requestURL, uID)
 					case <-eofDone:
 						fmt.Print("\neofDone received true, stopping and returning from goRoutine\n")
 						q.stopPlaybackAndTalking(vc, es)
@@ -339,7 +341,7 @@ func (q *Queue) ListenAndProcessQueue(ctx context.Context, session disgord.Sessi
 			q.NowPlayingURL = ""
 		}
 		// Leave if the bot is the only member in a voice channel
-		if len(q.VoiceCache) == 1 && q.VoiceCache[860286976296878080] != 0 && vc != nil {
+		if len(q.VoiceCache) == 1 && q.VoiceCache[ServerIDs.BoombotID] != 0 && vc != nil {
 			vc.Close()
 		}
 	}
@@ -395,7 +397,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 		// TO-DO===============================================================
 		// I need to respond to a message create event rather than pinging discord's api every two seconds
 		//(2 seconds is the tightest interval before being rate-limited)
-		msgs, err := disgordClient.Channel(852321734820102155).GetMessages(&disgord.GetMessagesParams{
+		msgs, err := disgordClient.Channel(ServerIDs.JukeboxID).GetMessages(&disgord.GetMessagesParams{
 			Limit: 10,
 		})
 		if err != nil {
@@ -418,7 +420,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				timeFields := strings.Split(q.CurrentlyPlayingDetails.ContentDetails.Duration, "PT")
 
 				disgordClient.SendMsg(
-					852321734820102155,
+					ServerIDs.JukeboxID,
 					&disgord.CreateMessageParams{
 						Embed: &disgord.Embed{
 							Title:       q.CurrentlyPlayingDetails.Snippet.Title,
