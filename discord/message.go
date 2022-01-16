@@ -33,7 +33,12 @@ func (mec *MessageEventClient) FilterMessages() error {
 		}
 	case ServerIDs.TihiID:
 		if strings.Contains(mec.data.Content, "https://external-preview.redd.it") {
-			fmt.Println("\nBINGO!")
+			fmt.Println("\nDeleting bad link in TIHI")
+			go deleteMessage(mec.data, 1*time.Second, mec.disgordClient)
+		}
+	case ServerIDs.BattleStationID:
+		if strings.Contains(mec.data.Content, "no_image_card") {
+			fmt.Println("\nDeleting bad link in sick-setups")
 			go deleteMessage(mec.data, 1*time.Second, mec.disgordClient)
 		}
 	default:
