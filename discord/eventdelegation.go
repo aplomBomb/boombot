@@ -43,7 +43,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	// Responses to specific channels
 	switch data.Message.ChannelID {
-	case 852321734820102155:
+	case ServerIDs.JukeboxID:
 		data.Message.React(ctx, s, "\u26D4") // Purge emoji
 		time.Sleep(1 * time.Second)
 		data.Message.React(ctx, s, "\u267B") // Shuffle Emoji
