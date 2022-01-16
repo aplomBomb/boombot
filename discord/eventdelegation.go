@@ -107,48 +107,19 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 }
 
 // RespondToPresenceUpdate fires when a server member's presence state changes
-// func RespondToPresenceUpdate(s disgord.Session, data *disgord.PresenceUpdate) {
-// This is temporary for testing\will be moved to a "roles" client
-// after i decide how i want to handle these events
+func RespondToPresenceUpdate(s disgord.Session, data *disgord.PresenceUpdate) {
 
-// Roles drg, twerkov, crafter respectively
-// Will map game name as string key/snowflake of role as value
-// Will make it really easy to remove/add role ids on events
-// roleCache := map[string]disgord.Snowflake
+	activity, err := data.Game()
 
-// managedRoles := []disgord.Snowflake{787758251574820864, 737467990647373827, 735890320348282880}
-// gameEvent, _ := data.Game()
-// fmt.Println("GameEvent: ", gameEvent)
-// fmt.Println("User: ", data.User.Username)
-// if gameEvent == nil {
-// 	fmt.Println("This must have been an online/offline event")
-// 	return
-// }
-// fmt.Println("Game Name: ", gameEvent.Name)
-// if len(data.Activities) == 0 {
-// 	memberQueryBuilder := globalGuild.Member(data.User.ID)
-// 	member, err := globalGuild.Member(data.User.ID).Get()
-// 	if err != nil {
-// 		fmt.Println("Error fetching member for role adjustment: ", err)
-// 	}
-// 	roles := member.Roles
-// 	fmt.Printf("\n%+v's roles before: %+v", data.User.Username, roles)
-// 	for _, rv := range roles {
-// 		for _, mrv := range managedRoles {
-// 			if mrv == rv {
-// 				memberQueryBuilder.RemoveRole(mrv)
-// 			}
-// 		}
-// 	}
-// 	fmt.Printf("\n%+v's roles after: %+v", data.User.Username, roles)
-// 	return
-// }
+	if err != nil {
+		fmt.Printf("\nError when feting presence update for %+v | %+v\n", data.User.Username, err)
+	}
 
-// userID := data.User.ID
-// activityName := data.Activities[0].Name
-// drgRoleID := 787758251574820864
-
-// for k := range data.Activities {
-// 	fmt.Println("activity: ", data.Activities[k])
-// }
-// }
+	fmt.Printf("\n%+v\n", data.User.Username)
+	fmt.Printf("\nActivity Name: %+v\n", activity.Name)
+	fmt.Printf("\nActivity AppID: %+v\n", activity.ApplicationID)
+	fmt.Printf("\nActivity Details: %+v\n", activity.Details)
+	fmt.Printf("\nActivity Party State: %+v\n", activity.State)
+	fmt.Printf("\nActivity Emoji: %+v\n", activity.Emoji)
+	fmt.Printf("\nActivity Type: %+v\n", activity.Type)
+}
