@@ -15,13 +15,15 @@ func randomDiogoWarning() string {
 		"\n**Are you sure this isn't a dumb question, dongo?**",
 		"\n**Hey diaygo, have you considered asking someone else?**",
 		"\n**Is this a question worth asking?**",
-		"\n**Bomb is currently busy, try again never.**",
-		"\n**Think long and hard about this, deego.**",
+		"\n**Bomb is currently busy, try again never**",
+		"\n**Think long and hard about this, deego**",
 		"\n**Do you honestly expect a serious answer?**",
 		"\n**Maybe.....no?**",
 		"\n**Fuck your face dingo**",
-		"\n**I'm pretty sure bomb would rather shove shards of glass up his own ass.**",
-		"\n**If bomb had a dollar for every silly question you've asked, he'd have at least $420.**",
+		"\n**I'm pretty sure bomb would rather shove shards of glass up his own ass**",
+		"\n**If bomb had a dollar for every silly question you've asked, he'd have at least $420**",
+		"\n**I believe there's someone a lot dumber that would enjoy answering that instead**",
+		"\n**Get lost you filthy degenerate**",
 	}
 
 	return diogoWarnings[rand.Intn(len(diogoWarnings))]
@@ -58,7 +60,7 @@ func respondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 		// time.Sleep(1 * time.Second)
 	}
 	// When diogo has another dumb question for me
-	if (strings.Contains(strings.ToLower(data.Message.Content), "bomb") || strings.Contains(strings.ToLower(data.Message.Content), "hey bomb") || strings.Contains(strings.ToLower(data.Message.Content), "so bomb") || strings.Contains(strings.ToLower(data.Message.Content), "christian") || strings.Contains(strings.ToLower(data.Message.Content), "so bomb")) && data.Message.Author.ID.String() == "88482210440544256" {
+	if data.Message.Author.ID == ServerIDs.DiogoID && (strings.Split(data.Message.Content, " ")[0] == "bomb" || strings.Split(data.Message.Content, " ")[1] == "bomb") {
 		data.Message.Reply(ctx, s, "<@"+data.Message.Author.ID.String()+">"+randomDiogoWarning())
 	}
 	if data.Message.Content == "listen here you little shit" {

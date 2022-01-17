@@ -13,7 +13,7 @@ type BoombotCreds struct {
 }
 
 type ServerIDs struct {
-	GuildID, JukeboxID, McModChID, TihiID, BattleStationID, VcInitializerID, BoombotID, DiogoID, BugID, RickyID, AverossID, FurryID disgord.Snowflake
+	GuildID, JukeboxID, McModChID, TihiID, VideosID, BattleStationID, VcInitializerID, BoombotID, DiogoID, BugID, RickyID, AverossID, FurryID disgord.Snowflake
 }
 
 // GetSecrets retrieves all tokens required by the bot via AWS SecretsManager
@@ -32,6 +32,7 @@ func GetServerIDs() ServerIDs {
 		JukeboxID:       932082717649162291,
 		McModChID:       932321289828462652,
 		TihiID:          931576984113389638,
+		VideosID:        931539642610749441,
 		BattleStationID: 932105622483259452,
 		VcInitializerID: 931539397600509983,
 		BoombotID:       860286976296878080,

@@ -160,8 +160,8 @@ func (cec *CommandEventClient) Delegate() {
 				}
 			}
 		case false:
-			fmt.Println("\nUser searching for song...")
 			argString := strings.Join(parsedArgs, " ")
+			fmt.Printf("\nUser searching for song: %+v", argString)
 			slc := cec.ytss.Q(argString)
 			resp, err := slc.Do()
 			if err != nil {
