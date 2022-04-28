@@ -74,6 +74,10 @@ func (c *PlaylistClient) GetPlaylist(arg string) ([]string, error) {
 			playlistID = id[0]
 			songIndex, _ = strconv.Atoi(urlFields[3])
 		}
+	case 5:
+		if strings.Contains(urlFields[3], "ab_channel") {
+			urlFields = urlFields[:len(urlFields)-2]
+		}
 	}
 	URLS, err := c.aggregateIDS(playlistID)
 	if err != nil {
