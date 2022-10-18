@@ -144,13 +144,13 @@ func (q *Queue) ReturnNowPlayingID() disgord.Snowflake {
 
 // ListenAndProcessQueue takes a message content string to fetch\encode\play
 // audio in the voice channel the author currently resides in
-func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilderAPI, ytvlc *youtube.VideosListCall) {
+func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilder, ytvlc *youtube.VideosListCall) {
 	wg := sync.WaitGroup{}
 	vcBuilder := guild.VoiceChannel(915762663752077342)
 
 	vc, err := vcBuilder.Connect(true, false)
 	if err != nil {
-		fmt.Printf("\nERROR: %+v\n", err)
+		fmt.Printf("\nERROR THIS SHIT IS FUCKED!!!: %+v\n", err)
 	}
 	for {
 		time.Sleep(3 * time.Second)

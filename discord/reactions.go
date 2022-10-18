@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/andersfylling/disgord"
-	"github.com/andersfylling/snowflake/v4"
 	disgordiface "github.com/aplombomb/boombot/discord/ifaces"
 )
 
@@ -76,8 +75,8 @@ var (
 
 // AdminReaction defines the structure of needed reaction data
 type AdminReaction struct {
-	userID    snowflake.Snowflake
-	channelID snowflake.Snowflake
+	userID    disgord.Snowflake
+	channelID disgord.Snowflake
 	emoji     *disgord.Emoji
 }
 
