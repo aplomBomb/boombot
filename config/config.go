@@ -8,8 +8,9 @@ import (
 
 // ConfJSONStruct is used to unmarshal the config.json
 type ConfJSONStruct struct {
-	Prefix  string `json:"Prefix"`
-	GuildID string `json:"Guild_ID"`
+	Prefix    string `json:"Prefix"`
+	GuildID   string `json:"Guild_ID"`
+	JukeboxID string `json:"Jukebox_ID"`
 	// MongoURL string `json:"Mongo_URL"`
 }
 

@@ -146,7 +146,7 @@ func (q *Queue) ReturnNowPlayingID() disgord.Snowflake {
 // audio in the voice channel the author currently resides in
 func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilderAPI, ytvlc *youtube.VideosListCall) {
 	wg := sync.WaitGroup{}
-	vcBuilder := guild.VoiceChannel(851268581094457357)
+	vcBuilder := guild.VoiceChannel(915762663752077342)
 
 	vc, err := vcBuilder.Connect(true, false)
 	if err != nil {
@@ -372,7 +372,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 		// TO-DO===============================================================
 		// I need to respond to a message create event rather than pinging discord's api every two seconds
 		//(2 seconds is the tightest interval before being rate-limited)
-		msgs, err := disgordClient.Channel(852321734820102155).GetMessages(&disgord.GetMessagesParams{
+		msgs, err := disgordClient.Channel(1031788884960493618).GetMessages(&disgord.GetMessagesParams{
 			Limit: 10,
 		})
 		if err != nil {
@@ -395,7 +395,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				timeFields := strings.Split(q.CurrentlyPlayingDetails.ContentDetails.Duration, "PT")
 
 				disgordClient.SendMsg(
-					852321734820102155,
+					1031788884960493618,
 					&disgord.CreateMessageParams{
 						Embed: &disgord.Embed{
 							Title:       q.CurrentlyPlayingDetails.Snippet.Title,

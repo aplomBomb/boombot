@@ -22,7 +22,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 // RespondToMessage delegates actions when messages are created
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	switch data.Message.ChannelID {
-	case 852321734820102155:
+	case 1031788884960493618:
 		data.Message.React(ctx, s, "\u26D4") // Purge emoji
 		time.Sleep(1 * time.Second)
 		data.Message.React(ctx, s, "\u267B") // Shuffle Emoji
@@ -116,7 +116,7 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 
 // userID := data.User.ID
 // activityName := data.Activities[0].Name
-// drgRoleID := 787758251574820864
+// drgRoleID := 864
 
 // for k := range data.Activities {
 // 	fmt.Println("activity: ", data.Activities[k])

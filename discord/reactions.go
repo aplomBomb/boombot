@@ -74,7 +74,7 @@ var (
 	}
 )
 
-//AdminReaction defines the structure of needed reaction data
+// AdminReaction defines the structure of needed reaction data
 type AdminReaction struct {
 	userID    snowflake.Snowflake
 	channelID snowflake.Snowflake
@@ -103,7 +103,7 @@ func NewReactionEventClient(emoji *disgord.Emoji, uID disgord.Snowflake, chID di
 
 // HandleJukeboxReact triggers the playback channels of the queue in response to user reaction
 func (rec *ReactionEventClient) HandleJukeboxReact(queue *Queue) {
-	if rec.uID != 860286976296878080 && rec.uID == queue.NowPlayingUID {
+	if rec.uID != 1031788884960493618 && rec.uID == queue.NowPlayingUID {
 		switch rec.emoji.Name {
 		case "\u26D4":
 			go func() {
@@ -134,7 +134,7 @@ func (rec *ReactionEventClient) HandleJukeboxReact(queue *Queue) {
 	}
 }
 
-//GenerateModResponse returns the applicable message response if reaction criteria are met
+// GenerateModResponse returns the applicable message response if reaction criteria are met
 func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) {
 	// fmt.Printf("Name: %+v\nChannelID: %+v\nUserID: %+v\n", rec.emoji.Name, rec.chID, rec.uID)
 
@@ -269,7 +269,7 @@ func (rec *ReactionEventClient) GenerateModResponse() (*disgord.Message, error) 
 	return &dm, nil
 }
 
-//ParseReaction bundles up reaction data for easier comparison
+// ParseReaction bundles up reaction data for easier comparison
 func createReactions(emojis []*disgord.Emoji) []*AdminReaction {
 	reactions := []*AdminReaction{}
 	for _, emoji := range emojis {
