@@ -42,5 +42,5 @@ func main() {
 		Cache: &disgord.CacheNop{},
 	})
 
-	discord.BotRun(client, "&", os.Getenv("GUILD_ID"), creds.YoutubeToken)
+	discord.BotRun(client, "&", "187298550193979392", creds.YoutubeToken)
 }

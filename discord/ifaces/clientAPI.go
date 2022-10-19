@@ -15,7 +15,7 @@ type DisgordClientAPI interface {
 	User(id disgord.Snowflake) disgord.UserQueryBuilder
 }
 
-type GuildQueryBuilder interface {
+type GuildQueryBuilderAPI interface {
 	VoiceChannel(channelID disgord.Snowflake) disgord.VoiceChannelQueryBuilder
 	GetChannels(flags ...disgord.Flag) ([]*disgord.Channel, error)
 }

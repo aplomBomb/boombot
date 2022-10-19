@@ -1,8 +1,10 @@
 package discord
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -144,20 +146,26 @@ func (q *Queue) ReturnNowPlayingID() disgord.Snowflake {
 
 // ListenAndProcessQueue takes a message content string to fetch\encode\play
 // audio in the voice channel the author currently resides in
-func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilder, ytvlc *youtube.VideosListCall) {
+func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClientAPI, guild disgord.GuildQueryBuilder, ytvlc *youtube.VideosListCall) {
 	wg := sync.WaitGroup{}
 	vcBuilder := guild.VoiceChannel(915762663752077342)
 
-	vc, err := vcBuilder.Connect(true, false)
+	vc, err := vcBuilder.Connect(false, true)
 	if err != nil {
-		fmt.Printf("\nERROR THIS SHIT IS FUCKED!!!: %+v\n", err)
+		fmt.Printf("\n %+v\n", err)
 	}
 	for {
 		time.Sleep(3 * time.Second)
 		if len(q.UserQueue) > 0 {
-			fmt.Println("\nQueues: ", len(q.UserQueue))
+			fmt.Println("\nQueues TEST: ", len(q.UserQueue))
 			wg.Add(1)
-			fmt.Printf("\nUpcoming Song/URL: %+v", q.UserQueue[q.NowPlayingUID][0])
+			fmt.Println("\n Queue: %+v", q.UserQueue)
+			b, err := json.Marshal(q.UserQueue)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(string(b))
+			// fmt.Printf("\nUpcoming Song/URL: %+v", q.UserQueue[q.NowPlayingUID][0])
 			q.setNowPlaying()
 			requestURL := ""
 
@@ -512,7 +520,7 @@ func (q *Queue) stopPlaybackAndTalking(vc disgord.VoiceConnection, es *dca.Encod
 	}
 }
 
-func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, guild disgordiface.GuildQueryBuilderAPI, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
+func (q *Queue) establishVoiceConnection(prevVC disgord.VoiceConnection, client disgordiface.DisgordClientAPI, guild disgord.GuildQueryBuilder, botChannelID disgord.Snowflake, requesteeChannelID disgord.Snowflake) (disgord.VoiceConnection, error) {
 	if botChannelID == 0 {
 		vc, err := guild.VoiceChannel(requesteeChannelID).Connect(false, true)
 		if err != nil {
