@@ -21,7 +21,7 @@ Boombot is a music streaming bot for group listening and sharing in Discord voic
 ## Getting Started
 
 ### Boombot is not currently setup for easy plug and play **_quite_** yet, but if you're eager...
-***If you'd rather just use Boombot before it's open to the public, you can be a beta tester in Boombot's home [server](https://discord.gg/J9Ys5WRxgQ)***
+***If you'd rather just use Boombot before it's open to the public, you can be a beta tester in Boombot's home [server](https://discord.gg/5Bmpec34US)***
 
 ### Dependencies
 
