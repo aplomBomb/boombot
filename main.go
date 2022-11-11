@@ -36,7 +36,8 @@ func main() {
 		},
 		Presence: &disgord.UpdateStatusPayload{
 			Game: &disgord.Activity{
-				Name: "mewzek",
+				Name: "Copyrighted Music",
+				Type: 1,
 			},
 		},
 		Cache: &disgord.CacheNop{},

@@ -100,9 +100,16 @@ func NewReactionEventClient(emoji *disgord.Emoji, uID disgord.Snowflake, chID di
 	}
 }
 
+func deleteReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
+	err := s.Channel(data.ChannelID).Message(data.MessageID).Reaction(data.PartialEmoji.Name).DeleteUser(data.UserID)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
 // HandleJukeboxReact triggers the playback channels of the queue in response to user reaction
-func (rec *ReactionEventClient) HandleJukeboxReact(queue *Queue) {
-	if rec.uID != 1031788884960493618 && rec.uID == queue.NowPlayingUID {
+func (rec *ReactionEventClient) HandleJukeboxReact(s disgord.Session, queue *Queue, data *disgord.MessageReactionAdd) {
+	if rec.uID != 860286976296878080 && rec.uID == queue.NowPlayingUID {
 		switch rec.emoji.Name {
 		case "\u26D4":
 			go func() {
@@ -111,16 +118,19 @@ func (rec *ReactionEventClient) HandleJukeboxReact(queue *Queue) {
 			}()
 		case "\u267B":
 			go func() {
+				deleteReaction(s, data)
 				queue.Shuffle <- true
 				return
 			}()
 		case "\u23F8":
 			go func() {
+				deleteReaction(s, data)
 				queue.Pause <- true
 				return
 			}()
 		case "\u25B6":
 			go func() {
+				deleteReaction(s, data)
 				queue.Play <- true
 				return
 			}()

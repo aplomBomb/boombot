@@ -1,10 +1,8 @@
 package discord
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -157,15 +155,8 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 	for {
 		time.Sleep(3 * time.Second)
 		if len(q.UserQueue) > 0 {
-			fmt.Println("\nQueues TEST: ", len(q.UserQueue))
+			fmt.Println("Queues: ", len(q.UserQueue))
 			wg.Add(1)
-			fmt.Println("\n Queue: %+v", q.UserQueue)
-			b, err := json.Marshal(q.UserQueue)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Println(string(b))
-			// fmt.Printf("\nUpcoming Song/URL: %+v", q.UserQueue[q.NowPlayingUID][0])
 			q.setNowPlaying()
 			requestURL := ""
 
@@ -184,7 +175,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			call := ytvlc.Id(id)
 			resp, err := call.Do()
 			if err != nil {
-				fmt.Println("\nERROR FETCHING VID DEETZ: ", err)
+				fmt.Println("ERROR FETCHING VID DEETZ: ", err)
 			}
 
 			if len(resp.Items) != 0 {
@@ -212,7 +203,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			}
 
 			if len(resp.Items) == 0 {
-				fmt.Println("\nNo data retrieved from Youtube|Skipping...")
+				fmt.Println("No data retrieved from Youtube|Skipping...")
 				q.RemoveQueueEntry()
 				wg.Done()
 				continue
@@ -226,13 +217,13 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			}
 			esData, err := es.ReadFrame()
 			if err != nil {
-				fmt.Println("\nError: ", err)
+				fmt.Println("Error: ", err)
 				q.RemoveQueueEntry()
 				wg.Done()
 				continue
 			}
 			if esData == nil {
-				fmt.Println("\nNo audio data|Skipping...")
+				fmt.Println("No audio data|Skipping...")
 				q.RemoveQueueEntry()
 				wg.Done()
 				continue
@@ -252,7 +243,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 			eofChannel := make(chan bool)
 			stopChannel := make(chan bool)
 
-			// Goroutine just cycles through the opusFrames produced from the encoding process
+			// Goroutine just cycles through the opusFrames returned from the encoding process
 			// The channels allow for realtime interaction/playback control from events triggered by users
 			go func(waitGroup *sync.WaitGroup) {
 				fmt.Println("Starting main goRoutine")
@@ -278,7 +269,7 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 						q.RemoveQueueEntry()
 						stopChannel <- true
 					case <-eofDone:
-						fmt.Print("\neofDone received true, stopping and returning from goRoutine\n")
+						fmt.Print("\neofDone received true, stopping and returning from main goRoutine\n")
 						q.stopPlaybackAndTalking(vc, es)
 						q.RemoveQueueEntry()
 						return
@@ -305,28 +296,28 @@ func (q *Queue) ListenAndProcessQueue(disgordClientAPI disgordiface.DisgordClien
 							fmt.Printf("\nError sending next opus frame: %+v\n", err)
 						}
 						if err == io.EOF {
-							fmt.Println("EOF, sending true to eofChannel...")
+							fmt.Println("END OF FILE: Informing secondary goRoutine")
 							eofChannel <- true
 							q.stopPlaybackAndTalking(vc, es)
 							q.RemoveQueueEntry()
-							fmt.Println("Song ended, moving on....")
+							fmt.Println("END OF FILE: Shutting down main goRoutine")
 							return
+
 						}
 						vc.SendOpusFrame(nextFrame)
 					}
 				}
 			}(&wg)
 			go func(waitGroup *sync.WaitGroup) {
-				fmt.Println("Starting secondary goRoutine")
+				fmt.Println("\nStarting secondary goRoutine")
 				waitGroup.Add(1)
 				defer waitGroup.Done()
-				defer fmt.Println("Leaving secondary goRoutine")
+				defer fmt.Println("\nLeaving secondary goRoutine")
 				for {
 					time.Sleep(1 * time.Second)
 					select {
 					case <-eofChannel:
-						fmt.Print("\neofChannel received true, sending true to eofDone channel\n")
-						eofDone <- true
+						fmt.Print("\nSecondary has received EOF signal, shutting down...\n")
 						return
 					case <-stopChannel:
 						forceDone <- true
@@ -364,6 +355,7 @@ func (q *Queue) GetEncodeSession(url string) (*dca.EncodeSession, error) {
 		StartTime:        0,
 		RawOutput:        true,
 		Threads:          8,
+		AudioFilter:      "loudnorm=I=-16:TP=-1.5:LRA=11",
 	})
 	if err != nil {
 		return nil, err
@@ -376,7 +368,7 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 	referenceEntry := PlayingDetails{}
 	for {
 		time.Sleep(2 * time.Second)
-		// fmt.Println("\nNOW PLAYING: ", q.UserQueue[q.NowPlayingUID])
+		// fmt.Println("NOW PLAYING: ", q.UserQueue[q.NowPlayingUID])
 		// TO-DO===============================================================
 		// I need to respond to a message create event rather than pinging discord's api every two seconds
 		//(2 seconds is the tightest interval before being rate-limited)
@@ -391,11 +383,11 @@ func (q *Queue) ManageJukebox(disgordClient disgordiface.DisgordClientAPI) {
 				// nextRequesteeName := "**Open Queue**"
 				requesteeName, err := disgordClient.User(q.NowPlayingUID).Get()
 				if err != nil {
-					fmt.Println("\n", err)
+					fmt.Println("", err)
 				}
 				avatarURL, err := requesteeName.AvatarURL(64, true)
 				if err != nil {
-					fmt.Println("\n", err)
+					fmt.Println("", err)
 				}
 
 				likeStr := strconv.FormatUint(q.CurrentlyPlayingDetails.Statistics.LikeCount, 10)
@@ -564,7 +556,7 @@ func (q *Queue) setNowPlaying() {
 	lastUID := q.LastPlayingUID
 	nextUID := disgord.Snowflake(0)
 
-	fmt.Println("\nLastPlayingUID: ", lastUID)
+	fmt.Println("LastPlayingUID: ", lastUID)
 
 	// When there is more than one queue, we dont want to play the same user's queue twice in a row
 	// Collect all the queue id's that aren't the last one

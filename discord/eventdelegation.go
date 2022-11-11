@@ -35,7 +35,7 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 		time.Sleep(1 * time.Second)
 	}
 	user := data.Message.Author
-	fmt.Printf("Message %+v by user %+v | %+v\n", data.Message.Content, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
+	fmt.Printf("\n%+v: %+v | %+v\n", user.Username, data.Message.Content, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	mec := NewMessageEventClient(data.Message, disgordGlobalClient)
 	err := mec.FilterNonModLinks()
 	if err != nil {
@@ -52,7 +52,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	}
 	// fmt.Printf("Message reaction %+v by user %+v | %+v\n", data.PartialEmoji.Name, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	rec := NewReactionEventClient(data.PartialEmoji, data.UserID, data.ChannelID, data.MessageID, disgordGlobalClient)
-	rec.HandleJukeboxReact(globalQueue)
+	rec.HandleJukeboxReact(s, globalQueue, data)
 	msg, err := rec.GenerateModResponse()
 	if err != nil {
 		fmt.Printf("\nError generating mod reaction response: %+v\n", err)
