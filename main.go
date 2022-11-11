@@ -36,11 +36,12 @@ func main() {
 		},
 		Presence: &disgord.UpdateStatusPayload{
 			Game: &disgord.Activity{
-				Name: "mewzek",
+				Name: "Copyrighted Music",
+				Type: 1,
 			},
 		},
 		Cache: &disgord.CacheNop{},
 	})
 
-	discord.BotRun(client, "&", os.Getenv("GUILD_ID"), creds.YoutubeToken)
+	discord.BotRun(client, "&", "187298550193979392", creds.YoutubeToken)
 }

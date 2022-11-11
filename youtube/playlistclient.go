@@ -74,6 +74,8 @@ func (c *PlaylistClient) GetPlaylist(arg string) ([]string, error) {
 			playlistID = id[0]
 			songIndex, _ = strconv.Atoi(urlFields[3])
 		}
+	case 5:
+		playlistID = urlFields[2]
 	}
 	URLS, err := c.aggregateIDS(playlistID)
 	if err != nil {

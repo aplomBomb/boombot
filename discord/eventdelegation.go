@@ -22,7 +22,7 @@ func RespondToCommand(s disgord.Session, data *disgord.MessageCreate) {
 // RespondToMessage delegates actions when messages are created
 func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 	switch data.Message.ChannelID {
-	case 852321734820102155:
+	case 1031788884960493618:
 		data.Message.React(ctx, s, "\u26D4") // Purge emoji
 		time.Sleep(1 * time.Second)
 		data.Message.React(ctx, s, "\u267B") // Shuffle Emoji
@@ -35,7 +35,7 @@ func RespondToMessage(s disgord.Session, data *disgord.MessageCreate) {
 		time.Sleep(1 * time.Second)
 	}
 	user := data.Message.Author
-	fmt.Printf("Message %+v by user %+v | %+v\n", data.Message.Content, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
+	fmt.Printf("\n%+v: %+v | %+v\n", user.Username, data.Message.Content, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	mec := NewMessageEventClient(data.Message, disgordGlobalClient)
 	err := mec.FilterNonModLinks()
 	if err != nil {
@@ -52,7 +52,7 @@ func RespondToReaction(s disgord.Session, data *disgord.MessageReactionAdd) {
 	}
 	// fmt.Printf("Message reaction %+v by user %+v | %+v\n", data.PartialEmoji.Name, user.Username, time.Now().Format("Mon Jan _2 15:04:05 2006"))
 	rec := NewReactionEventClient(data.PartialEmoji, data.UserID, data.ChannelID, data.MessageID, disgordGlobalClient)
-	rec.HandleJukeboxReact(globalQueue)
+	rec.HandleJukeboxReact(s, globalQueue, data)
 	msg, err := rec.GenerateModResponse()
 	if err != nil {
 		fmt.Printf("\nError generating mod reaction response: %+v\n", err)
@@ -116,7 +116,7 @@ func RespondToVoiceChannelUpdate(s disgord.Session, data *disgord.VoiceStateUpda
 
 // userID := data.User.ID
 // activityName := data.Activities[0].Name
-// drgRoleID := 787758251574820864
+// drgRoleID := 864
 
 // for k := range data.Activities {
 // 	fmt.Println("activity: ", data.Activities[k])

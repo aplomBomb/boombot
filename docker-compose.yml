@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   boombot:
-    env_file: 
+    env_file:
         - boombot.env
         - db.env
     image: aplombomb/boombot:latest
@@ -18,7 +18,7 @@ services:
       resources:
         limits:
           cpus: '0.25'
-  
+
   yt-api:
     container_name: yt-api
     image: mwader/ydls
@@ -29,7 +29,7 @@ services:
           cpus: '0.70'
 
   db:
-    env_file: 
+    env_file:
       - db.env
     container_name: pgDB
     image: postgres
@@ -44,7 +44,7 @@ services:
     restart: always
     depends_on:
       - db
-    ports: 
+    ports:
       - "8080:8080"
     links:
       - db

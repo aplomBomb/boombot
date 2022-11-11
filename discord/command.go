@@ -49,6 +49,7 @@ func (cec *CommandEventClient) Delegate() {
 		cec.queue.TriggerStop()
 		go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
 	case "play":
+		// CHECK IF USER IS IN VOICE CHAT
 		if cec.queue.ReturnVoiceCacheEntry(cec.data.Author.ID) == 0 {
 			_, err := mec.SendEmbedMsgReply(disgord.Embed{
 				Title:       "**Request Rejected**",
@@ -66,6 +67,7 @@ func (cec *CommandEventClient) Delegate() {
 			go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
 			return
 		}
+		// CHECK IF USER SUPPLIED ARGUMENT
 		if len(args) == 0 {
 			_, err := mec.SendEmbedMsgReply(disgord.Embed{
 				Title:       "**Empty Request**",
@@ -82,6 +84,7 @@ func (cec *CommandEventClient) Delegate() {
 			go deleteMessage(cec.data, 1*time.Second, cec.disgordClient)
 			return
 		}
+		// PARSE ARGUMENT
 		parsedArgs, isURL, err := cec.ParseYoutubeArg(args)
 		if err != nil {
 			fmt.Println("\nError parsing play argument: ", err)
@@ -160,7 +163,7 @@ func (cec *CommandEventClient) Delegate() {
 				}
 			}
 		case false:
-			fmt.Println("\nUser searching for song...")
+			fmt.Sprintf("\n==============================\n%+v searched for '%+v'\n==============================", cec.data.Author.Username, cec.data.Content)
 			argString := strings.Join(parsedArgs, " ")
 			slc := cec.ytss.Q(argString)
 			resp, err := slc.Do()
@@ -170,7 +173,7 @@ func (cec *CommandEventClient) Delegate() {
 			if len(resp.Items) != 0 {
 				fmt.Println("\nITEMS: ", resp.Items)
 				vidID := resp.Items[0].Id.VideoId
-				url := fmt.Sprintf("https://www.youtube.com/watch?v=%+v", vidID)
+				url := fmt.Sprintf("\nhttps://www.youtube.com/watch?v=%+v", vidID)
 				cec.queue.UpdateUserQueueState(cec.data.ChannelID, cec.data.Author.ID, url)
 				fmt.Println("\nURL from search: ", resp.Items[0].Snippet.Title)
 				avatarURL, err := cec.data.Author.AvatarURL(64, true)
