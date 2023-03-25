@@ -355,7 +355,6 @@ func (q *Queue) GetEncodeSession(url string) (*dca.EncodeSession, error) {
 		StartTime:        0,
 		RawOutput:        true,
 		Threads:          8,
-		AudioFilter:      "loudnorm=I=-16:TP=-1.5:LRA=11",
 	})
 	if err != nil {
 		return nil, err
